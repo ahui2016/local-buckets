@@ -1,11 +1,18 @@
 package main
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"log"
+
+	"github.com/gofiber/fiber/v2"
+)
 
 func main() {
 	app := fiber.New()
 
 	app.Static("/", "./public")
 
-	app.Listen(":3000")
+	api := app.Group("/api")
+	api.Get("/project-config", getProjectConfig)
+
+	log.Fatal(app.Listen(ProjectConfig.Host))
 }

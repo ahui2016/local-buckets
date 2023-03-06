@@ -1,29 +1,41 @@
 package util
 
-import "os"
+import (
+	"os"
 
-// Try panics if err != nil
-func Try(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
+	"github.com/pelletier/go-toml/v2"
+	"github.com/samber/lo"
+)
 
-// Try1 accepts (val, err), returns val, and panics if err != nil
-func Try1[V any](val V, err error) V {
-	Try(err)
-	return val
-}
-
-// Try2 accepts (val1, val2,  err), returns (val1, val2),
-// and panics if err != nil
-func Try2[V1 any, V2 any](val1 V1, val2 V2, err error) (V1, V2) {
-	Try(err)
-	return val1, val2
-}
+const (
+	PermNormalFile = 0666
+)
 
 // GetExePath returns the path name for the executable
 // that started the current process.
 func GetExePath() string {
-	return Try1(os.Executable())
+	return lo.Must1(os.Executable())
+}
+
+func WriteFile(name string, data []byte) error {
+	return os.WriteFile(name, data, PermNormalFile)
+}
+
+func WriteTOML(val interface{}, filename string) {
+	data := lo.Must(toml.Marshal(val))
+	WriteFile(filename, data)
+}
+
+func PathIsNotExist(name string) (ok bool) {
+	_, err := os.Lstat(name)
+	if os.IsNotExist(err) {
+		ok = true
+		err = nil
+	}
+	lo.Must0(err)
+	return
+}
+
+func PathIsExist(name string) bool {
+	return !PathIsNotExist(name)
 }
