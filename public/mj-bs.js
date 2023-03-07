@@ -89,12 +89,11 @@ MJBS.createAlert = function () {
    * msgType: primary/secondary/success/danger/warning/info/light/dark
    * @param {string} msgType
    * @param {string} msg
-   * @param {string?} time
+   * @param {boolean} prefix_time
    */
-  alert.insert = (msgType, msg, time) => {
-    if (typeof time != 'string' && !time) time = dayjs().format("HH:mm:ss");
-    const timeMsg = `${time} ${msg}`;
-    if (msgType == "danger") console.log(timeMsg);
+  alert.insert = (msgType, msg, prefix_time=true) => {
+    if (prefix_time) msg = `${dayjs().format("HH:mm:ss")} ${msg}`;
+    if (msgType == "danger") console.log(msg);
 
     const dismissBtn = m("button").addClass("btn-close").attr({
       type: "button",
@@ -105,7 +104,7 @@ MJBS.createAlert = function () {
     const elem = m("div")
       .addClass(`alert alert-${msgType} alert-dismissible fade show my-1`)
       .attr({ role: "alert" })
-      .append(span(timeMsg), dismissBtn);
+      .append(span(msg), dismissBtn);
 
     alert.insertElem(elem);
   };

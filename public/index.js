@@ -13,14 +13,24 @@ const ProjectInfoAlert = MJBS.createAlert();
 const ProjectInfo = cc("div", {
   classes: "card",
   children: [
-    m("div").addClass("card-header").append(
-      span("Project (正在使用的項目)"),
-      span('ℹ️').css({cursor:'pointer'}).on('click', event => {
-        event.preventDefault();
-        ProjectInfoAlert.insert('info', '用文本編輯器打開項目文件');
-      }),
-      m(ProjectInfoAlert)
-    ),
+    m("div")
+      .addClass("card-header")
+      .append(
+        span("Project (正在使用的項目)"),
+        span("ℹ️")
+          .css({ cursor: "pointer" })
+          .on("click", (event) => {
+            event.preventDefault();
+            ProjectInfoAlert.insert(
+              "info",
+              "用文本編輯器打開項目文件夾(資料夾)內的 project.toml, 可更改項目設定. " +
+                "注意, 用 utf-8 編碼保存文件. " +
+                "需要重啟程式才生效.",
+              false
+            );
+          }),
+        m(ProjectInfoAlert)
+      ),
     m("div")
       .addClass("card-body")
       .append(
