@@ -59,5 +59,5 @@
 
 - <https://cryptography.io/en/latest/hazmat/primitives/aead/>
 - 每个仓库可单独选择是否加密
-- 统一一个密码
+- 每个项目统一一个密码, 换言之, 一个项目内的各个加密仓库的密码相同
 - 未输入密码不会显示加密仓库
