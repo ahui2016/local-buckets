@@ -405,7 +405,7 @@ MJBS.hiddenButtonElem = function () {
  * @param {string} type
  * @returns {mjComponent}
  */
-MJBS.createButton = function (name, color, type = 'button') {
+MJBS.createButton = function (name, color = 'primary', type = 'button') {
   return cc("button", {
     text: name,
     classes: `btn btn-${color}`,

@@ -15,6 +15,7 @@ const (
 	ProjectTOML       = "project.toml"
 	DatabaseFileName  = "project.db"
 	BucketsFolderName = "buckets"
+	PublicFolderName  = "public"
 )
 
 var (
@@ -24,6 +25,7 @@ var (
 	ProjectConfigPath = filepath.Join(ProjectPath, ProjectTOML)
 	DatabasePath      = filepath.Join(ProjectPath, DatabaseFileName)
 	BucketsFolder     = filepath.Join(ProjectPath, BucketsFolderName)
+	PublicFolder      = filepath.Join(ProjectPath, PublicFolderName)
 )
 
 func init() {
@@ -33,11 +35,12 @@ func init() {
 }
 
 func initDB() {
-	lo.Must0(db.Open(DatabasePath))
+	lo.Must0(db.Open(DatabasePath, ProjectConfig.CipherKey))
 }
 
 func createFolders() {
-	util.MustMkdir(BucketsFolder)
+	util.MkdirIfNotExists(BucketsFolder)
+	util.MkdirIfNotExists(PublicFolder)
 }
 
 func readProjectConfig() {

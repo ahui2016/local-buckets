@@ -36,3 +36,7 @@ type Bucket struct {
 	// 是否加密 (在創建時決定, 不可更改) (密碼在 ProjectConfig 中統一設定)
 	Encrypted bool `json:"encrypted"`
 }
+
+type ChangePwdForm struct {
+	OldPassword string `json:"old_password"`
+}

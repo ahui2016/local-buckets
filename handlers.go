@@ -9,14 +9,21 @@ import (
 
 const OK = http.StatusOK
 
-// Text 用于向前端返回一个简单的文本消息。
-// 为了保持一致性，总是向前端返回 JSON, 因此即使是简单的文本消息也使用 JSON.
-type Text struct {
-	Message string `json:"message"`
+// TextMsg 用于向前端返回一个简单的文本消息。
+type TextMsg struct {
+	Text string `json:"text"`
 }
 
 func getProjectConfig(c *fiber.Ctx) error {
 	return c.JSON(model.ProjectInfo{Project: ProjectConfig, Path: ProjectPath})
+}
+
+func checkPassword(c *fiber.Ctx) error {
+	f := new(model.ChangePwdForm)
+	if err := c.BodyParser(f); err != nil {
+		return err
+	}
+	return db.SetAESGCM(f.OldPassword)
 }
 
 func getAllBuckets(c *fiber.Ctx) error {

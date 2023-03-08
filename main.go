@@ -9,11 +9,12 @@ import (
 func main() {
 	app := fiber.New()
 
-	app.Static("/", "./public")
+	app.Static("/", PublicFolder)
 
 	api := app.Group("/api")
 	api.Get("/project-config", getProjectConfig) // resp: Project
 	api.Get("/all-buckets", getAllBuckets)       // resp: null | Bucket[]
+	api.Post("/check-password", checkPassword)
 
 	log.Fatal(app.Listen(ProjectConfig.Host))
 }

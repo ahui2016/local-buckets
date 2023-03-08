@@ -6,7 +6,7 @@ const navBar = m("div")
       .addClass("col text-start")
       .append(
         MJBS.createLinkElem("index.html", { text: "Local-Buckets" }),
-        MJBS.span(" .. Create Bucket (新建倉庫)")
+        span(" .. Create Bucket (新建倉庫)")
       ),
     m("div")
       .addClass("col text-end")

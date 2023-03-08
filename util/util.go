@@ -48,6 +48,13 @@ func MustMkdir(name string) {
 	lo.Must0(os.Mkdir(name, NormalFolerPerm))
 }
 
+func MkdirIfNotExists(name string) {
+	if PathIsExist(name) {
+		return
+	}
+	lo.Must0(os.Mkdir(name, NormalFolerPerm))
+}
+
 func WriteFile(name string, data []byte) error {
 	return os.WriteFile(name, data, NormalFilePerm)
 }
