@@ -1,9 +1,10 @@
 package model
 
 type Project struct {
-	Host     string `json:"host"`
-	Title    string `json:"title"`
-	Subtitle string `json:"subtitle"`
+	Host      string `json:"host"`
+	Title     string `json:"title"`
+	Subtitle  string `json:"subtitle"`
+	CipherKey string `json:"cipherkey"` // 被加密的真正密鑰
 }
 
 type ProjectInfo struct {
@@ -11,8 +12,8 @@ type ProjectInfo struct {
 	Path string `json:"path"`
 }
 
-func NewProject(title string) *Project {
-	return &Project{"127.0.0.1:3000", title, ""}
+func NewProject(title string, cipherkey string) *Project {
+	return &Project{"127.0.0.1:3000", title, "", cipherkey}
 }
 
 // Bucket 倉庫

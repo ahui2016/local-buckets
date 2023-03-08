@@ -1,6 +1,7 @@
 package util
 
 import (
+	"encoding/base64"
 	"fmt"
 	"os"
 
@@ -12,6 +13,16 @@ const (
 	NormalFilePerm  = 0666
 	NormalFolerPerm = 0750
 )
+
+type Base64String = string
+
+func Base64Encode(data []byte) Base64String {
+	return base64.StdEncoding.EncodeToString(data)
+}
+
+func Base64Decode(s Base64String) ([]byte, error) {
+	return base64.StdEncoding.DecodeString(s)
+}
 
 // WrapErrors 把多个错误合并为一个错误.
 func WrapErrors(allErrors ...error) (wrapped error) {

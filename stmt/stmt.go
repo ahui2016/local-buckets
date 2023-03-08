@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS bucket
 	capacity       INTEGER   NOT NULL,
 	max_filesize   INTEGER   NOT NULL,
 	encrypted      BOOLEAN   NOT NULL
-)
+);
 `
 
 const GetAllBuckets = `SELECT * FROM bucket;`

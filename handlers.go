@@ -15,19 +15,14 @@ type Text struct {
 	Message string `json:"message"`
 }
 
-func checkErr(c *fiber.Ctx, err error) bool {
-	if err != nil {
-		c.JSON(400, Text{err.Error()})
-		return true
-	}
-	return false
-}
-
 func getProjectConfig(c *fiber.Ctx) error {
 	return c.JSON(model.ProjectInfo{Project: ProjectConfig, Path: ProjectPath})
 }
 
 func getAllBuckets(c *fiber.Ctx) error {
 	buckets, err := db.GetAllBuckets()
-	return c.JSON()
+	if err != nil {
+		return err
+	}
+	return c.JSON(buckets)
 }

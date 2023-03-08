@@ -1,6 +1,7 @@
 package database
 
 import (
+	"crypto/cipher"
 	"database/sql"
 
 	"github.com/ahui2016/local-buckets/model"
@@ -9,23 +10,26 @@ import (
 )
 
 type (
-	Bucket = model.Bucket
+	Base64String = string
+	Bucket       = model.Bucket
 )
 
 type DB struct {
-	Path    string
-	DB      *sql.DB
-	dbKey   SecretKey
-	userKey SecretKey
+	Path   string
+	DB     *sql.DB
+	secret string // hex
+	aesgcm cipher.AEAD
+	// dbKey   SecretKey
+	// userKey SecretKey
 }
 
 func (db *DB) Exec(query string, args ...any) (err error) {
-	_, err = db.DB.Exec(query, args)
+	_, err = db.DB.Exec(query, args...)
 	return
 }
 
 func (db *DB) Query(query string, args ...any) (*sql.Rows, error) {
-	return db.DB.Query(query, args)
+	return db.DB.Query(query, args...)
 }
 
 func (db *DB) Open(dbPath string) (err error) {
