@@ -37,6 +37,7 @@ func changePassword(c *fiber.Ctx) error {
 		return err
 	}
 	ProjectConfig.CipherKey = cipherKey
+	writeProjectConfig()
 	return nil
 }
 
