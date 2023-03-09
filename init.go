@@ -48,12 +48,16 @@ func readProjectConfig() {
 	lo.Must0(toml.Unmarshal(data, &ProjectConfig))
 }
 
+func writeProjectConfig() {
+	util.WriteTOML(ProjectConfig, ProjectConfigPath)
+}
+
 func initProjectConfig() {
 	if util.PathIsNotExist(ProjectConfigPath) {
 		title := filepath.Base(ProjectPath)
 		cipherkey := database.DefaultCipherKey()
 		ProjectConfig = model.NewProject(title, cipherkey)
-		util.WriteTOML(ProjectConfig, ProjectConfigPath)
+		writeProjectConfig()
 		return
 	}
 	readProjectConfig()

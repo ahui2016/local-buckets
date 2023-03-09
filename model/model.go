@@ -37,6 +37,11 @@ type Bucket struct {
 	Encrypted bool `json:"encrypted"`
 }
 
+type CheckPwdForm struct {
+	Password string `json:"password"`
+}
+
 type ChangePwdForm struct {
 	OldPassword string `json:"old_password"`
+	NewPassword string `json:"new_password"`
 }

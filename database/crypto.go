@@ -64,7 +64,7 @@ func newGCM(password string) cipher.AEAD {
 // DefaultCipherKey 用默認密碼去加密真正的密鑰.
 func DefaultCipherKey() HexString {
 	aesgcm := newGCM(DefaultPassword)
-	data := lo.Must(randomKey())
-	encryptedKey := lo.Must(encrypt(data[:], aesgcm))
+	realKey := lo.Must(randomKey())
+	encryptedKey := lo.Must(encrypt(realKey[:], aesgcm))
 	return hex.EncodeToString(encryptedKey)
 }

@@ -19,11 +19,25 @@ func getProjectConfig(c *fiber.Ctx) error {
 }
 
 func checkPassword(c *fiber.Ctx) error {
+	f := new(model.CheckPwdForm)
+	if err := c.BodyParser(f); err != nil {
+		return err
+	}
+	_, err := db.SetAESGCM(f.Password)
+	return err
+}
+
+func changePassword(c *fiber.Ctx) error {
 	f := new(model.ChangePwdForm)
 	if err := c.BodyParser(f); err != nil {
 		return err
 	}
-	return db.SetAESGCM(f.OldPassword)
+	cipherKey, err := db.ChangePassword(f.OldPassword, f.NewPassword)
+	if err != nil {
+		return err
+	}
+	ProjectConfig.CipherKey = cipherKey
+	return nil
 }
 
 func getAllBuckets(c *fiber.Ctx) error {

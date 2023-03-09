@@ -3,9 +3,11 @@ package database
 import (
 	"crypto/cipher"
 	"database/sql"
+	"encoding/hex"
 
 	"github.com/ahui2016/local-buckets/model"
 	"github.com/ahui2016/local-buckets/stmt"
+	"github.com/samber/lo"
 	_ "modernc.org/sqlite"
 )
 
@@ -42,13 +44,25 @@ func (db *DB) Open(dbPath string, cipherKey HexString) (err error) {
 	return nil
 }
 
-func (db *DB) SetAESGCM(password string) error {
+func (db *DB) SetAESGCM(password string) (realKey []byte, err error) {
 	aesgcm := newGCM(password)
-	if _, err := decrypt(db.cipherKey, aesgcm); err != nil {
-		return err
+	realKey, err = decrypt(db.cipherKey, aesgcm)
+	if err == nil {
+		db.aesgcm = aesgcm
 	}
+	return
+}
+
+func (db *DB) ChangePassword(oldPwd, newPwd string) (HexString, error) {
+	realKey, err := db.SetAESGCM(oldPwd)
+	if err != nil {
+		return "", err
+	}
+	aesgcm := newGCM(newPwd)
+	encryptedKey := lo.Must(encrypt(realKey[:], aesgcm))
 	db.aesgcm = aesgcm
-	return nil
+	db.cipherKey = hex.EncodeToString(encryptedKey)
+	return db.cipherKey, nil
 }
 
 func (db *DB) GetAllBuckets() ([]Bucket, error) {

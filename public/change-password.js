@@ -18,18 +18,23 @@ const navBar = m("div")
 
 const PageAlert = MJBS.createAlert();
 
-const OldPassword = MJBS.createInput();
-const CheckPwdBtn = MJBS.createButton("Check", "primary", "submit");
+const OldPasswordInput = MJBS.createInput('text', 'required');
+const NewPasswordInput = MJBS.createInput('text', 'required');
+const ChangePwdBtn = MJBS.createButton("Submit", "primary", "submit");
 
 const ChangePwdForm = cc("form", {
   attr: { autocomplete: "off" },
   children: [
-    MJBS.createFormControl(OldPassword, "Old Password", "舊密碼, 原密碼"),
-    m(CheckPwdBtn).on("click", (event) => {
+    MJBS.createFormControl(OldPasswordInput, "Old Password", "舊密碼 (當前密碼)"),
+    MJBS.createFormControl(NewPasswordInput, "New Password", "新密碼"),
+    m(ChangePwdBtn).on("click", (event) => {
       event.preventDefault();
       axiosPost({
-        url: "/api/check-password",
-        body: { old_password: MJBS.valOf(OldPassword) },
+        url: "/api/change-password",
+        body: {
+          old_password: MJBS.valOf(OldPasswordInput),
+          new_password: MJBS.valOf(NewPasswordInput)
+        },
         alert: PageAlert,
         onSuccess: (resp) => {
           PageAlert.insert("success", "密碼正確");

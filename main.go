@@ -14,7 +14,7 @@ func main() {
 	api := app.Group("/api")
 	api.Get("/project-config", getProjectConfig) // resp: Project
 	api.Get("/all-buckets", getAllBuckets)       // resp: null | Bucket[]
-	api.Post("/check-password", checkPassword)
+	api.Post("/change-password", changePassword)
 
 	log.Fatal(app.Listen(ProjectConfig.Host))
 }
