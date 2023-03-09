@@ -19,7 +19,7 @@ const navBar = m("div")
 const PageAlert = MJBS.createAlert();
 
 const OldPassword = MJBS.createInput();
-const CheckPwdBtn = MJBS.createButton("Check", 'primary', 'submit');
+const CheckPwdBtn = MJBS.createButton("Check", "primary", "submit");
 
 const ChangePwdForm = cc("form", {
   attr: { autocomplete: "off" },
@@ -29,11 +29,11 @@ const ChangePwdForm = cc("form", {
       event.preventDefault();
       axiosPost({
         url: "/api/check-password",
-        body: {old_password: MJBS.valOf(OldPassword)},
+        body: { old_password: MJBS.valOf(OldPassword) },
         alert: PageAlert,
-        onSuccess: resp => {
-          PageAlert.insert('success', '密碼正確');
-        }
+        onSuccess: (resp) => {
+          PageAlert.insert("success", "密碼正確");
+        },
       });
     }),
   ],

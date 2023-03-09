@@ -496,9 +496,9 @@ function copyToClipboard2(text, onSuccess, onFail) {
 // https://axios-http.com/docs/handling_errors
 function axiosErrToStr(err, data2str) {
   if (err.response) {
-    if (err.response.status == 500) {
-      return "500 Internal Server Error";
-    }
+    // if (err.response.status == 500) {
+    //   return "500 Internal Server Error";
+    // }
     const dataText = data2str(err.response.data);
     // err.response.data.detail 裏的 detail 與後端對應.
     return `[${err.response.status}] ${dataText}`;
@@ -512,22 +512,13 @@ function axiosErrToStr(err, data2str) {
 }
 
 function errorData_toString(data) {
+  if (typeof data === "string") {
+    return data;
+  }
   return JSON.stringify(data);
 }
 
-// api = HTTP-Get("/openapi.json")
-// validationError = api.components.schemas.ValidationError
-function validationErrorData_toString(data) {
-  if (typeof data.detail === "string") {
-    return data.detail;
-  }
-  const detail = data.detail[0];
-  const loc = JSON.stringify(detail.loc);
-  return `錯誤位置: ${loc}; 錯誤原因: ${detail.msg}`;
-}
-
-// 一般設為 errorData_toString
-const defaultData2str = validationErrorData_toString;
+const defaultData2str = errorData_toString;
 
 /**
  * axios get with default error handler.

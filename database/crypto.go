@@ -56,7 +56,7 @@ func decrypt(ciphertext HexString, aesgcm cipher.AEAD) (data []byte, err error) 
 }
 
 func newGCM(password string) cipher.AEAD {
-	key := md5.Sum([]byte(DefaultPassword))
+	key := md5.Sum([]byte(password))
 	block := lo.Must(aes.NewCipher(key[:]))
 	return lo.Must(cipher.NewGCM(block))
 }
