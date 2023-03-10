@@ -89,10 +89,10 @@ MJBS.createAlert = function () {
    * msgType: primary/secondary/success/danger/warning/info/light/dark
    * @param {string} msgType
    * @param {string} msg
-   * @param {boolean} prefix_time
+   * @param {string?} prefix_time 'no-prefix' | null
    */
-  alert.insert = (msgType, msg, prefix_time=true) => {
-    if (prefix_time) msg = `${dayjs().format("HH:mm:ss")} ${msg}`;
+  alert.insert = (msgType, msg, prefix_time = null) => {
+    if (!prefix_time) msg = `${dayjs().format("HH:mm:ss")} ${msg}`;
     if (msgType == "danger") console.log(msg);
 
     const dismissBtn = m("button").addClass("btn-close").attr({
@@ -396,7 +396,7 @@ MJBS.hiddenButtonElem = function () {
       e.preventDefault();
       return false;
     });
-}
+};
 
 /**
  * color: primary, secondary, success, danger, warning, info, light, dark, link
@@ -405,13 +405,13 @@ MJBS.hiddenButtonElem = function () {
  * @param {string} type
  * @returns {mjComponent}
  */
-MJBS.createButton = function (name, color = 'primary', type = 'button') {
+MJBS.createButton = function (name, color = "primary", type = "button") {
   return cc("button", {
     text: name,
     classes: `btn btn-${color}`,
     attr: { type: type },
   });
-}
+};
 
 /**
  * 使用方法:
@@ -427,9 +427,11 @@ MJBS.createButton = function (name, color = 'primary', type = 'button') {
  */
 MJBS.createSimplePageNav = (size, align) => {
   const PreviousPage = cc("a", { classes: "page-link", attr: { href: "#" } });
-  const ThisPage = cc("a", { classes: "page-link disabled text-bg-light text-muted" });
+  const ThisPage = cc("a", {
+    classes: "page-link disabled text-bg-light text-muted",
+  });
   const NextPage = cc("a", { classes: "page-link", attr: { href: "#" } });
-  
+
   let classes = "pagination";
   if (size) classes = `${classes} pagination-${size}`;
   if (align) classes = `${classes} justify-content-${align}`;
@@ -446,15 +448,15 @@ MJBS.createSimplePageNav = (size, align) => {
         ),
     ],
   });
-  
+
   PageNav.setThisPage = (text) => {
     ThisPage.elem().text(text);
   };
   PageNav.setPreviousPage = (href, text) => {
-    PreviousPage.elem().attr({href: href}).text(text);
+    PreviousPage.elem().attr({ href: href }).text(text);
   };
   PageNav.setNextPage = (href, text) => {
-    NextPage.elem().attr({href: href}).text(text);
+    NextPage.elem().attr({ href: href }).text(text);
   };
   return PageNav;
 };
@@ -468,7 +470,7 @@ MJBS.createSimplePageNav = (size, align) => {
  */
 MJBS.elemID = function (id, prefix = "e") {
   return `${prefix}${id}`;
-}
+};
 
 // 以下是一些 helper functions
 

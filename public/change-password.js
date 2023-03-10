@@ -18,8 +18,9 @@ const navBar = m("div")
 
 const PageAlert = MJBS.createAlert();
 
-const OldPasswordInput = MJBS.createInput('text', 'required');
-const NewPasswordInput = MJBS.createInput('text', 'required');
+const OldPasswordInput = MJBS.createInput('password', 'required');
+const NewPasswordInput = MJBS.createInput('password', 'required');
+const ConfirmPwdInput = MJBS.createInput('password', 'required');
 const ChangePwdBtn = MJBS.createButton("Submit", "primary", "submit");
 
 const ChangePwdForm = cc("form", {
@@ -27,8 +28,20 @@ const ChangePwdForm = cc("form", {
   children: [
     MJBS.createFormControl(OldPasswordInput, "Old Password", "舊密碼 (當前密碼)"),
     MJBS.createFormControl(NewPasswordInput, "New Password", "新密碼"),
+    MJBS.createFormControl(ConfirmPwdInput, "Confirm New Password", "再輸入一次新密碼"),
     m(ChangePwdBtn).on("click", (event) => {
       event.preventDefault();
+      const oldPwd = MJBS.valOf(OldPasswordInput);
+      const newPwd = MJBS.valOf(NewPasswordInput);
+      const newPwd2 = MJBS.valOf(ConfirmPwdInput);
+      if (oldPwd == '' || newPwd == '') {
+        PageAlert.insert('warning', '請填寫密碼');
+        return;
+      }
+      if (newPwd != newPwd2) {
+        PageAlert.insert('warning', '兩次輸入新密碼必須相同');
+        return;
+      }
       axiosPost({
         url: "/api/change-password",
         body: {
@@ -36,8 +49,9 @@ const ChangePwdForm = cc("form", {
           new_password: MJBS.valOf(NewPasswordInput)
         },
         alert: PageAlert,
-        onSuccess: (resp) => {
-          PageAlert.insert("success", "密碼正確");
+        onSuccess: () => {
+          PageAlert.clear();
+          PageAlert.insert("success", "已成功更換密碼");
         },
       });
     }),
@@ -54,4 +68,7 @@ $("#root")
 
 init();
 
-function init() {}
+function init() {
+  PageAlert.insert('primary', '提醒: 請記住新密碼, 一旦忘記將無法解密.', "no-prefix");
+  MJBS.focus(OldPasswordInput);
+}
