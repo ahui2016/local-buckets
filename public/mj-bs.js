@@ -329,9 +329,13 @@ MJBS.createLinkElem = function (href, options) {
  * @returns {mjComponent}
  */
 MJBS.createInput = function (type = "text", required = null, id = null) {
+  let classes = "form-control";
+  if (type == 'checkbox') {
+    classes = 'form-check-input';
+  }
   return cc("input", {
     id: id,
-    classes: "form-control",
+    classes: classes,
     attr: { type: type },
     prop: { required: required == "required" ? true : false },
   });
@@ -371,6 +375,41 @@ MJBS.createFormControl = function (
         .attr({ for: comp.raw_id })
         .text(labelText),
       m(comp)
+    );
+
+  if (!description) return formControl;
+
+  let descElem = description;
+
+  if (typeof description == "string") {
+    descElem = m("div").addClass("form-text").text(description);
+  }
+  formControl.append(descElem);
+  return formControl;
+};
+
+/**
+ * 主要用来包裹 checkbox
+ * @param {mjComponent} comp 用 createInput 函数生成的 checkbox。
+ * @param {string} labelText
+ * @param {string | mjElement | null} description
+ * @param {string} classes default = "mb-3 form-check"
+ * @returns {mjElement}
+ */
+MJBS.createFormCheck = function (
+  comp,
+  labelText,
+  description,
+  classes = "mb-3 form-check"
+) {
+  const formControl = m("div")
+    .addClass(classes)
+    .append(
+      m(comp),
+      m("label")
+        .addClass("form-check-label")
+        .attr({ for: comp.raw_id })
+        .text(labelText),
     );
 
   if (!description) return formControl;

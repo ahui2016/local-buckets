@@ -1,4 +1,3 @@
-
 const navBar = m("div")
   .addClass("row")
   .append(
@@ -6,82 +5,48 @@ const navBar = m("div")
       .addClass("col text-start")
       .append(
         MJBS.createLinkElem("index.html", { text: "Local-Buckets" }),
-        span(" .. Create Bucket (新建倉庫)")
+        span(" .. Create a Bucket (新建倉庫)")
       ),
     m("div")
       .addClass("col text-end")
       .append(
-        MJBS.createLinkElem("#", { text: "Link1" }).addClass(
-          "Link1"
-        ),
+        MJBS.createLinkElem("#", { text: "Link1" }).addClass("Link1"),
         " | ",
-        MJBS.createLinkElem("#", { text: "Link2" }).addClass(
-          "Link2"
-        ),
+        MJBS.createLinkElem("#", { text: "Link2" }).addClass("Link2")
       )
   );
 
 const PageAlert = MJBS.createAlert();
 
-const ProjectInfo = cc("div", {
-  classes: "card",
+const BucketNameInput = MJBS.createInput("text", "required");
+const BucketEncryptBox = MJBS.createInput("checkbox");
+const CreateBucketBtn = MJBS.createButton("Create", "primary");
+
+const ChangePwdForm = cc("form", {
+  attr: { autocomplete: "off" },
   children: [
-    m("div")
-      .addClass("card-header")
-      .append(
-        span("Project (正在使用的項目)"),
-        span("ℹ️")
-          .css({ cursor: "pointer" })
-          .on("click", (event) => {
-            event.preventDefault();
-            ProjectInfoAlert.insert(
-              "info",
-              "用文本編輯器打開項目文件夾(資料夾)內的 project.toml, 可更改項目設定. " +
-                "注意, 用 utf-8 編碼保存文件. " +
-                "需要重啟程式才生效.",
-              "no-prefix"
-            );
-          }),
-        m(ProjectInfoAlert)
-      ),
-    m("div")
-      .addClass("card-body")
-      .append(
-        m("div").addClass("Project-Title card-title fw-bold"),
-        m("div").addClass("Project-Subtitle text-muted"),
-        m("div").addClass("Project-Path text-muted")
-      ),
+    MJBS.createFormControl(
+      BucketNameInput,
+      "Bucket Name",
+      "倉庫名, 同時也是倉庫ID, 只能使用 0-9, a-z, A-Z, _(下劃線), -(連字號), .(點)"
+    ),
+    MJBS.createFormCheck(BucketEncryptBox, "Secret Bucket", "是否設為加密倉庫"),
+    m(CreateBucketBtn).on("click", (event) => {
+      event.preventDefault();
+    }),
   ],
 });
-
-ProjectInfo.fill = (project) => {
-  const elem = ProjectInfo.elem();
-  elem.find(".Project-Title").text(project.title);
-  elem.find(".Project-Subtitle").text(project.subtitle);
-  elem.find(".Project-Path").text(project.path);
-};
 
 $("#root")
   .css({ maxWidth: "992px" })
   .append(
-    pageTitleArea.addClass("my-5"),
-    m(AppAlert).addClass("my-3"),
-    m(ProjectInfo).addClass("my-3")
+    navBar.addClass("my-3"),
+    m(PageAlert).addClass("my-5"),
+    m(ChangePwdForm).addClass("my-5")
   );
 
 init();
 
 function init() {
-  initProjectInfo();
-}
-
-function initProjectInfo() {
-  axiosGet({
-    url: "/api/project-config",
-    alert: AppAlert,
-    onSuccess: (resp) => {
-      const project = resp.data;
-      ProjectInfo.fill(project);
-    },
-  });
+  MJBS.focus(BucketNameInput);
 }

@@ -61,9 +61,9 @@ const ChangePwdForm = cc("form", {
 $("#root")
   .css({ maxWidth: "992px" })
   .append(
-    navBar.addClass("my-5"),
-    m(PageAlert).addClass("my-3"),
-    m(ChangePwdForm).addClass("my-3")
+    navBar.addClass("my-3"),
+    m(PageAlert).addClass("my-5"),
+    m(ChangePwdForm).addClass("my-5")
   );
 
 init();
