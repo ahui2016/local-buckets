@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 
+	"github.com/ahui2016/local-buckets/stmt"
 	"github.com/ahui2016/local-buckets/util"
 )
 
@@ -14,6 +15,19 @@ type TX interface {
 
 type Row interface {
 	Scan(...any) error
+}
+
+func insertBucket(tx TX, b *Bucket) error {
+	_, err := tx.Exec(
+		stmt.InsertBucket,
+		b.ID,
+		b.Title,
+		b.Subtitle,
+		b.Capacity,
+		b.MaxFilesize,
+		b.Encrypted,
+	)
+	return err
 }
 
 func scanBucket(row Row) (b Bucket, err error) {

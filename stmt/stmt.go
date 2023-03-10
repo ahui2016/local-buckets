@@ -12,4 +12,8 @@ CREATE TABLE IF NOT EXISTS bucket
 );
 `
 
+const InsertBucket = `INSERT INTO bucket (
+	id, title, subtitle, capacity, max_filesize, encrypted
+) VALUES (?, ?, ?, ?, ?, ?);`
+
 const GetAllBuckets = `SELECT * FROM bucket;`

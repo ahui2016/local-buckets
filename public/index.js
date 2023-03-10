@@ -49,7 +49,7 @@ ProjectInfo.fill = (project) => {
 };
 
 $("#root")
-  .css({ maxWidth: "992px" })
+  .css(RootCss)
   .append(
     pageTitleArea.addClass("my-5"),
     m(AppAlert).addClass("my-3"),

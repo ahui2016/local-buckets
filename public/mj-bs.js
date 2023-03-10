@@ -616,6 +616,7 @@ function getUrlParam(name) {
 // 以下與 mj-bs.js 無關.
 
 const DateFormatYMD = "YYYY-MM-DD";
+const RootCss = { maxWidth: "992px" };
 
 // 糊塗記帳預設金額
 const predefinedAmounts = [
