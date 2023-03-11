@@ -22,7 +22,7 @@ const BucketNameInput = MJBS.createInput("text", "required");
 const BucketEncryptBox = MJBS.createInput("checkbox");
 const CreateBucketBtn = MJBS.createButton("Create", "primary");
 
-const ChangePwdForm = cc("form", {
+const CreateBucketForm = cc("form", {
   attr: { autocomplete: "off" },
   children: [
     MJBS.createFormControl(
@@ -31,6 +31,7 @@ const ChangePwdForm = cc("form", {
       "倉庫資料夾名, 同時也是倉庫ID, 只能使用 0-9, a-z, A-Z, _(下劃線), -(連字號), .(點)"
     ),
     MJBS.createFormCheck(BucketEncryptBox, "Secret Bucket", "是否設為加密倉庫"),
+    MJBS.hiddenButtonElem(),
     m(CreateBucketBtn).on("click", (event) => {
       event.preventDefault();
       const bucketName = BucketNameInput.val();
@@ -48,8 +49,8 @@ const ChangePwdForm = cc("form", {
         alert: PageAlert,
         onSuccess: (resp) => {
           const bucket = resp.data;
-          PageAlert.clear();
-          PageAlert.insert("success", "已成功更換密碼");
+          // window.location.href = `edit-bucket.html?id=${bucket.id}&new=true`;
+          PageAlert.insert('success', JSON.stringify(bucket));
         },
       });
 
@@ -62,7 +63,7 @@ $("#root")
   .append(
     navBar.addClass("my-3"),
     m(PageAlert).addClass("my-5"),
-    m(ChangePwdForm).addClass("my-5")
+    m(CreateBucketForm).addClass("my-5")
   );
 
 init();

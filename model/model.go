@@ -48,7 +48,7 @@ type Bucket struct {
 // CreateBucketForm 用於新建倉庫, 由前端傳給后端.
 type CreateBucketForm struct {
 	ID        string `json:"id" validate:"required"`
-	Encrypted bool   `json:"encrypted" validate:"required"`
+	Encrypted bool   `json:"encrypted"`
 }
 
 func NewBucket(form *CreateBucketForm) (*Bucket, error) {
@@ -66,7 +66,7 @@ func NewBucket(form *CreateBucketForm) (*Bucket, error) {
 
 func checkFilename(name string) error {
 	if FilenameForbidPattern.MatchString(name) {
-		return errors.New("只能使用 0-9, a-z, A-Z, _(下劃線), -(連字號), .(點)" +
+		return errors.New("只能使用 0-9, a-z, A-Z, _(下劃線), -(連字號), .(點)," +
 			"\n不可使用空格, 请用下劃線或連字號代替空格。")
 	}
 	return nil

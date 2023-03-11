@@ -17,11 +17,11 @@ type TextMsg struct {
 	Text string `json:"text"`
 }
 
-func validateParse(form any, c *fiber.Ctx) error {
-	if err := validate.Struct(form); err != nil {
+func parseValidate(form any, c *fiber.Ctx) error {
+	if err := c.BodyParser(form); err != nil {
 		return err
 	}
-	return c.BodyParser(form)
+	return validate.Struct(form)
 }
 
 func getProjectConfig(c *fiber.Ctx) error {
@@ -30,7 +30,7 @@ func getProjectConfig(c *fiber.Ctx) error {
 
 func checkPassword(c *fiber.Ctx) error {
 	f := new(model.CheckPwdForm)
-	if err := validateParse(f, c); err != nil {
+	if err := parseValidate(f, c); err != nil {
 		return err
 	}
 	_, err := db.SetAESGCM(f.Password)
@@ -39,7 +39,7 @@ func checkPassword(c *fiber.Ctx) error {
 
 func changePassword(c *fiber.Ctx) error {
 	f := new(model.ChangePwdForm)
-	if err := validateParse(f, c); err != nil {
+	if err := parseValidate(f, c); err != nil {
 		return err
 	}
 	cipherKey, err := db.ChangePassword(f.OldPassword, f.NewPassword)
@@ -61,12 +61,13 @@ func getAllBuckets(c *fiber.Ctx) error {
 
 func createBucket(c *fiber.Ctx) error {
 	f := new(model.CreateBucketForm)
-	if err := validateParse(f, c); err != nil {
+	if err := parseValidate(f, c); err != nil {
 		return err
 	}
 	bucket, err := db.InsertBucket(f)
 	if err != nil {
 		return err
 	}
+	createBucketFolder(f.ID)
 	return c.JSON(bucket)
 }

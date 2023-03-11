@@ -43,6 +43,11 @@ func createFolders() {
 	util.MkdirIfNotExists(PublicFolder)
 }
 
+func createBucketFolder(bucketID string) {
+	path := filepath.Join(BucketsFolder, bucketID)
+	util.MkdirIfNotExists(path)
+}
+
 func readProjectConfig() {
 	data := lo.Must(os.ReadFile(ProjectConfigPath))
 	lo.Must0(toml.Unmarshal(data, &ProjectConfig))
