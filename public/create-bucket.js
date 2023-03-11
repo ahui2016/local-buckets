@@ -18,7 +18,7 @@ const navBar = m("div")
 
 const PageAlert = MJBS.createAlert();
 
-const BucketNameInput = MJBS.createInput("text", "required");
+const BucketIDInput = MJBS.createInput("text", "required");
 const BucketEncryptBox = MJBS.createInput("checkbox");
 const CreateBucketBtn = MJBS.createButton("Create", "primary");
 
@@ -26,24 +26,24 @@ const CreateBucketForm = cc("form", {
   attr: { autocomplete: "off" },
   children: [
     MJBS.createFormControl(
-      BucketNameInput,
-      "Bucket Name",
-      "倉庫資料夾名, 同時也是倉庫ID, 只能使用 0-9, a-z, A-Z, _(下劃線), -(連字號), .(點)"
+      BucketIDInput,
+      "Bucket ID",
+      "倉庫ID, 只能使用 0-9, a-z, A-Z, _(下劃線), -(連字號), .(點)"
     ),
     MJBS.createFormCheck(BucketEncryptBox, "Secret Bucket", "是否設為加密倉庫"),
     MJBS.hiddenButtonElem(),
     m(CreateBucketBtn).on("click", (event) => {
       event.preventDefault();
-      const bucketName = BucketNameInput.val();
+      const bucketID = BucketIDInput.val();
       const encrypted = BucketEncryptBox.isChecked();
-      if (!bucketName) {
-        PageAlert.insert('warning', '請填寫 Bucket Name (倉庫資料夾名)');
+      if (!bucketID) {
+        PageAlert.insert('warning', '請填寫 Bucket ID');
         return;
       }
       axiosPost({
         url: "/api/create-bucket",
         body: {
-          id: bucketName,
+          id: bucketID,
           encrypted: encrypted
         },
         alert: PageAlert,
@@ -69,5 +69,5 @@ $("#root")
 init();
 
 function init() {
-  MJBS.focus(BucketNameInput);
+  MJBS.focus(BucketIDInput);
 }

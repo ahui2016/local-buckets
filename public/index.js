@@ -48,12 +48,20 @@ ProjectInfo.fill = (project) => {
   elem.find(".Project-Path").text(project.path);
 };
 
+const LinkList = cc("div", {
+  children: [
+    createIndexItem("Create Bucket", "create-bucket.html", "新建倉庫"),
+    createIndexItem("Change Password", "change-password.html", "更改密碼"),
+  ],
+});
+
 $("#root")
   .css(RootCss)
   .append(
     pageTitleArea.addClass("my-5"),
     m(AppAlert).addClass("my-3"),
-    m(ProjectInfo).addClass("my-3")
+    m(ProjectInfo).addClass("my-3"),
+    m(LinkList).addClass("my-5")
   );
 
 init();
@@ -71,4 +79,20 @@ function initProjectInfo() {
       ProjectInfo.fill(project);
     },
   });
+}
+
+function createIndexItem(text, link, description) {
+  return m("div")
+    .addClass("row mb-2 g-1")
+    .append(
+      m("div")
+        .addClass("col text-end")
+        .append(
+          m("a")
+            .text(text)
+            .attr({ href: link })
+            .addClass("text-decoration-none")
+        ),
+      m("div").addClass("col").text(description)
+    );
 }
