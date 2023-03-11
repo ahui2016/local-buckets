@@ -4,14 +4,24 @@ import (
 	"net/http"
 
 	"github.com/ahui2016/local-buckets/model"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 )
 
 const OK = http.StatusOK
 
+var validate = validator.New()
+
 // TextMsg 用于向前端返回一个简单的文本消息。
 type TextMsg struct {
 	Text string `json:"text"`
+}
+
+func validateParse(form any, c *fiber.Ctx) error {
+	if err := validate.Struct(form); err != nil {
+		return err
+	}
+	return c.BodyParser(form)
 }
 
 func getProjectConfig(c *fiber.Ctx) error {
@@ -20,7 +30,7 @@ func getProjectConfig(c *fiber.Ctx) error {
 
 func checkPassword(c *fiber.Ctx) error {
 	f := new(model.CheckPwdForm)
-	if err := c.BodyParser(f); err != nil {
+	if err := validateParse(f, c); err != nil {
 		return err
 	}
 	_, err := db.SetAESGCM(f.Password)
@@ -29,7 +39,7 @@ func checkPassword(c *fiber.Ctx) error {
 
 func changePassword(c *fiber.Ctx) error {
 	f := new(model.ChangePwdForm)
-	if err := c.BodyParser(f); err != nil {
+	if err := validateParse(f, c); err != nil {
 		return err
 	}
 	cipherKey, err := db.ChangePassword(f.OldPassword, f.NewPassword)
@@ -47,4 +57,16 @@ func getAllBuckets(c *fiber.Ctx) error {
 		return err
 	}
 	return c.JSON(buckets)
+}
+
+func createBucket(c *fiber.Ctx) error {
+	f := new(model.CreateBucketForm)
+	if err := validateParse(f, c); err != nil {
+		return err
+	}
+	bucket, err := db.InsertBucket(f)
+	if err != nil {
+		return err
+	}
+	return c.JSON(bucket)
 }

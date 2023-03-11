@@ -54,6 +54,7 @@ MJBS.appendToList = function (list, items) {
 };
 
 /**
+ * 獲取文本框的值.
  * @param {mjElement | mjComponent} obj
  * @param {"trim"?} trim
  * @returns {string}
@@ -61,6 +62,16 @@ MJBS.appendToList = function (list, items) {
 MJBS.valOf = function (obj, trim) {
   let s = "elem" in obj ? obj.elem().val() : obj.val();
   return trim == "trim" ? s.trim() : s;
+};
+
+/**
+ * 獲取 checkbox 的值.
+ * @param {mjElement | mjComponent} obj
+ * @returns {string}
+ */
+MJBS.isChecked = function (obj) {
+  if ("elem" in obj) obj = obj.elem();
+  return obj.prop("checked");
 };
 
 /**
@@ -330,15 +341,32 @@ MJBS.createLinkElem = function (href, options) {
  */
 MJBS.createInput = function (type = "text", required = null, id = null) {
   let classes = "form-control";
-  if (type == 'checkbox') {
-    classes = 'form-check-input';
+  if (type == "checkbox") {
+    classes = "form-check-input";
   }
-  return cc("input", {
+  const self = cc("input", {
     id: id,
     classes: classes,
     attr: { type: type },
     prop: { required: required == "required" ? true : false },
   });
+
+  if (type == 'text') {
+    self.val = () => {
+      return self.elem().val().trim();      
+    };
+  }
+  if (type == 'password') {
+    self.val = () => {
+      return self.elem().val();      
+    };
+  }
+  if (type == "checkbox") {
+    self.isChecked = () => {
+      return self.elem().prop("checked");
+    };
+  }
+  return self;
 };
 
 /**
@@ -409,7 +437,7 @@ MJBS.createFormCheck = function (
       m("label")
         .addClass("form-check-label")
         .attr({ for: comp.raw_id })
-        .text(labelText),
+        .text(labelText)
     );
 
   if (!description) return formControl;

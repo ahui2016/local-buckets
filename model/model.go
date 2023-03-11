@@ -47,11 +47,11 @@ type Bucket struct {
 
 // CreateBucketForm 用於新建倉庫, 由前端傳給后端.
 type CreateBucketForm struct {
-	ID        string `json:"id"`
-	Encrypted bool   `json:"encrypted"`
+	ID        string `json:"id" validate:"required"`
+	Encrypted bool   `json:"encrypted" validate:"required"`
 }
 
-func NewBucket(form CreateBucketForm) (*Bucket, error) {
+func NewBucket(form *CreateBucketForm) (*Bucket, error) {
 	if err := checkFilename(form.ID); err != nil {
 		return nil, err
 	}
@@ -73,10 +73,10 @@ func checkFilename(name string) error {
 }
 
 type CheckPwdForm struct {
-	Password string `json:"password"`
+	Password string `json:"password" validate:"required"`
 }
 
 type ChangePwdForm struct {
-	OldPassword string `json:"old_password"`
-	NewPassword string `json:"new_password"`
+	OldPassword string `json:"old_password" validate:"required"`
+	NewPassword string `json:"new_password" validate:"required"`
 }

@@ -28,11 +28,31 @@ const ChangePwdForm = cc("form", {
     MJBS.createFormControl(
       BucketNameInput,
       "Bucket Name",
-      "倉庫名, 同時也是倉庫ID, 只能使用 0-9, a-z, A-Z, _(下劃線), -(連字號), .(點)"
+      "倉庫資料夾名, 同時也是倉庫ID, 只能使用 0-9, a-z, A-Z, _(下劃線), -(連字號), .(點)"
     ),
     MJBS.createFormCheck(BucketEncryptBox, "Secret Bucket", "是否設為加密倉庫"),
     m(CreateBucketBtn).on("click", (event) => {
       event.preventDefault();
+      const bucketName = BucketNameInput.val();
+      const encrypted = BucketEncryptBox.isChecked();
+      if (!bucketName) {
+        PageAlert.insert('warning', '請填寫 Bucket Name (倉庫資料夾名)');
+        return;
+      }
+      axiosPost({
+        url: "/api/create-bucket",
+        body: {
+          id: bucketName,
+          encrypted: encrypted
+        },
+        alert: PageAlert,
+        onSuccess: (resp) => {
+          const bucket = resp.data;
+          PageAlert.clear();
+          PageAlert.insert("success", "已成功更換密碼");
+        },
+      });
+
     }),
   ],
 });

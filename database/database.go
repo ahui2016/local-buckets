@@ -73,7 +73,7 @@ func (db *DB) GetAllBuckets() ([]Bucket, error) {
 	return scanBuckets(rows)
 }
 
-func (db *DB) InsertBucket(form model.CreateBucketForm) (bucket *Bucket, err error) {
+func (db *DB) InsertBucket(form *model.CreateBucketForm) (bucket *Bucket, err error) {
 	bucket, err = model.NewBucket(form)
 	if err != nil {
 		return

@@ -31,11 +31,11 @@ const ChangePwdForm = cc("form", {
     MJBS.createFormControl(ConfirmPwdInput, "Confirm New Password", "再輸入一次新密碼"),
     m(ChangePwdBtn).on("click", (event) => {
       event.preventDefault();
-      const oldPwd = MJBS.valOf(OldPasswordInput);
-      const newPwd = MJBS.valOf(NewPasswordInput);
-      const newPwd2 = MJBS.valOf(ConfirmPwdInput);
+      const oldPwd = OldPasswordInput.val();
+      const newPwd = NewPasswordInput.val();
+      const newPwd2 = ConfirmPwdInput.val();
       if (oldPwd == '' || newPwd == '') {
-        PageAlert.insert('warning', '請填寫密碼');
+        PageAlert.insert('warning', '請填寫舊密碼和新密碼');
         return;
       }
       if (newPwd != newPwd2) {
@@ -45,8 +45,8 @@ const ChangePwdForm = cc("form", {
       axiosPost({
         url: "/api/change-password",
         body: {
-          old_password: MJBS.valOf(OldPasswordInput),
-          new_password: MJBS.valOf(NewPasswordInput)
+          old_password: oldPwd,
+          new_password: newPwd
         },
         alert: PageAlert,
         onSuccess: () => {
