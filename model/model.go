@@ -71,19 +71,22 @@ func NewBucket(form *CreateBucketForm) (*Bucket, error) {
 // File 文件.
 // 当 adler32 没有冲突时, sha256 取 nil 值,
 // 当 adler32 有冲突时, 必须同时记录 adler32 和 sha256.
+// sha256 只允許空字符串重複, 有內容的值不允許重複.
+// Notes 與 Keywords 本質上是一樣的, 只是一行字符串, 用來輔助搜尋.
 type File struct {
-	ID      int64    // 自動數字ID
-	Adler32 string   // NOT NULL UNIQUE
-	Sha256  string   // NULL UNIQUE
-	Name    string   // 文件名
-	Size    int64    // length in bytes for regular files
-	Type    string   // 文件類型, 例: text/js, office/docx
-	Like    int64    // 點贊
-	CTime   string   // RFC3339 文件入庫時間
-	UTime   string   // RFC3339 文件更新時間
-	Checked string   // RFC3339 上次校驗文件完整性的時間
-	Damaged bool     // 上次校驗結果 (文件是否損壞)
-	Tags    []string // 该项目不在数据库中，放在这里只是为了方便
+	ID       int64  `json:"id"`      // 自動數字ID
+	Adler32  string `json:"adler32"` // NOT NULL, 允許重複
+	Sha256   string `json:"sha256"`  // NOT NULL, 允許重複
+	Name     string `json:"name"`    // 文件名
+	Notes    string `json:"notes"`   // 備註
+	Keywords string `json:"keywors"` // 關鍵詞, 便於搜尋
+	Size     int64  `json:"size"`    // length in bytes for regular files
+	Type     string `json:"type"`    // 文件類型, 例: text/js, office/docx
+	Like     int64  `json:"like"`    // 點贊
+	CTime    string `json:"ctime"`   // RFC3339 文件入庫時間
+	UTime    string `json:"utime"`   // RFC3339 文件更新時間
+	Checked  string `json:"checked"` // RFC3339 上次校驗文件完整性的時間
+	Damaged  bool   `json:"damaged"` // 上次校驗結果 (文件是否損壞)
 }
 
 func checkFilename(name string) error {
