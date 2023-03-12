@@ -32,6 +32,7 @@ func (db *DB) Query(query string, args ...any) (*sql.Rows, error) {
 	return db.DB.Query(query, args...)
 }
 
+// TODO: forign key
 func (db *DB) Open(dbPath string, cipherKey HexString) (err error) {
 	if db.DB, err = sql.Open("sqlite", dbPath); err != nil {
 		return
