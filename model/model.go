@@ -5,6 +5,10 @@ import (
 	"regexp"
 )
 
+const (
+	RFC3339 = "2006-01-02 15:04:05Z07:00"
+)
+
 // 文件名只能使用 0-9, a-z, A-Z, _(下劃線), -(連字號), .(點)
 var FilenameForbidPattern = regexp.MustCompile(`[^0-9a-zA-Z._\-]`)
 
@@ -62,6 +66,24 @@ func NewBucket(form *CreateBucketForm) (*Bucket, error) {
 	b.MaxFilesize = 1024 // MB
 	b.Encrypted = form.Encrypted
 	return b, nil
+}
+
+// File 文件.
+// 当 adler32 没有冲突时, sha256 取 nil 值,
+// 当 adler32 有冲突时, 必须同时记录 adler32 和 sha256.
+type File struct {
+	ID      int64    // 自動數字ID
+	Adler32 string   // NOT NULL UNIQUE
+	Sha256  string   // NULL UNIQUE
+	Name    string   // 文件名
+	Size    int64    // length in bytes for regular files
+	Type    string   // 文件類型, 例: text/js, office/docx
+	Like    int64    // 點贊
+	CTime   string   // RFC3339 文件入庫時間
+	UTime   string   // RFC3339 文件更新時間
+	Checked string   // RFC3339 上次校驗文件完整性的時間
+	Damaged bool     // 上次校驗結果 (文件是否損壞)
+	Tags    []string // 该项目不在数据库中，放在这里只是为了方便
 }
 
 func checkFilename(name string) error {
