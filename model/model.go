@@ -91,6 +91,12 @@ type File struct {
 	Damaged  bool   `json:"damaged"`  // 上次校驗結果 (文件是否損壞)
 }
 
+func NewFile(root, bucketID, name string) *File {
+	f := new(File)
+	return f
+	// TODO
+}
+
 func checkFilename(name string) error {
 	if FilenameForbidPattern.MatchString(name) {
 		return errors.New("只能使用 0-9, a-z, A-Z, _(下劃線), -(連字號), .(點)," +

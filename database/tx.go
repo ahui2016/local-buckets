@@ -53,3 +53,56 @@ func scanBuckets(rows *sql.Rows) (all []Bucket, err error) {
 	err = util.WrapErrors(rows.Err(), rows.Close())
 	return
 }
+
+func insertFile(tx TX, f *File) error {
+	_, err := tx.Exec(
+		stmt.InsertFile,
+		// f.ID, 自增ID
+		f.Adler32,
+		f.Sha256,
+		f.BucketID,
+		f.Name,
+		f.Notes,
+		f.Keywords,
+		f.Size,
+		f.Type,
+		f.Like,
+		f.CTime,
+		f.UTime,
+		f.Checked,
+		f.Damaged,
+	)
+	return err
+}
+
+func scanFile(row Row) (f File, err error) {
+	err = row.Scan(
+		&f.ID,
+		&f.Adler32,
+		&f.Sha256,
+		&f.BucketID,
+		&f.Name,
+		&f.Notes,
+		&f.Keywords,
+		&f.Size,
+		&f.Type,
+		&f.Like,
+		&f.CTime,
+		&f.UTime,
+		&f.Checked,
+		&f.Damaged,
+	)
+	return
+}
+
+func scanFiles(rows *sql.Rows) (all []File, err error) {
+	for rows.Next() {
+		f, err := scanFile(rows)
+		if err != nil {
+			return nil, err
+		}
+		all = append(all, f)
+	}
+	err = util.WrapErrors(rows.Err(), rows.Close())
+	return
+}

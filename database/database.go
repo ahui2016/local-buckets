@@ -14,6 +14,7 @@ import (
 type (
 	Base64String = string
 	Bucket       = model.Bucket
+	File         = model.File
 )
 
 type DB struct {
@@ -32,9 +33,9 @@ func (db *DB) Query(query string, args ...any) (*sql.Rows, error) {
 	return db.DB.Query(query, args...)
 }
 
-// TODO: forign key
 func (db *DB) Open(dbPath string, cipherKey HexString) (err error) {
-	if db.DB, err = sql.Open("sqlite", dbPath); err != nil {
+	const turnOnForeignKeys = "?_pragma=foreign_keys(1)"
+	if db.DB, err = sql.Open("sqlite", dbPath+turnOnForeignKeys); err != nil {
 		return
 	}
 	db.Path = dbPath

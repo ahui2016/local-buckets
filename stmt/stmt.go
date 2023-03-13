@@ -43,3 +43,8 @@ const InsertBucket = `INSERT INTO bucket (
 ) VALUES (?, ?, ?, ?, ?, ?);`
 
 const GetAllBuckets = `SELECT * FROM bucket;`
+
+const InsertFile = `INSERT INTO file (
+	adler32, sha256, bucketid, name,  notes,   keywords, size,
+	type,    like,   ctime,    utime, checked, damaged
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
