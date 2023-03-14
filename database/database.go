@@ -85,3 +85,19 @@ func (db *DB) InsertBucket(form *model.CreateBucketForm) (bucket *Bucket, err er
 	}
 	return
 }
+
+func (db *DB) InsertFile(file *File) (File, error) {
+	if _, err := db.GetFileByHash(file.Adler32, file.Sha256); err != sql.ErrNoRows {
+		// TODO: 如何防止重复文件？
+		// 同仓库同文件名不行, hash相同也不行
+	}
+	if err := insertFile(db.DB, file); err != nil {
+		return File{}, err
+	}
+	return db.GetFileByHash(file.Adler32, file.Sha256)
+}
+
+func (db *DB) GetFileByHash(adler32, sha256 string) (File, error) {
+	row := db.DB.QueryRow(stmt.GetFileByHash, adler32, sha256)
+	return scanFile(row)
+}

@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS file
 	adler32    TEXT      NOT NULL,
 	sha256     TEXT      NOT NULL,
 	bucketid   TEXT      REFERENCES bucket(id) ON UPDATE CASCADE,
-	name       TEXT      NOT NULL,
+	name       TEXT      NOT NULL COLLATE NOCASE UNIQUE,
 	notes      TEXT      NOT NULL,
 	keywords   TEXT      NOT NULL,
 	size       INTEGER   NOT NULL,
@@ -26,7 +26,8 @@ CREATE TABLE IF NOT EXISTS file
 	ctime      TEXT      NOT NULL,
 	utime      TEXT      NOT NULL,
 	checked    TEXT      NOT NULL,
-	damaged    BOOLEAN   NOT NULL
+	damaged    BOOLEAN   NOT NULL,
+	deleted    BOOLEAN   NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_file_bucketid ON file(bucketid);
@@ -46,5 +47,7 @@ const GetAllBuckets = `SELECT * FROM bucket;`
 
 const InsertFile = `INSERT INTO file (
 	adler32, sha256, bucketid, name,  notes,   keywords, size,
-	type,    like,   ctime,    utime, checked, damaged
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
+	type,    like,   ctime,    utime, checked, damaged,  deleted
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
+
+const GetFileByHash = `SELECT * FROM file WHERE alder32=? and sha256=?;`

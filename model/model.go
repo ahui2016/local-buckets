@@ -9,9 +9,10 @@ const (
 	RFC3339 = "2006-01-02 15:04:05Z07:00"
 )
 
-// 文件名只能使用 0-9, a-z, A-Z, _(下劃線), -(連字號), .(點)
-var FilenameForbidPattern = regexp.MustCompile(`[^0-9a-zA-Z._\-]`)
+// ID 只能使用 0-9, a-z, A-Z, _(下劃線), -(連字號), .(點)
+var IdForbidPattern = regexp.MustCompile(`[^0-9a-zA-Z._\-]`)
 
+// Project 工程
 type Project struct {
 	Host      string `json:"host"`
 	Title     string `json:"title"`
@@ -89,6 +90,7 @@ type File struct {
 	UTime    string `json:"utime"`    // RFC3339 文件更新時間
 	Checked  string `json:"checked"`  // RFC3339 上次校驗文件完整性的時間
 	Damaged  bool   `json:"damaged"`  // 上次校驗結果 (文件是否損壞)
+	Deleted  bool   `json:"deleted"`  // 把文件标记为 "已删除"
 }
 
 func NewFile(root, bucketID, name string) *File {
@@ -98,7 +100,7 @@ func NewFile(root, bucketID, name string) *File {
 }
 
 func checkFilename(name string) error {
-	if FilenameForbidPattern.MatchString(name) {
+	if IdForbidPattern.MatchString(name) {
 		return errors.New("只能使用 0-9, a-z, A-Z, _(下劃線), -(連字號), .(點)," +
 			"\n不可使用空格, 请用下劃線或連字號代替空格。")
 	}

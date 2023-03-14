@@ -71,6 +71,7 @@ func insertFile(tx TX, f *File) error {
 		f.UTime,
 		f.Checked,
 		f.Damaged,
+		f.Deleted,
 	)
 	return err
 }
@@ -91,6 +92,7 @@ func scanFile(row Row) (f File, err error) {
 		&f.UTime,
 		&f.Checked,
 		&f.Damaged,
+		&f.Deleted,
 	)
 	return
 }
