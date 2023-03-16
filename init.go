@@ -14,6 +14,7 @@ import (
 const (
 	ProjectTOML       = "project.toml"
 	DatabaseFileName  = "project.db"
+	WaitingFolderName = "waiting"
 	BucketsFolderName = "buckets"
 	PublicFolderName  = "public"
 )
@@ -24,6 +25,7 @@ var (
 	ProjectConfig     *model.Project
 	ProjectConfigPath = filepath.Join(ProjectPath, ProjectTOML)
 	DatabasePath      = filepath.Join(ProjectPath, DatabaseFileName)
+	WaitingFolder     = filepath.Join(ProjectPath, WaitingFolderName)
 	BucketsFolder     = filepath.Join(ProjectPath, BucketsFolderName)
 	PublicFolder      = filepath.Join(ProjectPath, PublicFolderName)
 )
@@ -39,13 +41,14 @@ func initDB() {
 }
 
 func createFolders() {
-	util.MkdirIfNotExists(BucketsFolder)
-	util.MkdirIfNotExists(PublicFolder)
+	util.MkdirIfNotExists(WaitingFolder, 0)
+	util.MkdirIfNotExists(BucketsFolder, 0)
+	util.MkdirIfNotExists(PublicFolder, 0)
 }
 
 func createBucketFolder(bucketID string) {
 	path := filepath.Join(BucketsFolder, bucketID)
-	util.MkdirIfNotExists(path)
+	util.MkdirIfNotExists(path, util.ReadonlyFolderPerm)
 }
 
 func readProjectConfig() {

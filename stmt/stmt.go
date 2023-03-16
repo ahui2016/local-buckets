@@ -27,11 +27,11 @@ CREATE TABLE IF NOT EXISTS file
 	utime      TEXT      NOT NULL,
 	checked    TEXT      NOT NULL,
 	damaged    BOOLEAN   NOT NULL,
-	deleted    BOOLEAN   NOT NULL
+	deleted    BOOLEAN   NOT NULL,
+	UNIQUE (adler32, sha256)
 );
 
 CREATE INDEX IF NOT EXISTS idx_file_bucketid ON file(bucketid);
-CREATE INDEX IF NOT EXISTS idx_file_name ON file(name);
 CREATE INDEX IF NOT EXISTS idx_file_notes ON file(notes);
 CREATE INDEX IF NOT EXISTS idx_file_keywords ON file(keywords);
 CREATE INDEX IF NOT EXISTS idx_file_ctime ON file(ctime);
@@ -51,3 +51,5 @@ const InsertFile = `INSERT INTO file (
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
 
 const GetFileByHash = `SELECT * FROM file WHERE alder32=? and sha256=?;`
+
+const GetFileByName = `SELECT * FROM file WHERE bucketid=? and name=?;`
