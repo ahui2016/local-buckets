@@ -50,6 +50,8 @@ const InsertFile = `INSERT INTO file (
 	type,    like,   ctime,    utime, checked, damaged,  deleted
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
 
-const GetFileByHash = `SELECT * FROM file WHERE alder32=? and sha256=?;`
+const GetFileByName = `SELECT * FROM file WHERE name=?;`
 
-const GetFileByName = `SELECT * FROM file WHERE bucketid=? and name=?;`
+const GetFilesByAlder32 = `SELECT * FROM file WHERE alder32=?;`
+
+const GetFileByHash = `SELECT * FROM file WHERE alder32=? and sha256=?;`

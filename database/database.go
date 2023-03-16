@@ -4,6 +4,8 @@ import (
 	"crypto/cipher"
 	"database/sql"
 	"encoding/hex"
+	"errors"
+	"fmt"
 
 	"github.com/ahui2016/local-buckets/model"
 	"github.com/ahui2016/local-buckets/stmt"
@@ -27,6 +29,10 @@ type DB struct {
 func (db *DB) Exec(query string, args ...any) (err error) {
 	_, err = db.DB.Exec(query, args...)
 	return
+}
+
+func (db *DB) QueryRow(query string, args ...any) *sql.Row {
+	return db.DB.QueryRow(query, args...)
 }
 
 func (db *DB) Query(query string, args ...any) (*sql.Rows, error) {
@@ -97,7 +103,55 @@ func (db *DB) InsertFile(file *File) (File, error) {
 	return db.GetFileByHash(file.Adler32, file.Sha256)
 }
 
+// CheckSameFile 发现有相同文件 (同名或同内容) 时返回错误,
+// 未发现相同文件则返回 nil 或其他错误.
+func (db *DB) CheckSameFile(file *File) error {
+	if err := db.checkSameFileName(file); err != nil {
+		return err
+	}
+
+	// 至此, err 必然是 sql.ErrNoRows, 即没有同名文件.
+	// 接下来检查有无相同内容的文件.
+	files, err := db.GetFilesByAlder32(file.Adler32)
+	if errors.Is(err, sql.ErrNoRows) {
+		err = nil
+	}
+	if len(files) == 0 {
+		return err
+	}
+
+}
+
+// 有同名文件时返回 error, 无同名文件则返回 nil 或其他错误.
+func (db *DB) checkSameFileName(file *File) error {
+	same, err := db.GetFileByName(file.Name)
+	if err == nil && len(same.Name) > 0 {
+		return fmt.Errorf("同名文件(檔案)已存在: %s", same.Name)
+	}
+	if errors.Is(err, sql.ErrNoRows) {
+		err = nil
+	}
+	return err
+}
+
+// 有相同内容的文件时返回 error, 无相同内容的文件则返回 nil 或其他错误.
+func (db *DB) checkSameChecksum(file *File) error {
+}
+
+func (db *DB) GetFilesByAlder32(adler32 string) ([]File, error) {
+	rows, err := db.Query(stmt.GetFileByHash, adler32)
+	if err != nil {
+		return nil, err
+	}
+	return scanFiles(rows)
+}
+
 func (db *DB) GetFileByHash(adler32, sha256 string) (File, error) {
-	row := db.DB.QueryRow(stmt.GetFileByHash, adler32, sha256)
+	row := db.QueryRow(stmt.GetFileByHash, adler32, sha256)
+	return scanFile(row)
+}
+
+func (db *DB) GetFileByName(name string) (File, error) {
+	row := db.QueryRow(stmt.GetFileByName, name)
 	return scanFile(row)
 }
