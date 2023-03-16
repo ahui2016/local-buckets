@@ -2,12 +2,16 @@ package util
 
 import (
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
+	"hash/adler32"
+	"io"
 	"io/fs"
 	"os"
 
 	"github.com/pelletier/go-toml/v2"
 	"github.com/samber/lo"
+	"golang.org/x/crypto/blake2b"
 )
 
 const (
@@ -17,7 +21,10 @@ const (
 	NormalFolerPerm    = 0750
 )
 
-type Base64String = string
+type (
+	Base64String = string
+	HexString    = string
+)
 
 func Base64Encode(data []byte) Base64String {
 	return base64.StdEncoding.EncodeToString(data)
@@ -116,4 +123,39 @@ func UnlockFile(name string) {
 // LockFile 把文件设为只读权限 (不可写)
 func LockFile(name string) {
 	lo.Must0(os.Chmod(name, ReadonlyFilePerm))
+}
+
+// https://pkg.go.dev/crypto/sha256#example-New-File
+func FileAdler32(name string) (HexString, error) {
+	f, err := os.Open("file.txt")
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
+	h := adler32.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return "", err
+	}
+
+	checksum := h.Sum(nil)
+	return hex.EncodeToString(checksum), nil
+}
+
+// https://blog.min.io/fast-hashing-in-golang-using-blake2/
+// https://pkg.go.dev/crypto/sha256#example-New-File
+func FileSum256(name string) (HexString, error) {
+	f, err := os.Open("file.txt")
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
+	h := lo.Must(blake2b.New256(nil))
+	if _, err := io.Copy(h, f); err != nil {
+		return "", err
+	}
+
+	checksum := h.Sum(nil)
+	return hex.EncodeToString(checksum), nil
 }

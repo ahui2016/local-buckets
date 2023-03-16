@@ -3,6 +3,10 @@ package model
 import (
 	"errors"
 	"regexp"
+	"strconv"
+	"strings"
+
+	"github.com/samber/lo"
 )
 
 const (
@@ -97,6 +101,14 @@ func NewFile(root, bucketID, name string) *File {
 	f := new(File)
 	return f
 	// TODO
+}
+
+// FilesToString 把多个文件转换为多个文件的 ID 的字符串.
+func FilesToString(files []File) string {
+	ids := lo.Map(files, func(x File, _ int) string {
+		return strconv.Itoa(int(x.ID))
+	})
+	return strings.Join(ids, ", ")
 }
 
 func checkFilename(name string) error {

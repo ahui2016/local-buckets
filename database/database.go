@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"path/filepath"
 
 	"github.com/ahui2016/local-buckets/model"
 	"github.com/ahui2016/local-buckets/stmt"
@@ -20,10 +21,11 @@ type (
 )
 
 type DB struct {
-	Path      string
-	DB        *sql.DB
-	cipherKey HexString
-	aesgcm    cipher.AEAD
+	Path        string
+	ProjectPath string
+	DB          *sql.DB
+	cipherKey   HexString
+	aesgcm      cipher.AEAD
 }
 
 func (db *DB) Exec(query string, args ...any) (err error) {
@@ -39,12 +41,13 @@ func (db *DB) Query(query string, args ...any) (*sql.Rows, error) {
 	return db.DB.Query(query, args...)
 }
 
-func (db *DB) Open(dbPath string, cipherKey HexString) (err error) {
+func (db *DB) Open(dbPath, pjPath string, cipherKey HexString) (err error) {
 	const turnOnForeignKeys = "?_pragma=foreign_keys(1)"
 	if db.DB, err = sql.Open("sqlite", dbPath+turnOnForeignKeys); err != nil {
 		return
 	}
 	db.Path = dbPath
+	db.ProjectPath = pjPath
 	if err = db.Exec(stmt.CreateTables); err != nil {
 		return
 	}
@@ -110,19 +113,10 @@ func (db *DB) CheckSameFile(file *File) error {
 		return err
 	}
 
-	// 至此, err 必然是 sql.ErrNoRows, 即没有同名文件.
-	// 接下来检查有无相同内容的文件.
-	files, err := db.GetFilesByAlder32(file.Adler32)
-	if errors.Is(err, sql.ErrNoRows) {
-		err = nil
-	}
-	if len(files) == 0 {
-		return err
-	}
-
+	return nil // TODO
 }
 
-// 有同名文件时返回 error, 无同名文件则返回 nil 或其他错误.
+// 有同名文件时返回 error(同名文件已存在), 无同名文件则返回 nil 或其他错误.
 func (db *DB) checkSameFileName(file *File) error {
 	same, err := db.GetFileByName(file.Name)
 	if err == nil && len(same.Name) > 0 {
@@ -134,8 +128,21 @@ func (db *DB) checkSameFileName(file *File) error {
 	return err
 }
 
-// 有相同内容的文件时返回 error, 无相同内容的文件则返回 nil 或其他错误.
+// 有相同内容的文件时返回 error(相同内容的文件已存在),
+// 无相同内容的文件则返回 nil 或其他错误.
 func (db *DB) checkSameChecksum(file *File) error {
+	files, err := db.GetFilesByAlder32(file.Adler32)
+	if errors.Is(err, sql.ErrNoRows) {
+		err = nil
+	}
+	if len(files) == 0 {
+		return err
+	}
+	idList := model.FilesToString(files)
+	if len(files) == 1 {
+		sameFile := files[0]
+		sameFilePath := filepath.Join(db.ProjectPath, sameFile.BucketID, sameFile.Name)
+	}
 }
 
 func (db *DB) GetFilesByAlder32(adler32 string) ([]File, error) {

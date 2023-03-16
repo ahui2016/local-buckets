@@ -37,7 +37,7 @@ func init() {
 }
 
 func initDB() {
-	lo.Must0(db.Open(DatabasePath, ProjectConfig.CipherKey))
+	lo.Must0(db.Open(DatabasePath, ProjectPath, ProjectConfig.CipherKey))
 }
 
 func createFolders() {
