@@ -58,8 +58,7 @@ func insertFile(tx TX, f *File) error {
 	_, err := tx.Exec(
 		stmt.InsertFile,
 		// f.ID, 自增ID
-		f.Adler32,
-		f.Sha256,
+		f.Checksum,
 		f.BucketID,
 		f.Name,
 		f.Notes,
@@ -79,8 +78,7 @@ func insertFile(tx TX, f *File) error {
 func scanFile(row Row) (f File, err error) {
 	err = row.Scan(
 		&f.ID,
-		&f.Adler32,
-		&f.Sha256,
+		&f.Checksum,
 		&f.BucketID,
 		&f.Name,
 		&f.Notes,

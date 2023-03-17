@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
-	"hash/adler32"
 	"io"
 	"io/fs"
 	"os"
@@ -125,33 +124,18 @@ func LockFile(name string) {
 	lo.Must0(os.Chmod(name, ReadonlyFilePerm))
 }
 
-// https://pkg.go.dev/crypto/sha256#example-New-File
-func FileAdler32(name string) (HexString, error) {
-	f, err := os.Open("file.txt")
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
-
-	h := adler32.New()
-	if _, err := io.Copy(h, f); err != nil {
-		return "", err
-	}
-
-	checksum := h.Sum(nil)
-	return hex.EncodeToString(checksum), nil
-}
-
+// BLAKE2b is faster than MD5, SHA-1, SHA-2, and SHA-3, on 64-bit x86-64 and ARM architectures.
+// https://en.wikipedia.org/wiki/BLAKE_(hash_function)#BLAKE2
 // https://blog.min.io/fast-hashing-in-golang-using-blake2/
 // https://pkg.go.dev/crypto/sha256#example-New-File
-func FileSum256(name string) (HexString, error) {
+func FileSum512(name string) (HexString, error) {
 	f, err := os.Open("file.txt")
 	if err != nil {
 		return "", err
 	}
 	defer f.Close()
 
-	h := lo.Must(blake2b.New256(nil))
+	h := lo.Must(blake2b.New512(nil))
 	if _, err := io.Copy(h, f); err != nil {
 		return "", err
 	}

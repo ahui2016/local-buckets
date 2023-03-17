@@ -75,14 +75,10 @@ func NewBucket(form *CreateBucketForm) (*Bucket, error) {
 }
 
 // File 文件.
-// 当 adler32 没有冲突时, sha256 取 nil 值,
-// 当 adler32 有冲突时, 必须同时记录 adler32 和 sha256.
-// sha256 只允許空字符串重複, 有內容的值不允許重複.
 // Notes 與 Keywords 本質上是一樣的, 只是一行字符串, 用來輔助搜尋.
 type File struct {
 	ID       int64  `json:"id"`       // 自動數字ID
-	Adler32  string `json:"adler32"`  // NOT NULL, 允許重複
-	Sha256   string `json:"sha256"`   // NOT NULL, 允許重複
+	Checksum string `json:"checksum"` // NOT NULL UNIQUE
 	BucketID string `json:"bucketid"` // Bucket.ID
 	Name     string `json:"name"`     // 文件名
 	Notes    string `json:"notes"`    // 備註

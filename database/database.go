@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"path/filepath"
 
 	"github.com/ahui2016/local-buckets/model"
 	"github.com/ahui2016/local-buckets/stmt"
@@ -95,29 +94,28 @@ func (db *DB) InsertBucket(form *model.CreateBucketForm) (bucket *Bucket, err er
 	return
 }
 
-func (db *DB) InsertFile(file *File) (File, error) {
-	if _, err := db.GetFileByHash(file.Adler32, file.Sha256); err != sql.ErrNoRows {
-		// TODO: 如何防止重复文件？
-		// 同仓库同文件名不行, hash相同也不行
+func (db *DB) InsertFile(file *File) (*File, error) {
+	if err := db.CheckSameFile(file); err != nil {
+		return nil, err
 	}
 	if err := insertFile(db.DB, file); err != nil {
-		return File{}, err
+		return nil, err
 	}
-	return db.GetFileByHash(file.Adler32, file.Sha256)
+	f, err := db.GetFileByChecksum(file.Checksum)
+	return &f, err
 }
 
 // CheckSameFile 发现有相同文件 (同名或同内容) 时返回错误,
 // 未发现相同文件则返回 nil 或其他错误.
 func (db *DB) CheckSameFile(file *File) error {
-	if err := db.checkSameFileName(file); err != nil {
+	if err := db.checkSameFilename(file); err != nil {
 		return err
 	}
-
-	return nil // TODO
+	return db.checkSameChecksum(file)
 }
 
 // 有同名文件时返回 error(同名文件已存在), 无同名文件则返回 nil 或其他错误.
-func (db *DB) checkSameFileName(file *File) error {
+func (db *DB) checkSameFilename(file *File) error {
 	same, err := db.GetFileByName(file.Name)
 	if err == nil && len(same.Name) > 0 {
 		return fmt.Errorf("同名文件(檔案)已存在: %s", same.Name)
@@ -131,30 +129,18 @@ func (db *DB) checkSameFileName(file *File) error {
 // 有相同内容的文件时返回 error(相同内容的文件已存在),
 // 无相同内容的文件则返回 nil 或其他错误.
 func (db *DB) checkSameChecksum(file *File) error {
-	files, err := db.GetFilesByAlder32(file.Adler32)
+	same, err := db.GetFileByChecksum(file.Checksum)
+	if err == nil && len(same.Name) > 0 {
+		return fmt.Errorf("相同内容的文件(檔案)已存在: %s", same.Name)
+	}
 	if errors.Is(err, sql.ErrNoRows) {
 		err = nil
 	}
-	if len(files) == 0 {
-		return err
-	}
-	idList := model.FilesToString(files)
-	if len(files) == 1 {
-		sameFile := files[0]
-		sameFilePath := filepath.Join(db.ProjectPath, sameFile.BucketID, sameFile.Name)
-	}
+	return err
 }
 
-func (db *DB) GetFilesByAlder32(adler32 string) ([]File, error) {
-	rows, err := db.Query(stmt.GetFileByHash, adler32)
-	if err != nil {
-		return nil, err
-	}
-	return scanFiles(rows)
-}
-
-func (db *DB) GetFileByHash(adler32, sha256 string) (File, error) {
-	row := db.QueryRow(stmt.GetFileByHash, adler32, sha256)
+func (db *DB) GetFileByChecksum(checksum string) (File, error) {
+	row := db.QueryRow(stmt.GetFileByChecksum, checksum)
 	return scanFile(row)
 }
 
