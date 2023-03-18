@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 
@@ -11,22 +12,32 @@ import (
 	"github.com/samber/lo"
 )
 
+type (
+	Project = model.Project
+	Bucket  = model.Bucket
+	File    = model.File
+)
+
 const (
 	ProjectTOML       = "project.toml"
 	DatabaseFileName  = "project.db"
 	WaitingFolderName = "waiting"
 	BucketsFolderName = "buckets"
+	TempFolderName    = "temp"
+	TempFilesJsonName = "temp_files.json"
 	PublicFolderName  = "public"
 )
 
 var (
 	db                = new(database.DB)
 	ProjectPath       = filepath.Dir(util.GetExePath())
-	ProjectConfig     *model.Project
+	ProjectConfig     *Project
 	ProjectConfigPath = filepath.Join(ProjectPath, ProjectTOML)
 	DatabasePath      = filepath.Join(ProjectPath, DatabaseFileName)
 	WaitingFolder     = filepath.Join(ProjectPath, WaitingFolderName)
 	BucketsFolder     = filepath.Join(ProjectPath, BucketsFolderName)
+	TempFolder        = filepath.Join(ProjectPath, TempFolderName)
+	TempFilesJsonPath = filepath.Join(TempFolder, TempFilesJsonName)
 	PublicFolder      = filepath.Join(ProjectPath, PublicFolderName)
 )
 
@@ -43,6 +54,7 @@ func initDB() {
 func createFolders() {
 	util.MkdirIfNotExists(WaitingFolder, 0)
 	util.MkdirIfNotExists(BucketsFolder, 0)
+	util.MkdirIfNotExists(TempFolder, 0)
 	util.MkdirIfNotExists(PublicFolder, 0)
 }
 
@@ -69,4 +81,22 @@ func initProjectConfig() {
 		return
 	}
 	readProjectConfig()
+}
+
+func getTempFiles() (map[string]*File, error) {
+	files := make(map[string]*File)
+	filesJSON, err := os.ReadFile(TempFilesJsonPath)
+	if err != nil {
+		// 如果读取文件失败，则反回一个空的 filesInfo, 不处理错误。
+		return files, nil
+	}
+	err = json.Unmarshal(filesJSON, &files)
+	return files, err
+}
+
+func getWaitingFiles() ([]string, error) {
+	files, err := util.GetRegularFiles(WaitingFolder)
+	if err != nil {
+		return nil, err
+	}
 }

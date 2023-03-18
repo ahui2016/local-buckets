@@ -3,10 +3,12 @@ package util
 import (
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/fs"
 	"os"
+	"path/filepath"
 
 	"github.com/pelletier/go-toml/v2"
 	"github.com/samber/lo"
@@ -85,9 +87,15 @@ func WriteReadonlyFile(name string, data []byte) error {
 	return os.WriteFile(name, data, ReadonlyFilePerm)
 }
 
-func WriteTOML(val interface{}, filename string) {
-	data := lo.Must(toml.Marshal(val))
-	lo.Must0(WriteFile(filename, data, 0))
+func WriteTOML(data interface{}, filename string) {
+	dataTOML := lo.Must(toml.Marshal(data))
+	lo.Must0(WriteFile(filename, dataTOML, 0))
+}
+
+// WriteJSON 把 data 转换为漂亮格式的 JSON 并写入文件 filename 中。
+func WriteJSON(data interface{}, filename string) {
+	dataJSON := lo.Must(json.MarshalIndent(data, "", "    "))
+	lo.Must0(WriteFile(filename, dataJSON, 0))
 }
 
 func PathIsNotExist(name string) (ok bool) {
@@ -102,6 +110,32 @@ func PathIsNotExist(name string) (ok bool) {
 
 func PathIsExist(name string) bool {
 	return !PathIsNotExist(name)
+}
+
+func IsRegularFile(name string) (ok bool, err error) {
+	info, err := os.Stat(name)
+	if err != nil {
+		return
+	}
+	return info.Mode().IsRegular(), nil
+}
+
+func GetRegularFiles(folder string) (files []string, err error) {
+	pattern := filepath.Join(folder, "*")
+	items, err := filepath.Glob(pattern)
+	if err != nil {
+		return nil, err
+	}
+	for _, file := range items {
+		ok, err := IsRegularFile(file)
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			files = append(files, file)
+		}
+	}
+	return files, nil
 }
 
 // UnlockFolder 把文件夹设为可访问, 可添加/删除文件.
