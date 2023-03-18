@@ -41,6 +41,10 @@ func (db *DB) Query(query string, args ...any) (*sql.Rows, error) {
 	return db.DB.Query(query, args...)
 }
 
+func (db *DB) mustBegin() *sql.Tx {
+	return lo.Must(db.DB.Begin())
+}
+
 func (db *DB) Open(dbPath, pjPath string, cipherKey HexString) (err error) {
 	const turnOnForeignKeys = "?_pragma=foreign_keys(1)"
 	if db.DB, err = sql.Open("sqlite", dbPath+turnOnForeignKeys); err != nil {
@@ -95,17 +99,28 @@ func (db *DB) InsertBucket(form *model.CreateBucketForm) (bucket *Bucket, err er
 	return
 }
 
-// InsertFile inserts a file into the database.
-// 注意, 在使用该函数之前, 请先使用 db.CheckSameFiles() 检查全部等待处理的文件.
+// InsertFile 主要用于同名文件冲突时的逐一处理.
 func (db *DB) InsertFile(file *File) (*File, error) {
-	// if err := db.checkSameFile(file); err != nil {
-	// 	return nil, err
-	// }
 	if err := insertFile(db.DB, file); err != nil {
 		return nil, err
 	}
 	f, err := db.GetFileByChecksum(file.Checksum)
 	return &f, err
+}
+
+// InsertFiles inserts files into the database.
+// 注意, 在使用该函数之前, 请先使用 db.CheckSameFiles() 检查全部等待处理的文件.
+func (db *DB) InsertFiles(files []*File) error {
+	tx := db.mustBegin()
+	defer tx.Rollback()
+
+	for _, file := range files {
+		if err := insertFile(db.DB, file); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
 }
 
 func (db *DB) CheckSameFiles(files []*File) (allErr error) {

@@ -84,6 +84,28 @@ func getWaitingFiles(c *fiber.Ctx) error {
 	return c.JSON(files)
 }
 
+// uploadNewFiles 只上传新文件,
+// 若要更新现有文件, 则使用 updateFile() 函数.
+func uploadNewFiles(c *fiber.Ctx) error {
+	f := new(model.UploadToBucketForm)
+	if err := parseValidate(f, c); err != nil {
+		return err
+	}
+	files, err := checkAndGetWaitingFiles()
+	if err != nil {
+		return err
+	}
+	files = setBucketID(f.BucketID, files)
+	return db.InsertFiles(files)
+}
+
+func setBucketID(bucketID string, files []*File) []*File {
+	for _, file := range files {
+		file.BucketID = bucketID
+	}
+	return files
+}
+
 func checkAndGetWaitingFiles() ([]*File, error) {
 	files, err := util.GetRegularFiles(WaitingFolder)
 	if err != nil {

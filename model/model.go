@@ -202,6 +202,10 @@ type ChangePwdForm struct {
 	NewPassword string `json:"new_password" validate:"required"`
 }
 
+type UploadToBucketForm struct {
+	BucketID string `json:"bucketid" validate:"required"`
+}
+
 // GetMIME returns the content-type of a file extension.
 // https://github.com/gofiber/fiber/blob/master/utils/http.go (edited).
 func GetMIME(extension string) (mime string) {
