@@ -97,24 +97,57 @@ type File struct {
 	Deleted  bool   `json:"deleted"`  // 把文件标记为 "已删除"
 }
 
-func NewFile(root, bucketID, name string) (*File, error) {
-	now := Now()
-	info, err := os.Lstat(name)
+// NewWaitingFile 根据 filePath 生成新文件,
+// 其中 filePath 是等待上传的文件的路径.
+func NewWaitingFile(filePath string) (*File, error) {
+	info, err := os.Lstat(filePath)
 	if err != nil {
 		return nil, err
 	}
-	checksum, err := util.FileSum512(name)
+	checksum, err := util.FileSum512(filePath)
+	if err != nil {
+		return nil, err
+	}
+	basename := filepath.Base(filePath)
+	now := Now()
+	f := new(File)
+	f.Checksum = checksum
+	f.BucketID = ""
+	f.Name = basename
+	f.Notes = ""
+	f.Keywords = ""
+	f.Size = info.Size()
+	f.Type = typeByFilename(basename)
+	f.Like = 0
+	f.CTime = now
+	f.UTime = now
+	f.Checked = now
+	f.Damaged = false
+	f.Deleted = false
+	return f, nil
+}
+
+// NewFile 根据 root, bucketID, basename 生成新文件,
+// 其中 root 是工程根目录.
+func NewFile(root, bucketID, basename string) (*File, error) {
+	now := Now()
+	filePath := filepath.Join(root, bucketID, basename)
+	info, err := os.Lstat(filePath)
+	if err != nil {
+		return nil, err
+	}
+	checksum, err := util.FileSum512(filePath)
 	if err != nil {
 		return nil, err
 	}
 	f := new(File)
 	f.Checksum = checksum
 	f.BucketID = bucketID
-	f.Name = name
+	f.Name = basename
 	f.Notes = ""
 	f.Keywords = ""
 	f.Size = info.Size()
-	f.Type = typeByFilename(name)
+	f.Type = typeByFilename(basename)
 	f.Like = 0
 	f.CTime = now
 	f.UTime = now

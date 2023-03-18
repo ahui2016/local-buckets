@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 
@@ -81,22 +80,4 @@ func initProjectConfig() {
 		return
 	}
 	readProjectConfig()
-}
-
-func getTempFiles() (map[string]*File, error) {
-	files := make(map[string]*File)
-	filesJSON, err := os.ReadFile(TempFilesJsonPath)
-	if err != nil {
-		// 如果读取文件失败，则反回一个空的 filesInfo, 不处理错误。
-		return files, nil
-	}
-	err = json.Unmarshal(filesJSON, &files)
-	return files, err
-}
-
-func getWaitingFiles() ([]string, error) {
-	files, err := util.GetRegularFiles(WaitingFolder)
-	if err != nil {
-		return nil, err
-	}
 }

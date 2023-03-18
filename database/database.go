@@ -9,6 +9,7 @@ import (
 
 	"github.com/ahui2016/local-buckets/model"
 	"github.com/ahui2016/local-buckets/stmt"
+	"github.com/ahui2016/local-buckets/util"
 	"github.com/samber/lo"
 	_ "modernc.org/sqlite"
 )
@@ -94,10 +95,12 @@ func (db *DB) InsertBucket(form *model.CreateBucketForm) (bucket *Bucket, err er
 	return
 }
 
+// InsertFile inserts a file into the database.
+// 注意, 在使用该函数之前, 请先使用 db.CheckSameFiles() 检查全部等待处理的文件.
 func (db *DB) InsertFile(file *File) (*File, error) {
-	if err := db.CheckSameFile(file); err != nil {
-		return nil, err
-	}
+	// if err := db.checkSameFile(file); err != nil {
+	// 	return nil, err
+	// }
 	if err := insertFile(db.DB, file); err != nil {
 		return nil, err
 	}
@@ -105,9 +108,18 @@ func (db *DB) InsertFile(file *File) (*File, error) {
 	return &f, err
 }
 
+func (db *DB) CheckSameFiles(files []*File) (allErr error) {
+	for _, file := range files {
+		if err := db.checkSameFile(file); err != nil {
+			allErr = util.WrapErrors(allErr, err)
+		}
+	}
+	return
+}
+
 // CheckSameFile 发现有相同文件 (同名或同内容) 时返回错误,
 // 未发现相同文件则返回 nil 或其他错误.
-func (db *DB) CheckSameFile(file *File) error {
+func (db *DB) checkSameFile(file *File) error {
 	if err := db.checkSameFilename(file); err != nil {
 		return err
 	}

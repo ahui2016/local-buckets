@@ -1,11 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/ahui2016/local-buckets/model"
+	"github.com/ahui2016/local-buckets/util"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/samber/lo"
 )
 
 const OK = http.StatusOK
@@ -70,4 +74,55 @@ func createBucket(c *fiber.Ctx) error {
 	}
 	createBucketFolder(f.ID)
 	return c.JSON(bucket)
+}
+
+func getWaitingFiles(c *fiber.Ctx) error {
+	files, err := checkAndGetWaitingFiles()
+	if err != nil {
+		return err
+	}
+	return c.JSON(files)
+}
+
+func checkAndGetWaitingFiles() ([]*File, error) {
+	files, err := util.GetRegularFiles(WaitingFolder)
+	if err != nil {
+		return nil, err
+	}
+	waitingFiles, err := toWaitingFiles(files)
+	if err != nil {
+		return nil, err
+	}
+	waitingFilesList := lo.Values(waitingFiles)
+	err = db.CheckSameFiles(waitingFilesList)
+	return waitingFilesList, err
+}
+
+func toWaitingFiles(files []string) (map[string]*File, error) {
+	waitingFiles := make(map[string]*File)
+	filenames := []string{}
+
+	for _, filePath := range files {
+		file, err := model.NewWaitingFile(filePath)
+		if err != nil {
+			return nil, err
+		}
+
+		filename := strings.ToLower(file.Name)
+		if lo.Contains(filenames, filename) {
+			err = fmt.Errorf(
+				"發現同名檔案 (檔案名稱不分大小寫): %s", filename)
+			return nil, err
+		}
+		filenames = append(filenames, filename)
+
+		if same, ok := waitingFiles[file.Checksum]; ok {
+			err = fmt.Errorf(
+				"[%s] 與 [%s] 重複 (兩個檔案內容完全相同)", file.Name, same.Name)
+			return nil, err
+		}
+		waitingFiles[file.Checksum] = file
+	}
+
+	return waitingFiles, nil
 }
