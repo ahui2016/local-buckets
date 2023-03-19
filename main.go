@@ -16,7 +16,8 @@ func main() {
 	api.Get("/all-buckets", getAllBuckets)       // resp.data: null | Bucket[]
 	api.Post("/create-bucket", createBucket)     // resp.data: Bucket
 	api.Post("/change-password", changePassword)
-	api.Get("/waiting-files", getWaitingFiles) // resp.data: File[]
+	api.Get("/waiting-files", getWaitingFiles) // resp.data: File[] | ErrSameNameFiles
+	api.Post("/upload-new-files", uploadNewFiles)
 
 	log.Fatal(app.Listen(ProjectConfig.Host))
 }

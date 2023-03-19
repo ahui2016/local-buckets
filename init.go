@@ -12,9 +12,10 @@ import (
 )
 
 type (
-	Project = model.Project
-	Bucket  = model.Bucket
-	File    = model.File
+	Project   = model.Project
+	Bucket    = model.Bucket
+	File      = model.File
+	MovedFile = model.MovedFile
 )
 
 const (
@@ -22,22 +23,22 @@ const (
 	DatabaseFileName  = "project.db"
 	WaitingFolderName = "waiting"
 	BucketsFolderName = "buckets"
-	TempFolderName    = "temp"
+	TempFolderName    = "temp" // TODO: 删除
 	TempFilesJsonName = "temp_files.json"
 	PublicFolderName  = "public"
 )
 
 var (
 	db                = new(database.DB)
-	ProjectPath       = filepath.Dir(util.GetExePath())
+	ProjectRoot       = filepath.Dir(util.GetExePath())
 	ProjectConfig     *Project
-	ProjectConfigPath = filepath.Join(ProjectPath, ProjectTOML)
-	DatabasePath      = filepath.Join(ProjectPath, DatabaseFileName)
-	WaitingFolder     = filepath.Join(ProjectPath, WaitingFolderName)
-	BucketsFolder     = filepath.Join(ProjectPath, BucketsFolderName)
-	TempFolder        = filepath.Join(ProjectPath, TempFolderName)
+	ProjectConfigPath = filepath.Join(ProjectRoot, ProjectTOML)
+	DatabasePath      = filepath.Join(ProjectRoot, DatabaseFileName)
+	WaitingFolder     = filepath.Join(ProjectRoot, WaitingFolderName)
+	BucketsFolder     = filepath.Join(ProjectRoot, BucketsFolderName)
+	TempFolder        = filepath.Join(ProjectRoot, TempFolderName)
 	TempFilesJsonPath = filepath.Join(TempFolder, TempFilesJsonName)
-	PublicFolder      = filepath.Join(ProjectPath, PublicFolderName)
+	PublicFolder      = filepath.Join(ProjectRoot, PublicFolderName)
 )
 
 func init() {
@@ -47,7 +48,7 @@ func init() {
 }
 
 func initDB() {
-	lo.Must0(db.Open(DatabasePath, ProjectPath, ProjectConfig.CipherKey))
+	lo.Must0(db.Open(DatabasePath, ProjectRoot, ProjectConfig.CipherKey))
 }
 
 func createFolders() {
@@ -73,7 +74,7 @@ func writeProjectConfig() {
 
 func initProjectConfig() {
 	if util.PathIsNotExist(ProjectConfigPath) {
-		title := filepath.Base(ProjectPath)
+		title := filepath.Base(ProjectRoot)
 		cipherkey := database.DefaultCipherKey()
 		ProjectConfig = model.NewProject(title, cipherkey)
 		writeProjectConfig()

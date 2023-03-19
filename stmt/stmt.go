@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS bucket
 	title          TEXT      NOT NULL COLLATE NOCASE UNIQUE,
 	subtitle       TEXT      NOT NULL,
 	capacity       INTEGER   NOT NULL,
-	max_filesize   INTEGER   NOT NULL,
 	encrypted      BOOLEAN   NOT NULL
 );
 
@@ -38,10 +37,14 @@ CREATE INDEX IF NOT EXISTS idx_file_checked ON file(checked);
 `
 
 const InsertBucket = `INSERT INTO bucket (
-	id, title, subtitle, capacity, max_filesize, encrypted
-) VALUES (?, ?, ?, ?, ?, ?);`
+	id, title, subtitle, capacity, encrypted
+) VALUES (?, ?, ?, ?, ?);`
 
 const GetAllBuckets = `SELECT * FROM bucket;`
+
+const GetBucket = `SELECT * FROM bucket WHERE id=?;`
+
+const CountFilesInBucket = `SELECT count(*) FROM file WHERE bucketid=?;`
 
 const InsertFile = `INSERT INTO file (
 	checksum, bucketid, name,  notes, keywords, size,

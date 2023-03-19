@@ -17,6 +17,13 @@ type Row interface {
 	Scan(...any) error
 }
 
+// getInt1 gets one Integer value from the database.
+func getInt1(tx TX, query string, arg ...any) (n int64, err error) {
+	row := tx.QueryRow(query, arg...)
+	err = row.Scan(&n)
+	return
+}
+
 func insertBucket(tx TX, b *Bucket) error {
 	_, err := tx.Exec(
 		stmt.InsertBucket,
@@ -24,7 +31,6 @@ func insertBucket(tx TX, b *Bucket) error {
 		b.Title,
 		b.Subtitle,
 		b.Capacity,
-		b.MaxFilesize,
 		b.Encrypted,
 	)
 	return err
@@ -36,7 +42,6 @@ func scanBucket(row Row) (b Bucket, err error) {
 		&b.Title,
 		&b.Subtitle,
 		&b.Capacity,
-		&b.MaxFilesize,
 		&b.Encrypted,
 	)
 	return

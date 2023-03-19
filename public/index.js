@@ -16,14 +16,14 @@ const ProjectInfo = cc("div", {
     m("div")
       .addClass("card-header")
       .append(
-        span("Project (正在使用的項目)"),
+        span("Project (正在使用的專案)"),
         span("ℹ️")
           .css({ cursor: "pointer" })
           .on("click", (event) => {
             event.preventDefault();
             ProjectInfoAlert.insert(
               "info",
-              "用文本編輯器打開項目文件夾(資料夾)內的 project.toml, 可更改項目設定. " +
+              "用文本編輯器打開專案文件夾(資料夾)內的 project.toml, 可更改專案設定. " +
                 "注意, 用 utf-8 編碼保存文件. " +
                 "需要重啟程式才生效.",
               "no-prefix"

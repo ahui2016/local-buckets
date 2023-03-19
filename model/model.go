@@ -20,7 +20,7 @@ const (
 // ID 只能使用 0-9, a-z, A-Z, _(下劃線), -(連字號), .(點)
 var IdForbidPattern = regexp.MustCompile(`[^0-9a-zA-Z._\-]`)
 
-// Project 工程
+// Project 專案
 type Project struct {
 	Host      string `json:"host"`
 	Title     string `json:"title"`
@@ -50,10 +50,7 @@ type Bucket struct {
 	Subtitle string `json:"subtitle"`
 
 	// 容量 (最多可容納多少個文件)
-	Capacity int `json:"capacity"`
-
-	// 文件體積上限 (單位: MB)
-	MaxFilesize int `json:"max_filesize"`
+	Capacity int64 `json:"capacity"`
 
 	// 是否加密 (在創建時決定, 不可更改) (密碼在 ProjectConfig 中統一設定)
 	Encrypted bool `json:"encrypted"`
@@ -73,7 +70,6 @@ func NewBucket(form *CreateBucketForm) (*Bucket, error) {
 	b.ID = form.ID
 	b.Title = form.ID
 	b.Capacity = 1024
-	b.MaxFilesize = 1024 // MB
 	b.Encrypted = form.Encrypted
 	return b, nil
 }
@@ -128,7 +124,7 @@ func NewWaitingFile(filePath string) (*File, error) {
 }
 
 // NewFile 根据 root, bucketID, basename 生成新文件,
-// 其中 root 是工程根目录.
+// 其中 root 是專案根目录.
 func NewFile(root, bucketID, basename string) (*File, error) {
 	now := Now()
 	filePath := filepath.Join(root, bucketID, basename)
@@ -206,20 +202,35 @@ type UploadToBucketForm struct {
 	BucketID string `json:"bucketid" validate:"required"`
 }
 
-type ErrSameNameFiles struct {
-	Filename string `json:"filename"`
-	ErrType  string `json:"errtype"`
+type MovedFile struct {
+	Src string
+	Dst string
 }
 
-func NewErrSameNameFiles(filename string) ErrSameNameFiles {
+// Move calls os.Rename, moves the file from Src to Dst.
+func (m MovedFile) Move() error {
+	return os.Rename(m.Src, m.Dst)
+}
+
+// Rollback moves the file from Dst back to Src.
+func (m MovedFile) Rollback() error {
+	return os.Rename(m.Dst, m.Src)
+}
+
+type ErrSameNameFiles struct {
+	File    File   `json:"file"`
+	ErrType string `json:"errType"`
+}
+
+func NewErrSameNameFiles(file File) ErrSameNameFiles {
 	return ErrSameNameFiles{
-		Filename: filename,
-		ErrType:  "ErrSameNameFiles",
+		File:    file,
+		ErrType: "ErrSameNameFiles",
 	}
 }
 
 func (e ErrSameNameFiles) Error() string {
-	return "同名檔案已存在(檔案名稱不分大小寫): " + e.Filename
+	return "同名檔案已存在(檔案名稱不分大小寫): " + e.File.Name
 }
 
 // GetMIME returns the content-type of a file extension.

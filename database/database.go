@@ -60,6 +60,11 @@ func (db *DB) Open(dbPath, pjPath string, cipherKey HexString) (err error) {
 	return nil
 }
 
+// GetInt1 gets one Integer value from the database.
+func (db *DB) GetInt1(query string, arg ...any) (int64, error) {
+	return getInt1(db.DB, query, arg...)
+}
+
 func (db *DB) SetAESGCM(password string) (realKey []byte, err error) {
 	aesgcm := newGCM(password)
 	realKey, err = decrypt(db.cipherKey, aesgcm)
@@ -87,6 +92,11 @@ func (db *DB) GetAllBuckets() ([]Bucket, error) {
 		return nil, err
 	}
 	return scanBuckets(rows)
+}
+
+func (db *DB) GetBucket(id string) (Bucket, error) {
+	row := db.QueryRow(stmt.GetBucket, id)
+	return scanBucket(row)
 }
 
 func (db *DB) InsertBucket(form *model.CreateBucketForm) (bucket *Bucket, err error) {
@@ -152,7 +162,7 @@ func (db *DB) checkSameFile(file *File) error {
 func (db *DB) checkSameFilename(file *File) error {
 	same, err := db.GetFileByName(file.Name)
 	if err == nil && len(same.Name) > 0 {
-		return model.NewErrSameNameFiles(same.Name)
+		return model.NewErrSameNameFiles(same)
 	}
 	if errors.Is(err, sql.ErrNoRows) {
 		err = nil
