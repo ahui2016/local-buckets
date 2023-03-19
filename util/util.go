@@ -177,3 +177,30 @@ func FileSum512(name string) (HexString, error) {
 	checksum := h.Sum(nil)
 	return hex.EncodeToString(checksum), nil
 }
+
+// https://stackoverflow.com/questions/30376921/how-do-you-copy-a-file-in-go
+func CopyFile(destPath, sourcePath string) error {
+	src, err := os.Open(sourcePath)
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+
+	dst, err := os.Create(destPath)
+	if err != nil {
+		return err
+	}
+	defer dst.Close()
+
+	_, err1 := io.Copy(dst, src)
+	err2 := dst.Sync()
+	return WrapErrors(err1, err2)
+}
+
+func DeleteFiles(files []string) (err error) {
+	for _, file := range files {
+		e := os.Remove(file)
+		err = WrapErrors(err, e)
+	}
+	return err
+}

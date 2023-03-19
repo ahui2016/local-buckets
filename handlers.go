@@ -86,6 +86,7 @@ func getWaitingFiles(c *fiber.Ctx) error {
 
 // uploadNewFiles 只上传新文件,
 // 若要更新现有文件, 则使用 updateFile() 函数.
+// TODO: 参考 localtags 的 addFiles() 函数, 复制文件.
 func uploadNewFiles(c *fiber.Ctx) error {
 	f := new(model.UploadToBucketForm)
 	if err := parseValidate(f, c); err != nil {

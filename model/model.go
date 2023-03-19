@@ -206,6 +206,22 @@ type UploadToBucketForm struct {
 	BucketID string `json:"bucketid" validate:"required"`
 }
 
+type ErrSameNameFiles struct {
+	Filename string `json:"filename"`
+	ErrType  string `json:"errtype"`
+}
+
+func NewErrSameNameFiles(filename string) ErrSameNameFiles {
+	return ErrSameNameFiles{
+		Filename: filename,
+		ErrType:  "ErrSameNameFiles",
+	}
+}
+
+func (e ErrSameNameFiles) Error() string {
+	return "同名檔案已存在(檔案名稱不分大小寫): " + e.Filename
+}
+
 // GetMIME returns the content-type of a file extension.
 // https://github.com/gofiber/fiber/blob/master/utils/http.go (edited).
 func GetMIME(extension string) (mime string) {

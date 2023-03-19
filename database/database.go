@@ -15,9 +15,10 @@ import (
 )
 
 type (
-	Base64String = string
-	Bucket       = model.Bucket
-	File         = model.File
+	Base64String     = string
+	Bucket           = model.Bucket
+	File             = model.File
+	ErrSameNameFiles = model.ErrSameNameFiles
 )
 
 type DB struct {
@@ -123,9 +124,15 @@ func (db *DB) InsertFiles(files []*File) error {
 	return tx.Commit()
 }
 
+// CheckSameFiles 检查有无同名/相同内容的文件,
+// 发现相同内容的文件时, 记录全部重复文件,
+// 但发现同名文件时, 则立即返回错误 (因为前端需要对同名文件进行逐个处理).
 func (db *DB) CheckSameFiles(files []*File) (allErr error) {
 	for _, file := range files {
 		if err := db.checkSameFile(file); err != nil {
+			if e, ok := err.(ErrSameNameFiles); ok {
+				return e
+			}
 			allErr = util.WrapErrors(allErr, err)
 		}
 	}
@@ -141,11 +148,11 @@ func (db *DB) checkSameFile(file *File) error {
 	return db.checkSameChecksum(file)
 }
 
-// 有同名文件时返回 error(同名文件已存在), 无同名文件则返回 nil 或其他错误.
+// 有同名文件时返回 ErrSameNameFiles, 无同名文件则返回 nil 或其他错误.
 func (db *DB) checkSameFilename(file *File) error {
 	same, err := db.GetFileByName(file.Name)
 	if err == nil && len(same.Name) > 0 {
-		return fmt.Errorf("同名文件(檔案)已存在: %s", same.Name)
+		return model.NewErrSameNameFiles(same.Name)
 	}
 	if errors.Is(err, sql.ErrNoRows) {
 		err = nil
