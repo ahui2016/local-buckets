@@ -88,6 +88,7 @@ $("#root")
   .append(
     navBar.addClass("my-3"),
     m(PageAlert).addClass("my-5"),
+    m(SameNameRadioCard).addClass("my-5").hide(),
     m(BucketSelectGroup).addClass("my-5").hide(),
     m(WaitingFileList).addClass("my-5"),
     m(UploadButtonArea).addClass("my-5").hide(),
@@ -148,7 +149,7 @@ function getWaitingFiles() {
       }
     })
     .catch((err) => {
-      PageAlert.insert("danger", axiosErrToStr(err, defaultData2str));
+      getWaitingFilesErrorHandler(err, PageAlert);
     });
 }
 
@@ -164,4 +165,29 @@ function getWaitingFolder() {
       );
     },
   });
+}
+
+function getWaitingFilesErrorHandler(err, alert) {
+  if (err.response) {
+    if (typeof err.response.data === "string") {
+      alert.insert("danger", data);
+      return;
+    }
+    if (err.response.data.errType == 'ErrSameNameFiles') {
+      alert.insert("danger", "檔案名稱重複");
+      SameNameRadioCard.show();
+      SameNameRadioCard.init();
+      return;
+    }
+    alert.insert('danger', JSON.stringify(data));
+    return;
+  }
+
+  if (err.request) {
+    const errMsg = err.request.status + " The request was made but no response was received.";
+    alert.insert("danger", errMsg);
+    return;
+  }
+
+  alert.insert("danger", err.message);
 }
