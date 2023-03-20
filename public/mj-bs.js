@@ -100,7 +100,7 @@ MJBS.createAlert = function () {
    * msgType: primary/secondary/success/danger/warning/info/light/dark
    * @param {string} msgType
    * @param {string} msg
-   * @param {string?} prefix_time 'no-prefix' | null
+   * @param {string?} prefix_time 'no-time' | null
    */
   alert.insert = (msgType, msg, prefix_time = null) => {
     if (!prefix_time) msg = `${dayjs().format("HH:mm:ss")} ${msg}`;
@@ -351,14 +351,14 @@ MJBS.createInput = function (type = "text", required = null, id = null) {
     prop: { required: required == "required" ? true : false },
   });
 
-  if (type == 'text') {
+  if (type == "text") {
     self.val = () => {
-      return self.elem().val().trim();      
+      return self.elem().val().trim();
     };
   }
-  if (type == 'password') {
+  if (type == "password") {
     self.val = () => {
-      return self.elem().val();      
+      return self.elem().val();
     };
   }
   if (type == "checkbox") {
@@ -639,6 +639,23 @@ function hasWhiteSpace(s) {
 function getUrlParam(name) {
   const queryString = new URLSearchParams(document.location.search);
   return queryString.get(name);
+}
+
+// 把文件大小转换为方便人类阅读的格式。
+function fileSizeToString(fileSize, fixed) {
+  if (fixed == null) {
+    fixed = 2;
+  }
+  const sizeGB = fileSize / 1024 / 1024 / 1024;
+  if (sizeGB < 1) {
+    const sizeMB = sizeGB * 1024;
+    if (sizeMB < 1) {
+      const sizeKB = sizeMB * 1024;
+      return `${sizeKB.toFixed(fixed)} KB`;
+    }
+    return `${sizeMB.toFixed(fixed)} MB`;
+  }
+  return `${sizeGB.toFixed(fixed)} GB`;
 }
 
 // 以下與 mj-bs.js 無關.

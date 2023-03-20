@@ -69,6 +69,6 @@ $("#root")
 init();
 
 function init() {
-  PageAlert.insert('primary', '提醒: 請記住新密碼, 一旦忘記將無法解密.', "no-prefix");
+  PageAlert.insert('primary', '提醒: 請記住新密碼, 一旦忘記將無法解密.', "no-time");
   MJBS.focus(OldPasswordInput);
 }

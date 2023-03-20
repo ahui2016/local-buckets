@@ -85,6 +85,6 @@ function cc(name, options) {
  * @param {string} text
  * @returns {mjElement}
  */
-span = function (text) {
+function span(text) {
   return m("span").text(text);
 };

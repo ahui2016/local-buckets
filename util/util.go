@@ -55,7 +55,7 @@ func GetExePath() string {
 	return lo.Must1(os.Executable())
 }
 
-// MustMkdir 创建文件夹, 如果 perm 等于零, 则使用默认权限.
+// MustMkdir 创建資料夹, 如果 perm 等于零, 则使用默认权限.
 func MustMkdir(name string, perm fs.FileMode) {
 	if perm == 0 {
 		perm = NormalFolerPerm
@@ -63,7 +63,7 @@ func MustMkdir(name string, perm fs.FileMode) {
 	lo.Must0(os.Mkdir(name, perm))
 }
 
-// MkdirIfNotExists 创建文件夹, 忽略 ErrExist, 如果 perm 等于零, 则使用默认权限.
+// MkdirIfNotExists 创建資料夹, 忽略 ErrExist, 如果 perm 等于零, 则使用默认权限.
 func MkdirIfNotExists(name string, perm fs.FileMode) {
 	if perm == 0 {
 		perm = NormalFolerPerm
@@ -74,7 +74,7 @@ func MkdirIfNotExists(name string, perm fs.FileMode) {
 	lo.Must0(os.Mkdir(name, perm))
 }
 
-// WriteFile 写文件, 如果 perm 等于零, 则使用默认权限.
+// WriteFile 写檔案, 如果 perm 等于零, 则使用默认权限.
 func WriteFile(name string, data []byte, perm fs.FileMode) error {
 	if perm == 0 {
 		perm = NormalFilePerm
@@ -82,7 +82,7 @@ func WriteFile(name string, data []byte, perm fs.FileMode) error {
 	return os.WriteFile(name, data, perm)
 }
 
-// WriteReadonlyFile 写文件, 同时把文件设为只读.
+// WriteReadonlyFile 写檔案, 同时把檔案设为只读.
 func WriteReadonlyFile(name string, data []byte) error {
 	return os.WriteFile(name, data, ReadonlyFilePerm)
 }
@@ -92,7 +92,7 @@ func WriteTOML(data interface{}, filename string) {
 	lo.Must0(WriteFile(filename, dataTOML, 0))
 }
 
-// WriteJSON 把 data 转换为漂亮格式的 JSON 并写入文件 filename 中。
+// WriteJSON 把 data 转换为漂亮格式的 JSON 并写入檔案 filename 中。
 func WriteJSON(data interface{}, filename string) {
 	dataJSON := lo.Must(json.MarshalIndent(data, "", "    "))
 	lo.Must0(WriteFile(filename, dataJSON, 0))
@@ -138,22 +138,22 @@ func GetRegularFiles(folder string) (files []string, err error) {
 	return files, nil
 }
 
-// UnlockFolder 把文件夹设为可访问, 可添加/删除文件.
+// UnlockFolder 把資料夹设为可访问, 可添加/删除檔案.
 func UnlockFolder(name string) {
 	lo.Must0(os.Chmod(name, NormalFolerPerm))
 }
 
-// LockFolder 把文件夹设为只读权限 (不可添加/删除文件)
+// LockFolder 把資料夹设为只读权限 (不可添加/删除檔案)
 func LockFolder(name string) {
 	lo.Must0(os.Chmod(name, ReadonlyFolderPerm))
 }
 
-// UnlockFile 把文件设为可读写.
+// UnlockFile 把檔案设为可读写.
 func UnlockFile(name string) {
 	lo.Must0(os.Chmod(name, NormalFilePerm))
 }
 
-// LockFile 把文件设为只读权限 (不可写)
+// LockFile 把檔案设为只读权限 (不可写)
 func LockFile(name string) {
 	lo.Must0(os.Chmod(name, ReadonlyFilePerm))
 }
@@ -163,7 +163,7 @@ func LockFile(name string) {
 // https://blog.min.io/fast-hashing-in-golang-using-blake2/
 // https://pkg.go.dev/crypto/sha256#example-New-File
 func FileSum512(name string) (HexString, error) {
-	f, err := os.Open("file.txt")
+	f, err := os.Open(name)
 	if err != nil {
 		return "", err
 	}

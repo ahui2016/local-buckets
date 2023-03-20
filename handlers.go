@@ -78,6 +78,10 @@ func createBucket(c *fiber.Ctx) error {
 	return c.JSON(bucket)
 }
 
+func getWaitingFolder(c *fiber.Ctx) error {
+	return c.JSON(TextMsg{WaitingFolder})
+}
+
 func getWaitingFiles(c *fiber.Ctx) error {
 	files, err := checkAndGetWaitingFiles()
 	if e, ok := err.(model.ErrSameNameFiles); ok {
@@ -89,8 +93,8 @@ func getWaitingFiles(c *fiber.Ctx) error {
 	return c.JSON(files)
 }
 
-// uploadNewFiles 只上传新文件,
-// 若要更新现有文件, 则使用 updateFile() 函数.
+// uploadNewFiles 只上传新檔案,
+// 若要更新现有檔案, 则使用 updateFile() 函数.
 func uploadNewFiles(c *fiber.Ctx) error {
 	f := new(model.UploadToBucketForm)
 	err1 := parseValidate(f, c)

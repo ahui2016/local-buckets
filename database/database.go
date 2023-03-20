@@ -110,7 +110,7 @@ func (db *DB) InsertBucket(form *model.CreateBucketForm) (bucket *Bucket, err er
 	return
 }
 
-// InsertFile 主要用于同名文件冲突时的逐一处理.
+// InsertFile 主要用于同名檔案冲突时的逐一处理.
 func (db *DB) InsertFile(file *File) (*File, error) {
 	if err := insertFile(db.DB, file); err != nil {
 		return nil, err
@@ -120,7 +120,7 @@ func (db *DB) InsertFile(file *File) (*File, error) {
 }
 
 // InsertFiles inserts files into the database.
-// 注意, 在使用该函数之前, 请先使用 db.CheckSameFiles() 检查全部等待处理的文件.
+// 注意, 在使用该函数之前, 请先使用 db.CheckSameFiles() 检查全部等待处理的檔案.
 func (db *DB) InsertFiles(files []*File) error {
 	tx := db.mustBegin()
 	defer tx.Rollback()
@@ -134,9 +134,9 @@ func (db *DB) InsertFiles(files []*File) error {
 	return tx.Commit()
 }
 
-// CheckSameFiles 检查有无同名/相同内容的文件,
-// 发现相同内容的文件时, 记录全部重复文件,
-// 但发现同名文件时, 则立即返回错误 (因为前端需要对同名文件进行逐个处理).
+// CheckSameFiles 检查有无同名/相同内容的檔案,
+// 发现相同内容的檔案时, 记录全部重复檔案,
+// 但发现同名檔案时, 则立即返回错误 (因为前端需要对同名檔案进行逐个处理).
 func (db *DB) CheckSameFiles(files []*File) (allErr error) {
 	for _, file := range files {
 		if err := db.checkSameFile(file); err != nil {
@@ -149,8 +149,8 @@ func (db *DB) CheckSameFiles(files []*File) (allErr error) {
 	return
 }
 
-// CheckSameFile 发现有相同文件 (同名或同内容) 时返回错误,
-// 未发现相同文件则返回 nil 或其他错误.
+// CheckSameFile 发现有相同檔案 (同名或同内容) 时返回错误,
+// 未发现相同檔案则返回 nil 或其他错误.
 func (db *DB) checkSameFile(file *File) error {
 	if err := db.checkSameFilename(file); err != nil {
 		return err
@@ -158,7 +158,7 @@ func (db *DB) checkSameFile(file *File) error {
 	return db.checkSameChecksum(file)
 }
 
-// 有同名文件时返回 ErrSameNameFiles, 无同名文件则返回 nil 或其他错误.
+// 有同名檔案时返回 ErrSameNameFiles, 无同名檔案则返回 nil 或其他错误.
 func (db *DB) checkSameFilename(file *File) error {
 	same, err := db.GetFileByName(file.Name)
 	if err == nil && len(same.Name) > 0 {
@@ -170,12 +170,12 @@ func (db *DB) checkSameFilename(file *File) error {
 	return err
 }
 
-// 有相同内容的文件时返回 error(相同内容的文件已存在),
-// 无相同内容的文件则返回 nil 或其他错误.
+// 有相同内容的檔案时返回 error(相同内容的檔案已存在),
+// 无相同内容的檔案则返回 nil 或其他错误.
 func (db *DB) checkSameChecksum(file *File) error {
 	same, err := db.GetFileByChecksum(file.Checksum)
 	if err == nil && len(same.Name) > 0 {
-		return fmt.Errorf("相同内容的文件(檔案)已存在: %s", same.Name)
+		return fmt.Errorf("相同内容的檔案(檔案)已存在: %s", same.Name)
 	}
 	if errors.Is(err, sql.ErrNoRows) {
 		err = nil

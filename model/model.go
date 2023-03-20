@@ -49,7 +49,7 @@ type Bucket struct {
 	Title    string `json:"title"`
 	Subtitle string `json:"subtitle"`
 
-	// 容量 (最多可容納多少個文件)
+	// 容量 (最多可容納多少個檔案)
 	Capacity int64 `json:"capacity"`
 
 	// 是否加密 (在創建時決定, 不可更改) (密碼在 ProjectConfig 中統一設定)
@@ -74,27 +74,27 @@ func NewBucket(form *CreateBucketForm) (*Bucket, error) {
 	return b, nil
 }
 
-// File 文件.
+// File 檔案.
 // Notes 與 Keywords 本質上是一樣的, 只是一行字符串, 用來輔助搜尋.
 type File struct {
 	ID       int64  `json:"id"`       // 自動數字ID
 	Checksum string `json:"checksum"` // NOT NULL UNIQUE
 	BucketID string `json:"bucketid"` // Bucket.ID
-	Name     string `json:"name"`     // 文件名
+	Name     string `json:"name"`     // 檔案名
 	Notes    string `json:"notes"`    // 備註
 	Keywords string `json:"keywors"`  // 關鍵詞, 便於搜尋
 	Size     int64  `json:"size"`     // length in bytes for regular files
-	Type     string `json:"type"`     // 文件類型, 例: text/js, office/docx
+	Type     string `json:"type"`     // 檔案類型, 例: text/js, office/docx
 	Like     int64  `json:"like"`     // 點贊
-	CTime    string `json:"ctime"`    // RFC3339 文件入庫時間
-	UTime    string `json:"utime"`    // RFC3339 文件更新時間
-	Checked  string `json:"checked"`  // RFC3339 上次校驗文件完整性的時間
-	Damaged  bool   `json:"damaged"`  // 上次校驗結果 (文件是否損壞)
-	Deleted  bool   `json:"deleted"`  // 把文件标记为 "已删除"
+	CTime    string `json:"ctime"`    // RFC3339 檔案入庫時間
+	UTime    string `json:"utime"`    // RFC3339 檔案更新時間
+	Checked  string `json:"checked"`  // RFC3339 上次校驗檔案完整性的時間
+	Damaged  bool   `json:"damaged"`  // 上次校驗結果 (檔案是否損壞)
+	Deleted  bool   `json:"deleted"`  // 把檔案标记为 "已删除"
 }
 
-// NewWaitingFile 根据 filePath 生成新文件,
-// 其中 filePath 是等待上传的文件的路径.
+// NewWaitingFile 根据 filePath 生成新檔案,
+// 其中 filePath 是等待上传的檔案的路径.
 func NewWaitingFile(filePath string) (*File, error) {
 	info, err := os.Lstat(filePath)
 	if err != nil {
@@ -123,7 +123,7 @@ func NewWaitingFile(filePath string) (*File, error) {
 	return f, nil
 }
 
-// NewFile 根据 root, bucketID, basename 生成新文件,
+// NewFile 根据 root, bucketID, basename 生成新檔案,
 // 其中 root 是專案根目录.
 func NewFile(root, bucketID, basename string) (*File, error) {
 	now := Now()
@@ -173,7 +173,7 @@ func typeByFilename(filename string) (filetype string) {
 	return filetype
 }
 
-// FilesToString 把多个文件转换为多个文件的 ID 的字符串.
+// FilesToString 把多个檔案转换为多个檔案的 ID 的字符串.
 func FilesToString(files []File) string {
 	ids := lo.Map(files, func(x File, _ int) string {
 		return strconv.Itoa(int(x.ID))

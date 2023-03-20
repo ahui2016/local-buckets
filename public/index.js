@@ -1,6 +1,6 @@
 const pageTitle = m("h5").text("Local Buckets").addClass("display-5");
 const pageSubtitle = m("p")
-  .text("本地文件倉庫 (管理文件, 備份文件)")
+  .text("本地資料倉庫 (管理資料, 備份資料)")
   .addClass(".lead");
 const pageTitleArea = m("div")
   .append(pageTitle, pageSubtitle)
@@ -23,10 +23,10 @@ const ProjectInfo = cc("div", {
             event.preventDefault();
             ProjectInfoAlert.insert(
               "info",
-              "用文本編輯器打開專案文件夾(資料夾)內的 project.toml, 可更改專案設定. " +
-                "注意, 用 utf-8 編碼保存文件. " +
+              "用文本編輯器打開專案資料夾內的 project.toml, 可更改專案設定. " +
+                "注意, 用 utf-8 編碼保存檔案. " +
                 "需要重啟程式才生效.",
-              "no-prefix"
+              "no-time"
             );
           }),
         m(ProjectInfoAlert)
@@ -50,6 +50,7 @@ ProjectInfo.fill = (project) => {
 
 const LinkList = cc("div", {
   children: [
+    createIndexItem("Upload", "waiting.html", "上傳檔案"),
     createIndexItem("Create Bucket", "create-bucket.html", "新建倉庫"),
     createIndexItem("Change Password", "change-password.html", "更改密碼"),
   ],
@@ -85,14 +86,14 @@ function createIndexItem(text, link, description) {
   return m("div")
     .addClass("row mb-2 g-1")
     .append(
+      m("div").addClass("col text-end").text(description),
       m("div")
-        .addClass("col text-end")
+        .addClass("col")
         .append(
           m("a")
             .text(text)
             .attr({ href: link })
             .addClass("text-decoration-none")
-        ),
-      m("div").addClass("col").text(description)
+        )
     );
 }
