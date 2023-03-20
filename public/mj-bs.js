@@ -122,6 +122,7 @@ MJBS.createAlert = function () {
 
   alert.clear = () => {
     alert.elem().html("");
+    return alert;
   };
 
   return alert;

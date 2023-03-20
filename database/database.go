@@ -175,7 +175,7 @@ func (db *DB) checkSameFilename(file *File) error {
 func (db *DB) checkSameChecksum(file *File) error {
 	same, err := db.GetFileByChecksum(file.Checksum)
 	if err == nil && len(same.Name) > 0 {
-		return fmt.Errorf("相同内容的檔案(檔案)已存在: %s", same.Name)
+		return fmt.Errorf("相同内容的檔案已存在: %s ↔ %s", file.Name, same.Name)
 	}
 	if errors.Is(err, sql.ErrNoRows) {
 		err = nil

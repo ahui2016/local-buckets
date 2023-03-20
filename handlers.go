@@ -152,7 +152,7 @@ func moveWaitingFiles(files []*File) (movedFiles []MovedFile, err error) {
 func moveWaitingFileToBucket(file *File) (MovedFile, error) {
 	movedFile := MovedFile{
 		Src: filepath.Join(WaitingFolder, file.Name),
-		Dst: filepath.Join(ProjectRoot, file.BucketID, file.Name),
+		Dst: filepath.Join(BucketsFolder, file.BucketID, file.Name),
 	}
 	err := movedFile.Move()
 	return movedFile, err

@@ -18,6 +18,32 @@ const navBar = m("div")
 
 const PageAlert = MJBS.createAlert();
 
+const BucketSelect = cc("select", {
+  classes: "form-select",
+  children: [
+    m("option")
+      .prop("selected", true)
+      .attr({ value: "" })
+      .text("請選擇一個倉庫..."),
+  ],
+});
+
+const BucketSelectGroup = cc("div", {
+  classes: 'input-group input-group-lg',
+  children: [
+    span('Bucket').addClass('input-group-text'),
+    m(BucketSelect)
+  ]
+});
+
+function BucketItem(bucket) {
+  return cc("option", {
+    id: "B-" + bucket.id,
+    attr: { value: bucket.id, title: bucket.id },
+    text: bucket.title,
+  });
+}
+
 const WaitingFileList = cc("ul", { classes: "list-group list-group-flush" });
 
 function FileItem(file) {
@@ -33,22 +59,71 @@ function FileItem(file) {
   });
 }
 
+const UploadButton = MJBS.createButton('Upload');
+const UploadAlert = MJBS.createAlert();
+const UploadButtonArea = cc("div", {
+  classes: "text-center",
+  children: [
+    m(UploadAlert),
+    m(UploadButton).on('click', (event) => {
+    event.preventDefault();
+    const bucketid = BucketSelect.elem().val();
+    if (!bucketid) {
+      UploadAlert.insert("warning", "請選擇一個倉庫");
+      return;
+    }
+    axiosPost({
+      url: '/api/upload-new-files',
+      body: {bucketid: bucketid},
+      alert: UploadAlert,
+      onSuccess: () => {
+        UploadAlert.clear().insert("success", "上傳成功");
+      }
+    })
+  })],
+})
+
 $("#root")
   .css(RootCss)
   .append(
     navBar.addClass("my-3"),
     m(PageAlert).addClass("my-5"),
-    m(WaitingFileList).addClass("my-5")
+    m(BucketSelectGroup).addClass("my-5").hide(),
+    m(WaitingFileList).addClass("my-5"),
+    m(UploadButtonArea).addClass("my-5").hide(),
   );
 
 init();
 
-function init() {
+async function init() {
+  if (await initBucketSelect() == "fail") {
+    return;
+  }
   getWaitingFolder();
   getWaitingFiles();
 }
 
-// https://briian.com/
+function initBucketSelect() {
+  return new Promise((resolve) => {
+    axiosGet({
+      url: "/api/all-buckets",
+      alert: PageAlert,
+      onSuccess: (resp) => {
+        const buckets = resp.data;
+        if (buckets && buckets.length > 0) {
+          MJBS.appendToList(BucketSelect, buckets.map(BucketItem));
+          resolve("success");
+        } else {
+          PageAlert.insert(
+            "warning",
+            "沒有倉庫, 請返回首頁, 點擊 Create Bucket 新建倉庫."
+          );
+          resolve("fail");
+        }
+      },
+    });
+  });
+}
 
 function getWaitingFiles() {
   axios
@@ -56,6 +131,8 @@ function getWaitingFiles() {
     .then((resp) => {
       const files = resp.data;
       if (files && files.length > 0) {
+        BucketSelectGroup.show();
+        UploadButtonArea.show();
         MJBS.appendToList(WaitingFileList, files.map(FileItem));
         PageAlert.insert(
           "light",
