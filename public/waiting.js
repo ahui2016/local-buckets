@@ -174,12 +174,14 @@ function getWaitingFilesErrorHandler(err, alert) {
       return;
     }
     if (err.response.data.errType == 'ErrSameNameFiles') {
-      alert.insert("danger", "檔案名稱重複");
+      const errSameName = err.response.data;
+      console.log(errSameName);
+      alert.insert("warning", "檔案名稱重複, 請處理.");
       SameNameRadioCard.show();
-      SameNameRadioCard.init();
+      SameNameRadioCard.init(errSameName.file);
       return;
     }
-    alert.insert('danger', JSON.stringify(data));
+    alert.insert('danger', JSON.stringify(err.response.data));
     return;
   }
 
