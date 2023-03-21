@@ -152,15 +152,15 @@ func (db *DB) CheckSameFiles(files []*File) (allErr error) {
 // CheckSameFile 发现有相同檔案 (同名或同内容) 时返回错误,
 // 未发现相同檔案则返回 nil 或其他错误.
 func (db *DB) checkSameFile(file *File) error {
-	if err := db.checkSameFilename(file); err != nil {
+	if err := db.CheckSameFilename(file.Name); err != nil {
 		return err
 	}
 	return db.checkSameChecksum(file)
 }
 
 // 有同名檔案时返回 ErrSameNameFiles, 无同名檔案则返回 nil 或其他错误.
-func (db *DB) checkSameFilename(file *File) error {
-	same, err := db.GetFileByName(file.Name)
+func (db *DB) CheckSameFilename(name string) error {
+	same, err := db.GetFileByName(name)
 	if err == nil && len(same.Name) > 0 {
 		return model.NewErrSameNameFiles(same)
 	}

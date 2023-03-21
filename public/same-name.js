@@ -64,19 +64,29 @@ SameNameFile.init = (file) => {
 
 const RenameInput = MJBS.createInput();
 const RenameBtn = MJBS.createButton('Rename');
+const RenameAlert = MJBS.createAlert();
 const RenameForm = cc('div', {
   classes: 'input-group',
   children: [
     m(RenameInput),
     m(RenameBtn).on('click', (event) => {
       event.preventDefault();
+      axiosPost({
+        url: "/api/rename-waiting-file",
+        alert: RenameAlert,
+        body: {
+          old_name: RenameInput.old_name,
+          new_name: MJBS.valOf(RenameInput, 'trim'),
+        },
+      });
     })
   ]
 });
 const RenameArea = cc("div", {
   children: [
     m('div').text('在此更改待上傳檔案的名稱, 注意保留副檔名(擴展名)').addClass('mb-1'),
-    m(RenameForm),
+    m(RenameForm).addClass('mb-2'),
+    m(RenameAlert)
   ]
 })
 
@@ -121,6 +131,7 @@ SameNameRadioCard.init = (file) => {
   });
   SameNameFile.init(file);
   RenameInput.elem().val(file.name);
+  RenameInput.old_name = file.Name;
 };
 
 function getSameNameRadioValue() {

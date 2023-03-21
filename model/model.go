@@ -198,6 +198,11 @@ type ChangePwdForm struct {
 	NewPassword string `json:"new_password" validate:"required"`
 }
 
+type RenameWaitingFileForm struct {
+	OldName string `json:"old_name" validate:"required"`
+	NewName string `json:"new_name" validate:"required"`
+}
+
 type UploadToBucketForm struct {
 	BucketID string `json:"bucketid" validate:"required"`
 }
@@ -230,7 +235,7 @@ func NewErrSameNameFiles(file File) ErrSameNameFiles {
 }
 
 func (e ErrSameNameFiles) Error() string {
-	return "同名檔案已存在(檔案名稱不分大小寫): " + e.File.Name
+	return "倉庫中已有同名檔案(檔案名稱不分大小寫): " + e.File.Name
 }
 
 // GetMIME returns the content-type of a file extension.

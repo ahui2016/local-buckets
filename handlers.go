@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -91,6 +92,38 @@ func getWaitingFiles(c *fiber.Ctx) error {
 		return err
 	}
 	return c.JSON(files)
+}
+
+func renameWaitingFile(c *fiber.Ctx) error {
+	form := new(model.RenameWaitingFileForm)
+	if err := parseValidate(form, c); err != nil {
+		return err
+	}
+	exists, err := waitingFileNameExists(form.NewName)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return fmt.Errorf("重命名失敗, 待上傳檔案中已有同名檔案: %s", form.NewName)
+	}
+	if err := db.CheckSameFilename(form.NewName); err != nil {
+		return err
+	}
+	oldPath := filepath.Join(WaitingFolder, form.OldName)
+	newPath := filepath.Join(WaitingFolder, form.NewName)
+	return os.Rename(oldPath, newPath)
+}
+
+func waitingFileNameExists(name string) (ok bool, err error) {
+	files, err := util.GetRegularFiles(WaitingFolder)
+	if err != nil {
+		return
+	}
+	filenames := lo.Map(files, func(filename string, _ int) string {
+		return strings.ToLower(filepath.Base(filename))
+	})
+	ok = lo.Contains(filenames, strings.ToLower(name))
+	return
 }
 
 // uploadNewFiles 只上传新檔案,
