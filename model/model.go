@@ -208,18 +208,22 @@ type UploadToBucketForm struct {
 	BucketID string `json:"bucketid" validate:"required"`
 }
 
+type OverwriteFileForm struct {
+	Filename string `json:"filename" validate:"required"`
+}
+
 type MovedFile struct {
 	Src string
 	Dst string
 }
 
 // Move calls os.Rename, moves the file from Src to Dst.
-func (m MovedFile) Move() error {
+func (m *MovedFile) Move() error {
 	return os.Rename(m.Src, m.Dst)
 }
 
 // Rollback moves the file from Dst back to Src.
-func (m MovedFile) Rollback() error {
+func (m *MovedFile) Rollback() error {
 	return os.Rename(m.Dst, m.Src)
 }
 

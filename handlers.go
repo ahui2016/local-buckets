@@ -43,20 +43,20 @@ func getProjectConfig(c *fiber.Ctx) error {
 }
 
 func checkPassword(c *fiber.Ctx) error {
-	f := new(model.CheckPwdForm)
-	if err := parseValidate(f, c); err != nil {
+	form := new(model.CheckPwdForm)
+	if err := parseValidate(form, c); err != nil {
 		return err
 	}
-	_, err := db.SetAESGCM(f.Password)
+	_, err := db.SetAESGCM(form.Password)
 	return err
 }
 
 func changePassword(c *fiber.Ctx) error {
-	f := new(model.ChangePwdForm)
-	if err := parseValidate(f, c); err != nil {
+	form := new(model.ChangePwdForm)
+	if err := parseValidate(form, c); err != nil {
 		return err
 	}
-	cipherKey, err := db.ChangePassword(f.OldPassword, f.NewPassword)
+	cipherKey, err := db.ChangePassword(form.OldPassword, form.NewPassword)
 	if err != nil {
 		return err
 	}
@@ -74,15 +74,15 @@ func getAllBuckets(c *fiber.Ctx) error {
 }
 
 func createBucket(c *fiber.Ctx) error {
-	f := new(model.CreateBucketForm)
-	if err := parseValidate(f, c); err != nil {
+	form := new(model.CreateBucketForm)
+	if err := parseValidate(form, c); err != nil {
 		return err
 	}
-	bucket, err := db.InsertBucket(f)
+	bucket, err := db.InsertBucket(form)
 	if err != nil {
 		return err
 	}
-	createBucketFolder(f.ID)
+	createBucketFolder(form.ID)
 	return c.JSON(bucket)
 }
 
@@ -133,13 +133,70 @@ func waitingFileNameExists(name string) (ok bool, err error) {
 	return
 }
 
+// TODO: 文件只读
+func overwriteFile(c *fiber.Ctx) error {
+	form := new(model.OverwriteFileForm)
+	if err := parseValidate(form, c); err != nil {
+		return err
+	}
+
+	waitingFile := new(model.MovedFile)
+	waitingFile.Src = filepath.Join(WaitingFolder, form.Filename)
+
+	// 这个 file 主要是为了获取新文件的 checksum, size 等数据.
+	file, err := model.NewWaitingFile(waitingFile.Src)
+	if err != nil {
+		return err
+	}
+	if err := db.CheckSameChecksum(file); err != nil {
+		return err
+	}
+
+	// 这个 fileInDB 主要是为了获取 File.ID 和 BucketID.
+	fileInDB, err := db.GetFileByName(file.Name)
+	if err != nil {
+		return err
+	}
+	file.ID = fileInDB.ID
+	file.BucketID = fileInDB.BucketID
+
+	waitingFile.Dst = filepath.Join(BucketsFolder, file.BucketID, file.Name)
+
+	// 以上是收集信息及检查错误
+	// 以下开始操作文件和数据库
+
+	// tempFile 把旧文件临时移动到安全的地方
+	// 在文件名区分大小写的系统里, 要注意 file.Name 与 fileInDB.Name 可能不同.
+	tempFile := model.MovedFile{
+		Src: filepath.Join(BucketsFolder, file.BucketID, fileInDB.Name),
+		Dst: filepath.Join(TempFolder, fileInDB.Name),
+	}
+	if err = tempFile.Move(); err != nil {
+		return err
+	}
+
+	// 移动新文件进仓库, 如果出错, 必须把旧文件移回原位.
+	if err = waitingFile.Move(); err != nil {
+		err2 := tempFile.Rollback()
+		return util.WrapErrors(err, err2)
+	}
+
+	// 更新数据库信息, 如果出错, 要把 waitingFile 和 tempFile 都移回原位.
+	if err := db.UpdateFileContent(file); err != nil {
+		err2 := waitingFile.Rollback()
+		err3 := tempFile.Rollback()
+		return util.WrapErrors(err, err2, err3)
+	}
+	return nil
+}
+
 // uploadNewFiles 只上传新檔案,
-// 若要更新现有檔案, 则使用 updateFile() 函数.
+// 若要更新现有檔案, 则使用 overwriteFile() 函数.
 func uploadNewFiles(c *fiber.Ctx) error {
-	f := new(model.UploadToBucketForm)
-	err1 := parseValidate(f, c)
-	bucket, err2 := db.GetBucket(f.BucketID)
-	count, err3 := db.GetInt1(stmt.CountFilesInBucket, f.BucketID)
+	form := new(model.UploadToBucketForm)
+	err1 := parseValidate(form, c)
+	bucket, err2 := db.GetBucket(form.BucketID)
+	count, err3 := db.GetInt1(stmt.CountFilesInBucket, form.BucketID)
 	if err := util.WrapErrors(err1, err2, err3); err != nil {
 		return err
 	}
@@ -156,7 +213,7 @@ func uploadNewFiles(c *fiber.Ctx) error {
 	// 以上是检查阶段
 	// 以下是实际执行阶段
 
-	files = setBucketID(f.BucketID, files)
+	files = setBucketID(form.BucketID, files)
 	movedFiles, err := moveWaitingFiles(files)
 	if err != nil {
 		err2 := rollbackMovedFiles(movedFiles)

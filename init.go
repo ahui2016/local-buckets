@@ -23,8 +23,7 @@ const (
 	DatabaseFileName  = "project.db"
 	WaitingFolderName = "waiting"
 	BucketsFolderName = "buckets"
-	TempFolderName    = "temp" // TODO: 删除
-	TempFilesJsonName = "temp_files.json"
+	TempFolderName    = "temp"
 	PublicFolderName  = "public"
 )
 
@@ -37,7 +36,6 @@ var (
 	WaitingFolder     = filepath.Join(ProjectRoot, WaitingFolderName)
 	BucketsFolder     = filepath.Join(ProjectRoot, BucketsFolderName)
 	TempFolder        = filepath.Join(ProjectRoot, TempFolderName)
-	TempFilesJsonPath = filepath.Join(TempFolder, TempFilesJsonName)
 	PublicFolder      = filepath.Join(ProjectRoot, PublicFolderName)
 )
 

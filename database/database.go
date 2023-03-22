@@ -134,6 +134,11 @@ func (db *DB) InsertFiles(files []*File) error {
 	return tx.Commit()
 }
 
+func (db *DB) UpdateFileContent(file *File) error {
+	return db.Exec(
+		stmt.UpdateFileContent, file.Checksum, file.Size, file.UTime, file.ID)
+}
+
 // CheckSameFiles 检查有无同名/相同内容的檔案,
 // 发现相同内容的檔案时, 记录全部重复檔案,
 // 但发现同名檔案时, 则立即返回错误 (因为前端需要对同名檔案进行逐个处理).
@@ -152,7 +157,7 @@ func (db *DB) CheckSameFiles(files []*File) (allErr error) {
 // CheckSameFile 发现有相同檔案 (同名或同内容) 时返回错误,
 // 未发现相同檔案则返回 nil 或其他错误.
 func (db *DB) checkSameFile(file *File) error {
-	if err := db.checkSameChecksum(file); err != nil {
+	if err := db.CheckSameChecksum(file); err != nil {
 		return err
 	}
 	return db.CheckSameFilename(file.Name)
@@ -172,7 +177,7 @@ func (db *DB) CheckSameFilename(name string) error {
 
 // 有相同内容的檔案时返回 error(相同内容的檔案已存在),
 // 无相同内容的檔案则返回 nil 或其他错误.
-func (db *DB) checkSameChecksum(file *File) error {
+func (db *DB) CheckSameChecksum(file *File) error {
 	same, err := db.GetFileByChecksum(file.Checksum)
 	if err == nil && len(same.Name) > 0 {
 		return fmt.Errorf(
