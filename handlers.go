@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/ahui2016/local-buckets/model"
 	"github.com/ahui2016/local-buckets/stmt"
@@ -22,6 +23,12 @@ var validate = validator.New()
 // TextMsg 用于向前端返回一个简单的文本消息。
 type TextMsg struct {
 	Text string `json:"text"`
+}
+
+// sleep is a middleware.
+func sleep(c *fiber.Ctx) error {
+	time.Sleep(time.Second)
+	return c.Next()
 }
 
 func parseValidate(form any, c *fiber.Ctx) error {
@@ -104,7 +111,7 @@ func renameWaitingFile(c *fiber.Ctx) error {
 		return err
 	}
 	if exists {
-		return fmt.Errorf("重命名失敗, 待上傳檔案中已有同名檔案: %s", form.NewName)
+		return fmt.Errorf("重命名失敗, waiting 中已有同名檔案: %s", form.NewName)
 	}
 	if err := db.CheckSameFilename(form.NewName); err != nil {
 		return err

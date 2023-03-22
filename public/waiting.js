@@ -169,19 +169,20 @@ function getWaitingFolder() {
 
 function getWaitingFilesErrorHandler(err, alert) {
   if (err.response) {
-    if (typeof err.response.data === "string") {
-      alert.insert("danger", data);
+    const respData = err.response.data;
+    if (typeof respData === "string") {
+      alert.insert("danger", respData);
       return;
     }
     if (err.response.data.errType == 'ErrSameNameFiles') {
-      const errSameName = err.response.data;
+      const errSameName = respData;
       console.log(errSameName);
       alert.insert("warning", "檔案名稱重複, 請處理.");
       SameNameRadioCard.show();
       SameNameRadioCard.init(errSameName.file);
       return;
     }
-    alert.insert('danger', JSON.stringify(err.response.data));
+    alert.insert('danger', JSON.stringify(respData));
     return;
   }
 

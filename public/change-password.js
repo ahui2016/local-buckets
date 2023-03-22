@@ -18,41 +18,53 @@ const navBar = m("div")
 
 const PageAlert = MJBS.createAlert();
 
-const OldPasswordInput = MJBS.createInput('password', 'required');
-const NewPasswordInput = MJBS.createInput('password', 'required');
-const ConfirmPwdInput = MJBS.createInput('password', 'required');
+const OldPasswordInput = MJBS.createInput("password", "required");
+const NewPasswordInput = MJBS.createInput("password", "required");
+const ConfirmPwdInput = MJBS.createInput("password", "required");
 const ChangePwdBtn = MJBS.createButton("Submit", "primary", "submit");
 
 const ChangePwdForm = cc("form", {
   attr: { autocomplete: "off" },
   children: [
-    MJBS.createFormControl(OldPasswordInput, "Old Password", "舊密碼 (當前密碼)"),
+    MJBS.createFormControl(
+      OldPasswordInput,
+      "Old Password",
+      "舊密碼 (當前密碼)"
+    ),
     MJBS.createFormControl(NewPasswordInput, "New Password", "新密碼"),
-    MJBS.createFormControl(ConfirmPwdInput, "Confirm New Password", "再輸入一次新密碼"),
+    MJBS.createFormControl(
+      ConfirmPwdInput,
+      "Confirm New Password",
+      "再輸入一次新密碼"
+    ),
     m(ChangePwdBtn).on("click", (event) => {
       event.preventDefault();
+      MJBS.disable(ChangePwdBtn);  // --------------------- disable
       const oldPwd = OldPasswordInput.val();
       const newPwd = NewPasswordInput.val();
       const newPwd2 = ConfirmPwdInput.val();
-      if (oldPwd == '' || newPwd == '') {
-        PageAlert.insert('warning', '請填寫舊密碼和新密碼');
+      if (oldPwd == "" || newPwd == "") {
+        PageAlert.insert("warning", "請填寫舊密碼和新密碼");
         return;
       }
       if (newPwd != newPwd2) {
-        PageAlert.insert('warning', '兩次輸入新密碼必須相同');
+        PageAlert.insert("warning", "兩次輸入新密碼必須相同");
         return;
       }
       axiosPost({
         url: "/api/change-password",
         body: {
           old_password: oldPwd,
-          new_password: newPwd
+          new_password: newPwd,
         },
         alert: PageAlert,
         onSuccess: () => {
           PageAlert.clear();
           PageAlert.insert("success", "已成功更換密碼");
         },
+        onAlways: () => {
+          MJBS.enable(ChangePwdBtn);  // ------------------- enable
+        }
       });
     }),
   ],
@@ -69,6 +81,10 @@ $("#root")
 init();
 
 function init() {
-  PageAlert.insert('primary', '提醒: 請記住新密碼, 一旦忘記將無法解密.', "no-time");
+  PageAlert.insert(
+    "primary",
+    "提醒: 請記住新密碼, 一旦忘記將無法解密. (初始密碼: abc123)",
+    "no-time"
+  );
   MJBS.focus(OldPasswordInput);
 }

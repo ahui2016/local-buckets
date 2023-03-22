@@ -71,13 +71,24 @@ const RenameForm = cc('div', {
     m(RenameInput),
     m(RenameBtn).on('click', (event) => {
       event.preventDefault();
+      const new_name = MJBS.valOf(RenameInput, 'trim');
+      if (new_name == RenameInput.old_name) {
+        RenameAlert.insert('warning', '檔案名稱未變更.');
+        return;
+      }
       axiosPost({
         url: "/api/rename-waiting-file",
         alert: RenameAlert,
         body: {
           old_name: RenameInput.old_name,
-          new_name: MJBS.valOf(RenameInput, 'trim'),
+          new_name: new_name,
         },
+        onSuccess: () => {
+          RenameAlert.insert('success', 'Rename Success! 三秒後自動刷新.');
+          setTimeout(() => {
+            window.location.reload();
+          }, 3000);
+        }
       });
     })
   ]
@@ -131,7 +142,7 @@ SameNameRadioCard.init = (file) => {
   });
   SameNameFile.init(file);
   RenameInput.elem().val(file.name);
-  RenameInput.old_name = file.Name;
+  RenameInput.old_name = file.name;
 };
 
 function getSameNameRadioValue() {

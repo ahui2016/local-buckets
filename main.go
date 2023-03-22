@@ -11,7 +11,7 @@ func main() {
 
 	app.Static("/", PublicFolder)
 
-	api := app.Group("/api")
+	api := app.Group("/api", sleep)
 	api.Get("/project-config", getProjectConfig) // resp.data: Project
 	api.Get("/all-buckets", getAllBuckets)       // resp.data: null | Bucket[]
 	api.Post("/create-bucket", createBucket)     // resp.data: Bucket

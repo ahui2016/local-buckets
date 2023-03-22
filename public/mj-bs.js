@@ -603,7 +603,7 @@ function axiosGet(options) {
       options.alert.insert("danger", axiosErrToStr(err, options.data2str));
     })
     .then(() => {
-      if (options.onAlways) onAlways();
+      if (options.onAlways) options.onAlways();
     });
 }
 
@@ -620,7 +620,7 @@ function axiosPost(options) {
       options.alert.insert("danger", axiosErrToStr(err, options.data2str));
     })
     .then(() => {
-      if (options.onAlways) onAlways();
+      if (options.onAlways) options.onAlways();
     });
 }
 
