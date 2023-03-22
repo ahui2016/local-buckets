@@ -9,6 +9,7 @@ const pageTitleArea = m("div")
 const AppAlert = MJBS.createAlert();
 
 const ProjectInfoAlert = MJBS.createAlert();
+const ProjectInfoLoading = MJBS.createLoading("", "large");
 
 const ProjectInfo = cc("div", {
   classes: "card",
@@ -34,6 +35,7 @@ const ProjectInfo = cc("div", {
     m("div")
       .addClass("card-body")
       .append(
+        m(ProjectInfoLoading).addClass("my-3"),
         m("div").addClass("Project-Title card-title fw-bold"),
         m("div").addClass("Project-Subtitle text-muted"),
         m("div").addClass("Project-Path text-muted")
@@ -78,6 +80,9 @@ function initProjectInfo() {
     onSuccess: (resp) => {
       const project = resp.data;
       ProjectInfo.fill(project);
+    },
+    onAlways: () => {
+      ProjectInfoLoading.hide();
     },
   });
 }

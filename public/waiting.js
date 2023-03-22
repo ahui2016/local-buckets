@@ -17,6 +17,7 @@ const navBar = m("div")
   );
 
 const PageAlert = MJBS.createAlert();
+const PageLoading = MJBS.createLoading(null, "large");
 
 const BucketSelect = cc("select", {
   classes: "form-select",
@@ -29,11 +30,8 @@ const BucketSelect = cc("select", {
 });
 
 const BucketSelectGroup = cc("div", {
-  classes: 'input-group input-group-lg',
-  children: [
-    span('Bucket').addClass('input-group-text'),
-    m(BucketSelect)
-  ]
+  classes: "input-group input-group-lg",
+  children: [span("Bucket").addClass("input-group-text"), m(BucketSelect)],
 });
 
 function BucketItem(bucket) {
@@ -59,29 +57,34 @@ function FileItem(file) {
   });
 }
 
-const UploadButton = MJBS.createButton('Upload');
+const UploadButton = MJBS.createButton("Upload");
 const UploadAlert = MJBS.createAlert();
 const UploadButtonArea = cc("div", {
   classes: "text-center",
   children: [
     m(UploadAlert),
-    m(UploadButton).on('click', (event) => {
-    event.preventDefault();
-    const bucketid = BucketSelect.elem().val();
-    if (!bucketid) {
-      UploadAlert.insert("warning", "請選擇一個倉庫");
-      return;
-    }
-    axiosPost({
-      url: '/api/upload-new-files',
-      body: {bucketid: bucketid},
-      alert: UploadAlert,
-      onSuccess: () => {
-        UploadAlert.clear().insert("success", "上傳成功");
+    m(UploadButton).on("click", (event) => {
+      event.preventDefault();
+      const bucketid = BucketSelect.elem().val();
+      if (!bucketid) {
+        UploadAlert.insert("warning", "請選擇一個倉庫");
+        return;
       }
-    })
-  })],
-})
+      MJBS.disable(UploadButton); // --------------------- disable
+      axiosPost({
+        url: "/api/upload-new-files",
+        body: { bucketid: bucketid },
+        alert: UploadAlert,
+        onSuccess: () => {
+          UploadAlert.clear().insert("success", "上傳成功");
+        },
+        onAlways: () => {
+          MJBS.enable(UploadButton); // ------------------- enable
+        },
+      });
+    }),
+  ],
+});
 
 $("#root")
   .css(RootCss)
@@ -92,12 +95,13 @@ $("#root")
     m(BucketSelectGroup).addClass("my-5").hide(),
     m(WaitingFileList).addClass("my-5"),
     m(UploadButtonArea).addClass("my-5").hide(),
+    m(PageLoading).addClass("my-5")
   );
 
 init();
 
 async function init() {
-  if (await initBucketSelect() == "fail") {
+  if ((await initBucketSelect()) == "fail") {
     return;
   }
   getWaitingFolder();
@@ -150,6 +154,9 @@ function getWaitingFiles() {
     })
     .catch((err) => {
       getWaitingFilesErrorHandler(err, PageAlert);
+    })
+    .then(() => {
+      PageLoading.hide();
     });
 }
 
@@ -174,7 +181,7 @@ function getWaitingFilesErrorHandler(err, alert) {
       alert.insert("danger", respData);
       return;
     }
-    if (err.response.data.errType == 'ErrSameNameFiles') {
+    if (err.response.data.errType == "ErrSameNameFiles") {
       const errSameName = respData;
       console.log(errSameName);
       alert.insert("warning", "檔案名稱重複, 請處理.");
@@ -182,12 +189,14 @@ function getWaitingFilesErrorHandler(err, alert) {
       SameNameRadioCard.init(errSameName.file);
       return;
     }
-    alert.insert('danger', JSON.stringify(respData));
+    alert.insert("danger", JSON.stringify(respData));
     return;
   }
 
   if (err.request) {
-    const errMsg = err.request.status + " The request was made but no response was received.";
+    const errMsg =
+      err.request.status +
+      " The request was made but no response was received.";
     alert.insert("danger", errMsg);
     return;
   }

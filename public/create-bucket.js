@@ -40,6 +40,7 @@ const CreateBucketForm = cc("form", {
         PageAlert.insert('warning', '請填寫 Bucket ID');
         return;
       }
+      MJBS.disable(CreateBucketBtn);  // --------------------- disable
       axiosPost({
         url: "/api/create-bucket",
         body: {
@@ -52,6 +53,9 @@ const CreateBucketForm = cc("form", {
           // window.location.href = `edit-bucket.html?id=${bucket.id}&new=true`;
           PageAlert.insert('success', JSON.stringify(bucket));
         },
+        onAlways: () => {
+          MJBS.enable(CreateBucketBtn);  // --------------------- enable
+        }
       });
 
     }),

@@ -87,6 +87,30 @@ MJBS.focus = function (obj, timeout = 300) {
 };
 
 /**
+ * 默认居中, 若想修改则填写 classes 参数, 例如 classes = "" 取消居中.
+ * 默认普通尺寸, 若想改成小尺寸, 设定 size = "small",
+ * 若想改成大尺寸, 设定 size = "large".
+ */
+MJBS.createLoading = function (classes = null, size = null) {
+  if (classes === null) classes = "text-center";
+  let spinnerClasses = "spinner-border";
+  let css = {};
+  if (size === "small") spinnerClasses += " spinner-border-sm";
+  if (size === "large") css = { width: "3rem", height: "3rem" };
+
+  return cc("div", {
+    classes: classes,
+    children: [
+      m("div")
+        .addClass(spinnerClasses)
+        .css(css)
+        .attr({ role: "status" })
+        .append(span("Loading...").addClass("visually-hidden")),
+    ],
+  });
+};
+
+/**
  * msgType: primary/secondary/success/danger/warning/info/light/dark
  */
 MJBS.createAlert = function () {

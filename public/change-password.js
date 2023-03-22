@@ -39,7 +39,6 @@ const ChangePwdForm = cc("form", {
     ),
     m(ChangePwdBtn).on("click", (event) => {
       event.preventDefault();
-      MJBS.disable(ChangePwdBtn);  // --------------------- disable
       const oldPwd = OldPasswordInput.val();
       const newPwd = NewPasswordInput.val();
       const newPwd2 = ConfirmPwdInput.val();
@@ -51,6 +50,7 @@ const ChangePwdForm = cc("form", {
         PageAlert.insert("warning", "兩次輸入新密碼必須相同");
         return;
       }
+      MJBS.disable(ChangePwdBtn);  // --------------------- disable
       axiosPost({
         url: "/api/change-password",
         body: {
