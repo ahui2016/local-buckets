@@ -2,6 +2,7 @@ package model
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -235,7 +236,8 @@ func NewErrSameNameFiles(file File) ErrSameNameFiles {
 }
 
 func (e ErrSameNameFiles) Error() string {
-	return "倉庫中已有同名檔案(檔案名稱不分大小寫): " + e.File.Name
+	return fmt.Sprintf(
+		"倉庫中已有同名檔案(檔案名稱不分大小寫): %s/%s", e.File.BucketID, e.File.Name)
 }
 
 // GetMIME returns the content-type of a file extension.

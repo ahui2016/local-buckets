@@ -74,8 +74,10 @@ const RenameForm = cc('div', {
       const new_name = MJBS.valOf(RenameInput, 'trim');
       if (new_name == RenameInput.old_name) {
         RenameAlert.insert('warning', '檔案名稱未變更.');
+        MJBS.focus(RenameInput);
         return;
       }
+      MJBS.disable(RenameBtn);  // ------------------------ disable
       axiosPost({
         url: "/api/rename-waiting-file",
         alert: RenameAlert,
@@ -84,10 +86,14 @@ const RenameForm = cc('div', {
           new_name: new_name,
         },
         onSuccess: () => {
-          RenameAlert.insert('success', 'Rename Success! 三秒後自動刷新.');
+          RenameForm.hide();
+          RenameAlert.clear().insert('success', 'Rename Success! 三秒後自動刷新.');
           setTimeout(() => {
             window.location.reload();
-          }, 3000);
+          }, 5000);
+        },
+        onAlways: () => {
+          MJBS.enable(RenameBtn);  // ------------------------ enable
         }
       });
     })
