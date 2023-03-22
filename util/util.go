@@ -16,10 +16,9 @@ import (
 )
 
 const (
-	ReadonlyFilePerm   = 0555
-	ReadonlyFolderPerm = 0550
-	NormalFilePerm     = 0666
-	NormalFolerPerm    = 0750
+	ReadonlyFilePerm = 0555
+	NormalFilePerm   = 0666
+	NormalFolerPerm  = 0750
 )
 
 type (
@@ -55,23 +54,19 @@ func GetExePath() string {
 	return lo.Must1(os.Executable())
 }
 
-// MustMkdir 创建資料夹, 如果 perm 等于零, 则使用默认权限.
-func MustMkdir(name string, perm fs.FileMode) {
-	if perm == 0 {
-		perm = NormalFolerPerm
-	}
-	lo.Must0(os.Mkdir(name, perm))
+// MustMkdir 创建資料夹.
+// 在 Windows 里, 文件夹的只读属性不起作用, 为了统一行为, 不把文件夹设为只读.
+func MustMkdir(name string) {
+	lo.Must0(os.Mkdir(name, NormalFolerPerm))
 }
 
-// MkdirIfNotExists 创建資料夹, 忽略 ErrExist, 如果 perm 等于零, 则使用默认权限.
-func MkdirIfNotExists(name string, perm fs.FileMode) {
-	if perm == 0 {
-		perm = NormalFolerPerm
-	}
+// MkdirIfNotExists 创建資料夹, 忽略 ErrExist.
+// 在 Windows 里, 文件夹的只读属性不起作用, 为了统一行为, 不把文件夹设为只读.
+func MkdirIfNotExists(name string) {
 	if PathIsExist(name) {
 		return
 	}
-	lo.Must0(os.Mkdir(name, perm))
+	MustMkdir(name)
 }
 
 // WriteFile 写檔案, 如果 perm 等于零, 则使用默认权限.
@@ -138,24 +133,14 @@ func GetRegularFiles(folder string) (files []string, err error) {
 	return files, nil
 }
 
-// UnlockFolder 把資料夹设为可访问, 可添加/删除檔案.
-func UnlockFolder(name string) {
-	lo.Must0(os.Chmod(name, NormalFolerPerm))
-}
-
-// LockFolder 把資料夹设为只读权限 (不可添加/删除檔案)
-func LockFolder(name string) {
-	lo.Must0(os.Chmod(name, ReadonlyFolderPerm))
-}
-
 // UnlockFile 把檔案设为可读写.
-func UnlockFile(name string) {
-	lo.Must0(os.Chmod(name, NormalFilePerm))
+func UnlockFile(name string) error {
+	return os.Chmod(name, NormalFilePerm)
 }
 
 // LockFile 把檔案设为只读权限 (不可写)
-func LockFile(name string) {
-	lo.Must0(os.Chmod(name, ReadonlyFilePerm))
+func LockFile(name string) error {
+	return os.Chmod(name, ReadonlyFilePerm)
 }
 
 // BLAKE2b is faster than MD5, SHA-1, SHA-2, and SHA-3, on 64-bit x86-64 and ARM architectures.

@@ -108,12 +108,34 @@ const RenameArea = cc("div", {
 })
 
 const OverwriteBtn = MJBS.createButton('Overwrite');
+const OverwriteAlert = MJBS.createAlert();
 const OverwriteBtnArea = cc("div", {
   children: [
+    m(OverwriteAlert).addClass('mb-2'),
     span('點擊此按鈕執行覆蓋: '),
-    m(OverwriteBtn),
+    m(OverwriteBtn).on('click', (event) => {
+      event.preventDefault();
+      MJBS.disable(OverwriteBtn);  // ------------------------ disable
+      axiosPost({
+        url: "/api/overwrite-file",
+        alert: OverwriteAlert,
+        body: {
+          filename: RenameInput.old_name,
+        },
+        onSuccess: () => {
+          OverwriteBtn.hide();
+          OverwriteAlert.clear().insert('success', 'Overwrite Success! 三秒後自動刷新.');
+          setTimeout(() => {
+            window.location.reload();
+          }, 5000);
+        },
+        onAlways: () => {
+          MJBS.enable(OverwriteBtn);  // ------------------------ enable
+        }
+      });
+    }),
   ]
-})
+});
 
 const SameNameRadioCard = cc("div", {
   classes: "card",

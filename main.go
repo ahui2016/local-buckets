@@ -20,6 +20,7 @@ func main() {
 	api.Get("/waiting-files", getWaitingFiles)   // resp.data: File[] | ErrSameNameFiles
 	api.Post("/upload-new-files", uploadNewFiles)
 	api.Post("/rename-waiting-file", renameWaitingFile)
+	api.Post("/overwrite-file", overwriteFile)
 
 	log.Fatal(app.Listen(ProjectConfig.Host))
 }

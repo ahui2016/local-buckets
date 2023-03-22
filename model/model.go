@@ -219,12 +219,16 @@ type MovedFile struct {
 
 // Move calls os.Rename, moves the file from Src to Dst.
 func (m *MovedFile) Move() error {
-	return os.Rename(m.Src, m.Dst)
+	err1 := os.Rename(m.Src, m.Dst)
+	err2 := util.LockFile(m.Dst)
+	return util.WrapErrors(err1, err2)
 }
 
 // Rollback moves the file from Dst back to Src.
 func (m *MovedFile) Rollback() error {
-	return os.Rename(m.Dst, m.Src)
+	err1 := os.Rename(m.Dst, m.Src)
+	err2 := util.LockFile(m.Src)
+	return util.WrapErrors(err1, err2)
 }
 
 type ErrSameNameFiles struct {

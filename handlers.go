@@ -133,7 +133,6 @@ func waitingFileNameExists(name string) (ok bool, err error) {
 	return
 }
 
-// TODO: 文件只读
 func overwriteFile(c *fiber.Ctx) error {
 	form := new(model.OverwriteFileForm)
 	if err := parseValidate(form, c); err != nil {
@@ -187,7 +186,9 @@ func overwriteFile(c *fiber.Ctx) error {
 		err3 := tempFile.Rollback()
 		return util.WrapErrors(err, err2, err3)
 	}
-	return nil
+
+	// 最后删除 tempFile.
+	return os.Remove(tempFile.Dst)
 }
 
 // uploadNewFiles 只上传新檔案,

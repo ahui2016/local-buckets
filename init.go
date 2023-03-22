@@ -50,15 +50,15 @@ func initDB() {
 }
 
 func createFolders() {
-	util.MkdirIfNotExists(WaitingFolder, 0)
-	util.MkdirIfNotExists(BucketsFolder, 0)
-	util.MkdirIfNotExists(TempFolder, 0)
-	util.MkdirIfNotExists(PublicFolder, 0)
+	util.MkdirIfNotExists(WaitingFolder)
+	util.MkdirIfNotExists(BucketsFolder)
+	util.MkdirIfNotExists(TempFolder)
+	util.MkdirIfNotExists(PublicFolder)
 }
 
 func createBucketFolder(bucketID string) {
 	path := filepath.Join(BucketsFolder, bucketID)
-	util.MkdirIfNotExists(path, util.ReadonlyFolderPerm)
+	util.MkdirIfNotExists(path)
 }
 
 func readProjectConfig() {
