@@ -52,6 +52,7 @@ ProjectInfo.fill = (project) => {
 
 const LinkList = cc("div", {
   children: [
+    createIndexItem("Recent Files", "recent-files.html", "最近檔案"),
     createIndexItem("Upload", "waiting.html", "上傳檔案"),
     createIndexItem("Create Bucket", "create-bucket.html", "新建倉庫"),
     createIndexItem("Change Password", "change-password.html", "更改密碼"),
