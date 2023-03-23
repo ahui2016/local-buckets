@@ -305,3 +305,11 @@ func toWaitingFiles(files []string) (map[string]*File, error) {
 
 	return waitingFiles, nil
 }
+
+func getRecentFiles(c *fiber.Ctx) error {
+	files, err := db.GetRecentFiles()
+	if err != nil {
+		return err
+	}
+	return c.JSON(files)
+}

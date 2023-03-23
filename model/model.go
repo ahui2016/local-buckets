@@ -23,10 +23,11 @@ var IdForbidPattern = regexp.MustCompile(`[^0-9a-zA-Z._\-]`)
 
 // Project 專案
 type Project struct {
-	Host      string `json:"host"`
-	Title     string `json:"title"`
-	Subtitle  string `json:"subtitle"`
-	CipherKey string `json:"cipherkey"` // 被加密的真正密鑰
+	Host             string `json:"host"`
+	Title            string `json:"title"`
+	Subtitle         string `json:"subtitle"`
+	CipherKey        string `json:"cipherkey"` // 被加密的真正密鑰
+	RecentFilesLimit int64  `json:"recent_files_limit"`
 }
 
 type ProjectInfo struct {
@@ -35,7 +36,7 @@ type ProjectInfo struct {
 }
 
 func NewProject(title string, cipherkey string) *Project {
-	return &Project{"127.0.0.1:3000", title, "", cipherkey}
+	return &Project{"127.0.0.1:3000", title, "", cipherkey, 100}
 }
 
 // Bucket 倉庫

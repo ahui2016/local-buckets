@@ -111,3 +111,20 @@ func scanFiles(rows *sql.Rows) (all []File, err error) {
 	err = util.WrapErrors(rows.Err(), rows.Close())
 	return
 }
+
+func getFiles(tx TX, query string, args ...any) (files []*File, err error) {
+	rows, err := tx.Query(query, args...)
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+	for rows.Next() {
+		file, err := scanFile(rows)
+		if err != nil {
+			return nil, err
+		}
+		files = append(files, &file)
+	}
+	err = rows.Err()
+	return
+}

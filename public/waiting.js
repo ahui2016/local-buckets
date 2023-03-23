@@ -1,3 +1,5 @@
+$("title").text("Waiting (等待上傳) - Local Buckets");
+
 const navBar = m("div")
   .addClass("row")
   .append(

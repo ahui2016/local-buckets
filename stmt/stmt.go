@@ -57,3 +57,5 @@ const UpdateFileContent = `UPDATE file
 const GetFileByName = `SELECT * FROM file WHERE name=?;`
 
 const GetFileByChecksum = `SELECT * FROM file WHERE checksum=?;`
+
+const GetRecentFiles = `SELECT * FROM file ORDER BY utime DESC LIMIT ?;`

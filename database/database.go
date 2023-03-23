@@ -18,15 +18,17 @@ type (
 	Base64String     = string
 	Bucket           = model.Bucket
 	File             = model.File
+	Project          = model.Project
 	ErrSameNameFiles = model.ErrSameNameFiles
 )
 
 type DB struct {
-	Path        string
-	ProjectPath string
-	DB          *sql.DB
-	cipherKey   HexString
-	aesgcm      cipher.AEAD
+	Path             string
+	ProjectPath      string
+	RecentFilesLimit int64
+	DB               *sql.DB
+	cipherKey        HexString
+	aesgcm           cipher.AEAD
 }
 
 func (db *DB) Exec(query string, args ...any) (err error) {
@@ -46,13 +48,16 @@ func (db *DB) mustBegin() *sql.Tx {
 	return lo.Must(db.DB.Begin())
 }
 
-func (db *DB) Open(dbPath, pjPath string, cipherKey HexString) (err error) {
+func (db *DB) Open(
+	dbPath, pjPath string, cipherKey HexString, projCfg *Project,
+) (err error) {
 	const turnOnForeignKeys = "?_pragma=foreign_keys(1)"
 	if db.DB, err = sql.Open("sqlite", dbPath+turnOnForeignKeys); err != nil {
 		return
 	}
 	db.Path = dbPath
 	db.ProjectPath = pjPath
+	db.RecentFilesLimit = projCfg.RecentFilesLimit
 	if err = db.Exec(stmt.CreateTables); err != nil {
 		return
 	}
@@ -197,4 +202,20 @@ func (db *DB) GetFileByChecksum(checksum string) (File, error) {
 func (db *DB) GetFileByName(name string) (File, error) {
 	row := db.QueryRow(stmt.GetFileByName, name)
 	return scanFile(row)
+}
+
+func (db *DB) GetRecentFiles() (files []*File, err error) {
+	files, err = getFiles(db.DB, stmt.GetRecentFiles, db.RecentFilesLimit)
+	if err != nil {
+		return
+	}
+	files = RemoveChecksum(files)
+	return
+}
+
+func RemoveChecksum(files []*File) []*File {
+	for i := range files {
+		files[i].Checksum = ""
+	}
+	return files
 }

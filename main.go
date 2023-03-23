@@ -22,5 +22,7 @@ func main() {
 	api.Post("/rename-waiting-file", renameWaitingFile)
 	api.Post("/overwrite-file", overwriteFile)
 
+	api.Get("/recent-files", getRecentFiles) // resp.data: File[]
+
 	log.Fatal(app.Listen(ProjectConfig.Host))
 }
