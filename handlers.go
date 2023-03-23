@@ -313,3 +313,40 @@ func getRecentFiles(c *fiber.Ctx) error {
 	}
 	return c.JSON(files)
 }
+
+func updateFileInfo(c *fiber.Ctx) error {
+	form := new(model.UpdateFileInfoForm)
+	if err := parseValidate(form, c); err != nil {
+		return err
+	}
+	if err := checkFileName(form.Name); err != nil {
+		return err
+	}
+	file, err := db.GetFileByID(form.ID)
+	if err != nil {
+		return err
+	}
+	if form.UTime == "" {
+		form.UTime = model.Now()
+	}
+	file.Name = form.Name
+	file.Notes = form.Notes
+	file.Keywords = form.Keywords
+	file.Like = form.Like
+	file.CTime = form.CTime
+	file.UTime = form.UTime
+}
+
+func checkFileName(name string) error {
+	return util.CheckFileName(filepath.Join(TempFolder, name))
+}
+
+type UpdateFileInfoForm struct {
+	ID       int64  `json:"id" validate:"required"`
+	Name     string `json:"name"`
+	Notes    string `json:"notes"`
+	Keywords string `json:"keywords"`
+	Like     int64  `json:"like"`
+	CTime    string `json:"ctime"`
+	UTime    string `json:"utime"`
+}

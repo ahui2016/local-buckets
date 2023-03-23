@@ -54,6 +54,11 @@ const InsertFile = `INSERT INTO file (
 const UpdateFileContent = `UPDATE file
 	SET checksum=?, size=?, utime=?, damaged=FALSE WHERE id=?;`
 
+const UpdateFileInfo = `UPDATE file SET name=?, notes=?,
+	keywords=?, type=?, like=?, ctime=?, utime=? WHERE id=?;`
+
+const GetFileByID = `SELECT * FROM file WHERE id=?;`
+
 const GetFileByName = `SELECT * FROM file WHERE name=?;`
 
 const GetFileByChecksum = `SELECT * FROM file WHERE checksum=?;`

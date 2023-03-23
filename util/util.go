@@ -189,3 +189,13 @@ func DeleteFiles(files []string) (err error) {
 	}
 	return err
 }
+
+// CheckFileName 尝试创建文件, 以确保文件名合法.
+func CheckFileName(tempFile string) error {
+	data := []byte("aabbcc") // 随便写入一些内容
+	if err := WriteFile(tempFile, data, 0); err != nil {
+		return err
+	}
+	// 如果正常创建文件, 则删除文件.
+	return os.Remove(tempFile)
+}

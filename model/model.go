@@ -84,7 +84,7 @@ type File struct {
 	BucketID string `json:"bucketid"` // Bucket.ID
 	Name     string `json:"name"`     // 檔案名
 	Notes    string `json:"notes"`    // 備註
-	Keywords string `json:"keywors"`  // 關鍵詞, 便於搜尋
+	Keywords string `json:"keywords"` // 關鍵詞, 便於搜尋
 	Size     int64  `json:"size"`     // length in bytes for regular files
 	Type     string `json:"type"`     // 檔案類型, 例: text/js, office/docx
 	Like     int64  `json:"like"`     // 點贊
@@ -211,6 +211,16 @@ type UploadToBucketForm struct {
 
 type OverwriteFileForm struct {
 	Filename string `json:"filename" validate:"required"`
+}
+
+type UpdateFileInfoForm struct {
+	ID       int64  `json:"id" validate:"required"`
+	Name     string `json:"name" validate:"required"`
+	Notes    string `json:"notes"`
+	Keywords string `json:"keywords"`
+	Like     int64  `json:"like"`
+	CTime    string `json:"ctime"`
+	UTime    string `json:"utime"`
 }
 
 type MovedFile struct {

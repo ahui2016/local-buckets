@@ -144,6 +144,11 @@ func (db *DB) UpdateFileContent(file *File) error {
 		stmt.UpdateFileContent, file.Checksum, file.Size, file.UTime, file.ID)
 }
 
+func (db *DB) UpdateFileInfo(file *File) error {
+	return db.Exec(stmt.UpdateFileInfo, file.Name, file.Notes,
+		file.Keywords, file.Type, file.Like, file.CTime, file.UTime, file.ID)
+}
+
 // CheckSameFiles 检查有无同名/相同内容的檔案,
 // 发现相同内容的檔案时, 记录全部重复檔案,
 // 但发现同名檔案时, 则立即返回错误 (因为前端需要对同名檔案进行逐个处理).
@@ -201,6 +206,11 @@ func (db *DB) GetFileByChecksum(checksum string) (File, error) {
 
 func (db *DB) GetFileByName(name string) (File, error) {
 	row := db.QueryRow(stmt.GetFileByName, name)
+	return scanFile(row)
+}
+
+func (db *DB) GetFileByID(id int64) (File, error) {
+	row := db.QueryRow(stmt.GetFileByID, id)
 	return scanFile(row)
 }
 
