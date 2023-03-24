@@ -376,6 +376,17 @@ MJBS.createInput = function (type = "text", required = null, id = null) {
     prop: { required: required == "required" ? true : false },
   });
 
+  if (type == "text" || type == "number") {
+    self.setVal = (val) => {
+      self.elem().val(val);
+    };
+  }
+  if (type == "number") {
+    self.intVal = () => {
+      const val = self.elem().val();
+      return parseInt(val);
+    };
+  }
   if (type == "text") {
     self.val = () => {
       return self.elem().val().trim();

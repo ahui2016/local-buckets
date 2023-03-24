@@ -43,11 +43,11 @@ func getProjectConfig(c *fiber.Ctx) error {
 }
 
 func checkPassword(c *fiber.Ctx) error {
-	form := new(model.CheckPwdForm)
+	form := new(model.OneTextForm)
 	if err := parseValidate(form, c); err != nil {
 		return err
 	}
-	_, err := db.SetAESGCM(form.Password)
+	_, err := db.SetAESGCM(form.Text) // password = form.Text
 	return err
 }
 
@@ -134,13 +134,13 @@ func waitingFileNameExists(name string) (ok bool, err error) {
 }
 
 func overwriteFile(c *fiber.Ctx) error {
-	form := new(model.OverwriteFileForm)
+	form := new(model.OneTextForm)
 	if err := parseValidate(form, c); err != nil {
 		return err
 	}
 
 	waitingFile := new(model.MovedFile)
-	waitingFile.Src = filepath.Join(WaitingFolder, form.Filename)
+	waitingFile.Src = filepath.Join(WaitingFolder, form.Text) // filename = form.Text
 
 	// 这个 file 主要是为了获取新文件的 checksum, size 等数据.
 	file, err := model.NewWaitingFile(waitingFile.Src)
@@ -194,10 +194,10 @@ func overwriteFile(c *fiber.Ctx) error {
 // uploadNewFiles 只上传新檔案,
 // 若要更新现有檔案, 则使用 overwriteFile() 函数.
 func uploadNewFiles(c *fiber.Ctx) error {
-	form := new(model.UploadToBucketForm)
+	form := new(model.OneTextForm)
 	err1 := parseValidate(form, c)
-	bucket, err2 := db.GetBucket(form.BucketID)
-	count, err3 := db.GetInt1(stmt.CountFilesInBucket, form.BucketID)
+	bucket, err2 := db.GetBucket(form.Text) // bucketID = form.Text
+	count, err3 := db.GetInt1(stmt.CountFilesInBucket, form.Text)
 	if err := util.WrapErrors(err1, err2, err3); err != nil {
 		return err
 	}
@@ -214,7 +214,7 @@ func uploadNewFiles(c *fiber.Ctx) error {
 	// 以上是检查阶段
 	// 以下是实际执行阶段
 
-	files = setBucketID(form.BucketID, files)
+	files = setBucketID(bucket.ID, files)
 	movedFiles, err := moveWaitingFiles(files)
 	if err != nil {
 		err2 := rollbackMovedFiles(movedFiles)
@@ -312,6 +312,19 @@ func getRecentFiles(c *fiber.Ctx) error {
 		return err
 	}
 	return c.JSON(files)
+}
+
+func getFileByID(c *fiber.Ctx) error {
+	form := new(model.FileIdForm)
+	if err := parseValidate(form, c); err != nil {
+		return err
+	}
+	file, err := db.GetFileByID(form.ID)
+	if err != nil {
+		return err
+	}
+	file.Checksum = ""
+	return c.JSON(file)
 }
 
 func updateFileInfo(c *fiber.Ctx) error {

@@ -23,6 +23,7 @@ func main() {
 	api.Post("/overwrite-file", overwriteFile)
 
 	api.Get("/recent-files", getRecentFiles) // resp.data: File[]
+	api.Post("/file-info", getFileByID)      // resp.data: File
 	api.Post("/update-file-info", updateFileInfo)
 
 	log.Fatal(app.Listen(ProjectConfig.Host))

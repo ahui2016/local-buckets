@@ -75,7 +75,7 @@ const UploadButtonArea = cc("div", {
       MJBS.disable(UploadButton); // --------------------- disable
       axiosPost({
         url: "/api/upload-new-files",
-        body: { bucketid: bucketid },
+        body: { text: bucketid },
         alert: UploadAlert,
         onSuccess: () => {
           UploadAlert.clear().insert("success", "上傳成功");

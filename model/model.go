@@ -199,8 +199,12 @@ func checkFilename(name string) error {
 	return nil
 }
 
-type CheckPwdForm struct {
-	Password string `json:"password" validate:"required"`
+type OneTextForm struct {
+	Text string `json:"text" validate:"required"`
+}
+
+type FileIdForm struct {
+	ID int64 `json:"id" validate:"required,gt=0"`
 }
 
 type ChangePwdForm struct {
@@ -213,16 +217,8 @@ type RenameWaitingFileForm struct {
 	NewName string `json:"new_name" validate:"required"`
 }
 
-type UploadToBucketForm struct {
-	BucketID string `json:"bucketid" validate:"required"`
-}
-
-type OverwriteFileForm struct {
-	Filename string `json:"filename" validate:"required"`
-}
-
 type UpdateFileInfoForm struct {
-	ID       int64  `json:"id" validate:"required"`
+	ID       int64  `json:"id" validate:"required,gt=0"`
 	Name     string `json:"name" validate:"required"`
 	Notes    string `json:"notes"`
 	Keywords string `json:"keywords"`

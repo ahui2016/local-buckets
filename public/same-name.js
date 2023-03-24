@@ -120,7 +120,7 @@ const OverwriteBtnArea = cc("div", {
         url: "/api/overwrite-file",
         alert: OverwriteAlert,
         body: {
-          filename: RenameInput.old_name,
+          text: RenameInput.old_name,
         },
         onSuccess: () => {
           OverwriteBtn.hide();
