@@ -351,16 +351,31 @@ func updateFileInfo(c *fiber.Ctx) error {
 	if form.UTime == file.UTime {
 		form.UTime = model.Now()
 	}
+
+	moved := new(MovedFile)
 	if form.Name != file.Name {
+		if err := db.CheckSameFilename(form.Name); err != nil {
+			return err
+		}
+		moved.Src = filepath.Join(BucketsFolder, file.BucketID, file.Name)
+		moved.Dst = filepath.Join(BucketsFolder, file.BucketID, form.Name)
+		if err := moved.Move(); err != nil {
+			return err
+		}
 		file.Rename(form.Name)
 	}
+
 	file.Notes = form.Notes
 	file.Keywords = form.Keywords
 	file.Like = form.Like
 	file.CTime = form.CTime
 	file.UTime = form.UTime
 
-	return db.UpdateFileInfo(&file)
+	if err := db.UpdateFileInfo(&file); err != nil {
+		err2 := moved.Rollback()
+		return util.WrapErrors(err, err2)
+	}
+	return nil
 }
 
 func checkFileName(name string) error {
