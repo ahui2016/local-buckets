@@ -339,11 +339,21 @@ func updateFileInfo(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
+	if form.Name == file.Name &&
+		form.Notes == file.Notes &&
+		form.Keywords == file.Keywords &&
+		form.Like == file.Like &&
+		form.CTime == file.CTime &&
+		form.UTime == file.UTime {
+		return fmt.Errorf("nothing changes (沒有變更)")
+	}
 
-	if form.UTime == "" {
+	if form.UTime == file.UTime {
 		form.UTime = model.Now()
 	}
-	file.Rename(form.Name)
+	if form.Name != file.Name {
+		file.Rename(form.Name)
+	}
 	file.Notes = form.Notes
 	file.Keywords = form.Keywords
 	file.Like = form.Like
