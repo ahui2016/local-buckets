@@ -326,27 +326,20 @@ func updateFileInfo(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
+
 	if form.UTime == "" {
 		form.UTime = model.Now()
 	}
-	file.Name = form.Name
+	file.Rename(form.Name)
 	file.Notes = form.Notes
 	file.Keywords = form.Keywords
 	file.Like = form.Like
 	file.CTime = form.CTime
 	file.UTime = form.UTime
+
+	return db.UpdateFileInfo(&file)
 }
 
 func checkFileName(name string) error {
 	return util.CheckFileName(filepath.Join(TempFolder, name))
-}
-
-type UpdateFileInfoForm struct {
-	ID       int64  `json:"id" validate:"required"`
-	Name     string `json:"name"`
-	Notes    string `json:"notes"`
-	Keywords string `json:"keywords"`
-	Like     int64  `json:"like"`
-	CTime    string `json:"ctime"`
-	UTime    string `json:"utime"`
 }

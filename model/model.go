@@ -155,6 +155,14 @@ func NewFile(root, bucketID, basename string) (*File, error) {
 	return f, nil
 }
 
+func (f *File) Rename(name string) {
+	if f.Name == name {
+		return
+	}
+	f.Name = name
+	f.Type = typeByFilename(name)
+}
+
 func Now() string {
 	return time.Now().Format(RFC3339)
 }
