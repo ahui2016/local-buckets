@@ -54,10 +54,8 @@ func GetExePath() string {
 	return lo.Must1(os.Executable())
 }
 
-// MustMkdir 创建資料夹.
-// 在 Windows 里, 文件夹的只读属性不起作用, 为了统一行为, 不把文件夹设为只读.
-func MustMkdir(name string) {
-	lo.Must0(os.Mkdir(name, NormalFolerPerm))
+func Mkdir(name string) error {
+	return os.Mkdir(name, NormalFolerPerm)
 }
 
 // MkdirIfNotExists 创建資料夹, 忽略 ErrExist.
@@ -66,7 +64,7 @@ func MkdirIfNotExists(name string) {
 	if PathIsExist(name) {
 		return
 	}
-	MustMkdir(name)
+	lo.Must0(Mkdir(name))
 }
 
 // WriteFile 写檔案, 如果 perm 等于零, 则使用默认权限.
@@ -82,9 +80,9 @@ func WriteReadonlyFile(name string, data []byte) error {
 	return os.WriteFile(name, data, ReadonlyFilePerm)
 }
 
-func WriteTOML(data interface{}, filename string) {
+func WriteTOML(data interface{}, filename string) error {
 	dataTOML := lo.Must(toml.Marshal(data))
-	lo.Must0(WriteFile(filename, dataTOML, 0))
+	return WriteFile(filename, dataTOML, 0)
 }
 
 // WriteJSON 把 data 转换为漂亮格式的 JSON 并写入檔案 filename 中。
@@ -105,6 +103,17 @@ func PathIsNotExist(name string) (ok bool) {
 
 func PathIsExist(name string) bool {
 	return !PathIsNotExist(name)
+}
+
+func DirIsEmpty(dirpath string) (ok bool, err error) {
+	items, err := filepath.Glob(dirpath + "/*")
+	ok = len(items) == 0
+	return
+}
+
+func DirIsNotEmpty(dirpath string) (ok bool, err error) {
+	ok, err = DirIsEmpty(dirpath)
+	return !ok, err
 }
 
 func IsRegularFile(name string) (ok bool, err error) {

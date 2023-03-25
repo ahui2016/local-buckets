@@ -32,8 +32,9 @@ function FileItem(file) {
   const bodyRowTwoRight = m("div")
     .addClass("col text-end")
     .append(
-      span(`(${fileSizeToString(file.size)}) `),
-      span(file.utime.substr(0, 10))
+      span(`(${fileSizeToString(file.size)})`).addClass('me-2'),
+      span(file.utime.substr(0, 10)).attr({title: file.utime}).addClass('me-2'),
+      MJBS.createLinkElem('edit-file.html?id='+file.id, {text:'info'})
     );
 
   const self = cc("div", {

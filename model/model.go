@@ -28,6 +28,7 @@ type Project struct {
 	Subtitle         string `json:"subtitle"`
 	CipherKey        string `json:"cipherkey"` // 被加密的真正密鑰
 	RecentFilesLimit int64  `json:"recent_files_limit"`
+	IsBackup         bool   `json:"is_backup"`
 }
 
 type ProjectInfo struct {
@@ -36,7 +37,7 @@ type ProjectInfo struct {
 }
 
 func NewProject(title string, cipherkey string) *Project {
-	return &Project{"127.0.0.1:3000", title, "", cipherkey, 100}
+	return &Project{"127.0.0.1:3000", title, "", cipherkey, 100, false}
 }
 
 // Bucket 倉庫

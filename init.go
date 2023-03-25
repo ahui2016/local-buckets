@@ -68,7 +68,7 @@ func readProjectConfig() {
 }
 
 func writeProjectConfig() {
-	util.WriteTOML(ProjectConfig, ProjectConfigPath)
+	lo.Must0(util.WriteTOML(ProjectConfig, ProjectConfigPath))
 }
 
 func initProjectConfig() {

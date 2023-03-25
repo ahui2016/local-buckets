@@ -406,3 +406,27 @@ func updateFileInfo(c *fiber.Ctx) error {
 func checkFileName(name string) error {
 	return util.CheckFileName(filepath.Join(TempFolder, name))
 }
+
+func createBackupProject(backupRoot string) error {
+	notEmpty, err := util.DirIsNotEmpty(backupRoot)
+	if err != nil {
+		return err
+	}
+	if notEmpty {
+		return fmt.Errorf("不是空資料夾: %s", backupRoot)
+	}
+	bkProjCfg := *ProjectConfig
+	bkProjCfg.IsBackup = true
+	bkProjCfgPath := filepath.Join(backupRoot, ProjectTOML)
+	if err := util.WriteTOML(bkProjCfg, bkProjCfgPath); err != nil {
+		return err
+	}
+	exePath := util.GetExePath()
+	exeName := filepath.Base(exePath)
+	bkProjExePath := filepath.Join(backupRoot, exeName)
+	if err := util.CopyFile(bkProjExePath, exePath); err != nil {
+		return err
+	}
+	bkProjBucketsDir := filepath.Join(backupRoot, BucketsFolderName)
+	return util.Mkdir(bkProjBucketsDir)
+}
