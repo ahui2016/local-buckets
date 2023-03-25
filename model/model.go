@@ -227,6 +227,11 @@ type UpdateFileInfoForm struct {
 	UTime    string `json:"utime"`
 }
 
+type MoveFileToBucketForm struct {
+	FileID   int64  `json:"file_id" validate:"required,gt=0"`
+	BucketID string `json:"bucket_id" validate:"required"`
+}
+
 type MovedFile struct {
 	Src string
 	Dst string

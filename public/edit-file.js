@@ -34,14 +34,58 @@ const CheckedInput = MJBS.createInput(); // readonly
 const DamagedInput = MJBS.createInput(); // readonly
 const DeletedInput = MJBS.createInput(); // readonly
 
+const MoveToBucketAlert = MJBS.createAlert();
+const BucketSelect = cc("select", { classes: "form-select" });
+const MoveToBucketBtn = MJBS.createButton("Move", "outline-primary");
+const MoveToBucketGroup = cc("div", {
+  classes: "input-group mb-3",
+  children: [
+    span("Move to").addClass("input-group-text"),
+    m(BucketSelect),
+    m(MoveToBucketBtn).on("click", (event) => {
+      event.preventDefault();
+      const body = {
+        file_id: IdInput.intVal(),
+        bucket_id: BucketSelect.elem().val(),
+      };
+      if (!body.bucket_id) {
+        MoveToBucketAlert.insert("warning", "請選擇一個倉庫");
+        return;
+      }
+
+      MJBS.disable(MoveToBucketBtn);
+      axiosPost({
+        url: "/api/move-file-to-bucket",
+        alert: MoveToBucketAlert,
+        body: body,
+        onSuccess: () => {
+          MoveToBucketAlert.clear().insert("success", "移動檔案成功!");
+          initBucketSelect(body.bucket_id);
+        },
+        onAlways: () => {
+          MJBS.enable(MoveToBucketBtn);
+        },
+      });
+    }),
+  ],
+});
+
 const SubmitBtn = MJBS.createButton("Submit");
 const SubmitBtnAlert = MJBS.createAlert();
 
 const EditFileForm = cc("form", {
   attr: { autocomplete: "off" },
   children: [
+    MJBS.hiddenButtonElem(),
+
     MJBS.createFormControl(IdInput, "ID"),
-    MJBS.createFormControl(BucketInput, "Bucket ID"),
+    MJBS.createFormControl(
+      BucketInput,
+      "Bucket",
+      "在下面選擇一個倉庫, 點擊 Move 按鈕, 可把檔案移至所選倉庫."
+    ),
+    m(MoveToBucketAlert).addClass("my-1"),
+    m(MoveToBucketGroup),
     MJBS.createFormControl(NameInput, "File Name"),
     MJBS.createFormControl(NotesInput, "Notes", "關於該檔案的簡單描述"),
     MJBS.createFormControl(KeywordsInput, "Keywords", "關鍵詞, 用於輔助搜尋."),
@@ -65,7 +109,6 @@ const EditFileForm = cc("form", {
     MJBS.createFormControl(DamagedInput, "Damaged", "檔案是否損壞"),
     MJBS.createFormControl(DeletedInput, "Deleted", "檔案是否標記為刪除"),
 
-    MJBS.hiddenButtonElem(),
     m(SubmitBtnAlert).addClass("my-3"),
     m("div")
       .addClass("text-center my-3")
@@ -112,50 +155,91 @@ $("#root")
 
 init();
 
-function init() {
+async function init() {
   let fileID = getUrlParam("id");
   if (!fileID) {
     PageLoading.hide();
     PageAlert.insert("danger", "id is null");
-    return
+    return;
   }
   fileID = parseInt(fileID);
-  initEditFileForm(fileID);
+  const file = await initEditFileForm(fileID);
+  initBucketSelect(file.bucketid);
 }
 
 function initEditFileForm(fileID) {
-  axiosPost({
-    url: "/api/file-info",
-    alert: PageAlert,
-    body: { id: fileID },
+  return new Promise((resolve) => {
+    axiosPost({
+      url: "/api/file-info",
+      alert: PageAlert,
+      body: { id: fileID },
+      onSuccess: (resp) => {
+        const file = resp.data;
+
+        IdInput.setVal(file.id);
+        BucketInput.setVal(file.bucketid);
+        NameInput.setVal(file.name);
+        NotesInput.setVal(file.notes);
+        KeywordsInput.setVal(file.keywords);
+        SizeInput.setVal(fileSizeToString(file.size));
+        LikeInput.setVal(file.like);
+        CTimeInput.setVal(file.ctime);
+        UTimeInput.setVal(file.utime);
+        CheckedInput.setVal(file.checked);
+        DamagedInput.setVal(file.damaged);
+        DeletedInput.setVal(file.deleted);
+
+        MJBS.disable(IdInput);
+        MJBS.disable(BucketInput);
+        MJBS.disable(SizeInput);
+        MJBS.disable(CheckedInput);
+        MJBS.disable(DamagedInput);
+        MJBS.disable(DeletedInput);
+
+        EditFileForm.show();
+        MJBS.focus(NotesInput);
+        resolve(file);
+      },
+      onAlways: () => {
+        PageLoading.hide();
+      },
+    });
+  });
+}
+
+function BucketItem(bucket) {
+  return cc("option", {
+    id: "B-" + bucket.id,
+    attr: { value: bucket.id, title: bucket.id },
+    text: bucket.title,
+  });
+}
+
+function initBucketSelect(currentbucketID) {
+  axiosGet({
+    url: "/api/all-buckets",
+    alert: MoveToBucketAlert,
     onSuccess: (resp) => {
-      const file = resp.data;
+      const buckets = resp.data;
 
-      IdInput.setVal(file.id);
-      BucketInput.setVal(file.bucketid);
-      NameInput.setVal(file.name);
-      NotesInput.setVal(file.notes);
-      KeywordsInput.setVal(file.keywords);
-      SizeInput.setVal(fileSizeToString(file.size));
-      LikeInput.setVal(file.like);
-      CTimeInput.setVal(file.ctime);
-      UTimeInput.setVal(file.utime);
-      CheckedInput.setVal(file.checked);
-      DamagedInput.setVal(file.damaged);
-      DeletedInput.setVal(file.deleted);
+      BucketSelect.elem().html("");
+      BucketSelect.elem().append(
+        m("option")
+          .prop("selected", true)
+          .attr({ value: "" })
+          .text("點擊此處選擇倉庫...")
+      );
 
-      MJBS.disable(IdInput);
-      MJBS.disable(BucketInput);
-      MJBS.disable(SizeInput);
-      MJBS.disable(CheckedInput);
-      MJBS.disable(DamagedInput);
-      MJBS.disable(DeletedInput);
-
-      EditFileForm.show();
-      MJBS.focus(NotesInput);
-    },
-    onAlways: () => {
-      PageLoading.hide();
+      for (const bucket of buckets) {
+        if (bucket.id == currentbucketID) {
+          let val = bucket.id;
+          if (bucket.id != bucket.title) val = `${bucket.id} (${bucket.title})`;
+          BucketInput.setVal(val);
+        } else {
+          const item = BucketItem(bucket);
+          BucketSelect.elem().append(m(item));
+        }
+      }
     },
   });
 }

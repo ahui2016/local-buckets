@@ -65,6 +65,7 @@ func changePassword(c *fiber.Ctx) error {
 	return nil
 }
 
+// TODO: 输入密码后才包含加密仓库
 func getAllBuckets(c *fiber.Ctx) error {
 	buckets, err := db.GetAllBuckets()
 	if err != nil {
@@ -325,6 +326,30 @@ func getFileByID(c *fiber.Ctx) error {
 	}
 	file.Checksum = ""
 	return c.JSON(file)
+}
+
+// TODO: 在加密仓库与公开仓库之间移动文件
+func moveFileToBucket(c *fiber.Ctx) error {
+	form := new(model.MoveFileToBucketForm)
+	if err := parseValidate(form, c); err != nil {
+		return err
+	}
+	file, err := db.GetFileByID(form.FileID)
+	if err != nil {
+		return err
+	}
+	moved := MovedFile{
+		Src: filepath.Join(BucketsFolder, file.BucketID, file.Name),
+		Dst: filepath.Join(BucketsFolder, form.BucketID, file.Name),
+	}
+	if err := moved.Move(); err != nil {
+		return err
+	}
+	if err := db.MoveFileToBucket(form.FileID, form.BucketID); err != nil {
+		err2 := moved.Rollback()
+		return util.WrapErrors(err, err2)
+	}
+	return nil
 }
 
 func updateFileInfo(c *fiber.Ctx) error {

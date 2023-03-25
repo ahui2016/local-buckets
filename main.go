@@ -25,6 +25,7 @@ func main() {
 	api.Get("/recent-files", getRecentFiles) // resp.data: File[]
 	api.Post("/file-info", getFileByID)      // resp.data: File
 	api.Post("/update-file-info", updateFileInfo)
+	api.Post("/move-file-to-bucket", moveFileToBucket)
 
 	log.Fatal(app.Listen(ProjectConfig.Host))
 }

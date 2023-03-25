@@ -57,6 +57,8 @@ const UpdateFileContent = `UPDATE file
 const UpdateFileInfo = `UPDATE file SET name=?, notes=?,
 	keywords=?, type=?, like=?, ctime=?, utime=? WHERE id=?;`
 
+const MoveFileToBucket = `UPDATE file SET bucketid=? WHERE id=?;`
+
 const GetFileByID = `SELECT * FROM file WHERE id=?;`
 
 const GetFileByName = `SELECT * FROM file WHERE name=?;`

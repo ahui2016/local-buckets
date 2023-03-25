@@ -503,9 +503,10 @@ MJBS.hiddenButtonElem = function () {
 
 /**
  * color: primary, secondary, success, danger, warning, info, light, dark, link
+ * color: outline-primary ...
  * @param {string} name
- * @param {string} color
- * @param {string} type
+ * @param {string} color default = "primary"
+ * @param {string} type default = "button"
  * @returns {mjComponent}
  */
 MJBS.createButton = function (name, color = "primary", type = "button") {
