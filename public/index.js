@@ -56,6 +56,7 @@ const LinkList = cc("div", {
     createIndexItem("Upload", "waiting.html", "上傳檔案"),
     createIndexItem("Create Bucket", "create-bucket.html", "新建倉庫"),
     createIndexItem("Change Password", "change-password.html", "更改密碼"),
+    createIndexItem("Backup", "backup.html", "備份專案"),
   ],
 });
 

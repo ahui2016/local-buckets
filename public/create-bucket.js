@@ -1,3 +1,5 @@
+$("title").text("Create a Bucket (新建倉庫) - Local Buckets");
+
 const navBar = m("div")
   .addClass("row")
   .append(
@@ -20,7 +22,7 @@ const PageAlert = MJBS.createAlert();
 
 const BucketIDInput = MJBS.createInput("text", "required");
 const BucketEncryptBox = MJBS.createInput("checkbox");
-const CreateBucketBtn = MJBS.createButton("Create", "primary");
+const CreateBucketBtn = MJBS.createButton("Create");
 
 const CreateBucketForm = cc("form", {
   attr: { autocomplete: "off" },
@@ -37,27 +39,26 @@ const CreateBucketForm = cc("form", {
       const bucketID = BucketIDInput.val();
       const encrypted = BucketEncryptBox.isChecked();
       if (!bucketID) {
-        PageAlert.insert('warning', '請填寫 Bucket ID');
+        PageAlert.insert("warning", "請填寫 Bucket ID");
         return;
       }
-      MJBS.disable(CreateBucketBtn);  // --------------------- disable
+      MJBS.disable(CreateBucketBtn); // --------------------- disable
       axiosPost({
         url: "/api/create-bucket",
         body: {
           id: bucketID,
-          encrypted: encrypted
+          encrypted: encrypted,
         },
         alert: PageAlert,
         onSuccess: (resp) => {
           const bucket = resp.data;
           // window.location.href = `edit-bucket.html?id=${bucket.id}&new=true`;
-          PageAlert.insert('success', JSON.stringify(bucket));
+          PageAlert.insert("success", JSON.stringify(bucket));
         },
         onAlways: () => {
-          MJBS.enable(CreateBucketBtn);  // --------------------- enable
-        }
+          MJBS.enable(CreateBucketBtn); // --------------------- enable
+        },
       });
-
     }),
   ],
 });

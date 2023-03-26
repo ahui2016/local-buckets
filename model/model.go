@@ -224,7 +224,7 @@ type UpdateFileInfoForm struct {
 	Notes    string `json:"notes"`
 	Keywords string `json:"keywords"`
 	Like     int64  `json:"like"`
-	CTime    string `json:"ctime"`
+	CTime    string `json:"ctime" validate:"required"`
 	UTime    string `json:"utime"`
 }
 

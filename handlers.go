@@ -376,6 +376,11 @@ func updateFileInfo(c *fiber.Ctx) error {
 	if form.UTime == file.UTime {
 		form.UTime = model.Now()
 	}
+	err1 := util.CheckTime(model.RFC3339, form.CTime)
+	err2 := util.CheckTime(model.RFC3339, form.UTime)
+	if err := util.WrapErrors(err1, err2); err != nil {
+		return err
+	}
 
 	moved := new(MovedFile)
 	if form.Name != file.Name {
@@ -405,6 +410,17 @@ func updateFileInfo(c *fiber.Ctx) error {
 
 func checkFileName(name string) error {
 	return util.CheckFileName(filepath.Join(TempFolder, name))
+}
+
+func createBKProjHandler(c *fiber.Ctx) error {
+	form := new(model.OneTextForm)
+	if err := parseValidate(form, c); err != nil {
+		return err
+	}
+	if util.PathIsNotExist(form.Text) {
+		return c.Status(404).SendString(fmt.Sprintf("not found: %s", form.Text))
+	}
+	return createBackupProject(form.Text)
 }
 
 func createBackupProject(backupRoot string) error {

@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/pelletier/go-toml/v2"
 	"github.com/samber/lo"
@@ -207,4 +208,10 @@ func CheckFileName(tempFile string) error {
 	}
 	// 如果正常创建文件, 则删除文件.
 	return os.Remove(tempFile)
+}
+
+// CheckTime 检查时间字符串是否符合指定格式.
+func CheckTime(layout, value string) error {
+	_, err := time.Parse(layout, value)
+	return err
 }
