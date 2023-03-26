@@ -412,6 +412,18 @@ func checkFileName(name string) error {
 	return util.CheckFileName(filepath.Join(TempFolder, name))
 }
 
+func deleteBKProjHandler(c *fiber.Ctx) error {
+	form := new(model.OneTextForm)
+	if err := parseValidate(form, c); err != nil {
+		return err
+	}
+	bkProj := form.Text
+	if lo.IndexOf(ProjectConfig.BackupProjects, bkProj) < 0 {
+		return c.Status(404).SendString("not found: " + bkProj)
+	}
+	return deleteBKProjFromConfig(bkProj)
+}
+
 func createBKProjHandler(c *fiber.Ctx) error {
 	form := new(model.OneTextForm)
 	if err := parseValidate(form, c); err != nil {
@@ -419,7 +431,7 @@ func createBKProjHandler(c *fiber.Ctx) error {
 	}
 	bkProjRoot := form.Text
 	if util.PathIsNotExist(bkProjRoot) {
-		return c.Status(404).SendString(fmt.Sprintf("not found: %s", bkProjRoot))
+		return c.Status(404).SendString("not found: " + bkProjRoot)
 	}
 	if err := createBackupProject(bkProjRoot); err != nil {
 		return err

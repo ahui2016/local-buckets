@@ -86,3 +86,11 @@ func addBKProjToConfig(bkProjRoot string) error {
 	ProjectConfig.BackupProjects = append(ProjectConfig.BackupProjects, bkProjRoot)
 	return util.WriteTOML(ProjectConfig, ProjectConfigPath)
 }
+
+func deleteBKProjFromConfig(bkProj string) error {
+	ProjectConfig.BackupProjects = lo.Reject(
+		ProjectConfig.BackupProjects, func(x string, _ int) bool {
+			return x == bkProj
+		})
+	return util.WriteTOML(ProjectConfig, ProjectConfigPath)
+}

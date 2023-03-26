@@ -28,6 +28,7 @@ func main() {
 	api.Post("/move-file-to-bucket", moveFileToBucket)
 
 	api.Post("/create-bk-proj", createBKProjHandler)
+	api.Post("/delete-bk-proj", deleteBKProjHandler)
 
 	log.Fatal(app.Listen(ProjectConfig.Host))
 }

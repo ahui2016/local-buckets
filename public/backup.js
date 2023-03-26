@@ -88,6 +88,7 @@ function BKProjItem(projPath) {
               m(UseBtn).addClass("me-2"),
               m(DelBtn).on("click", (event) => {
                 event.preventDefault();
+                MJBS.disable(DelBtn);
                 ItemAlert.insert(
                   "warning",
                   "待 delete 按鈕變紅色後再點擊一次, 執行刪除."
@@ -97,7 +98,30 @@ function BKProjItem(projPath) {
                   DangerDelBtn.show();
                 }, 5000);
               }),
-              m(DangerDelBtn).hide()
+              m(DangerDelBtn)
+                .hide()
+                .on("click", (event) => {
+                  event.preventDefault();
+                  MJBS.disable(UseBtn);
+                  MJBS.disable(DangerDelBtn);
+                  axiosPost({
+                    url: "/api/delete-bk-proj",
+                    alert: ItemAlert,
+                    body: { text: projPath },
+                    onSuccess: () => {
+                      UseBtn.hide();
+                      DangerDelBtn.hide();
+                      ItemAlert.clear().insert(
+                        "success",
+                        "該備份倉庫已被刪除 (僅從清單中刪除, 資料夾仍保留)"
+                      );
+                    },
+                    onAlways: () => {
+                      MJBS.enable(UseBtn);
+                      MJBS.enable(DangerDelBtn);
+                    },
+                  });
+                })
             ),
           m(ItemAlert)
         ),
