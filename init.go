@@ -81,3 +81,8 @@ func initProjectConfig() {
 	}
 	readProjectConfig()
 }
+
+func addBKProjToConfig(bkProjRoot string) error {
+	ProjectConfig.BackupProjects = append(ProjectConfig.BackupProjects, bkProjRoot)
+	return util.WriteTOML(ProjectConfig, ProjectConfigPath)
+}

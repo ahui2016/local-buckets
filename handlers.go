@@ -417,32 +417,36 @@ func createBKProjHandler(c *fiber.Ctx) error {
 	if err := parseValidate(form, c); err != nil {
 		return err
 	}
-	if util.PathIsNotExist(form.Text) {
-		return c.Status(404).SendString(fmt.Sprintf("not found: %s", form.Text))
+	bkProjRoot := form.Text
+	if util.PathIsNotExist(bkProjRoot) {
+		return c.Status(404).SendString(fmt.Sprintf("not found: %s", bkProjRoot))
 	}
-	return createBackupProject(form.Text)
+	if err := createBackupProject(bkProjRoot); err != nil {
+		return err
+	}
+	return addBKProjToConfig(bkProjRoot)
 }
 
-func createBackupProject(backupRoot string) error {
-	notEmpty, err := util.DirIsNotEmpty(backupRoot)
+func createBackupProject(bkProjRoot string) error {
+	notEmpty, err := util.DirIsNotEmpty(bkProjRoot)
 	if err != nil {
 		return err
 	}
 	if notEmpty {
-		return fmt.Errorf("不是空資料夾: %s", backupRoot)
+		return fmt.Errorf("不是空資料夾: %s", bkProjRoot)
 	}
 	bkProjCfg := *ProjectConfig
 	bkProjCfg.IsBackup = true
-	bkProjCfgPath := filepath.Join(backupRoot, ProjectTOML)
+	bkProjCfgPath := filepath.Join(bkProjRoot, ProjectTOML)
 	if err := util.WriteTOML(bkProjCfg, bkProjCfgPath); err != nil {
 		return err
 	}
 	exePath := util.GetExePath()
 	exeName := filepath.Base(exePath)
-	bkProjExePath := filepath.Join(backupRoot, exeName)
+	bkProjExePath := filepath.Join(bkProjRoot, exeName)
 	if err := util.CopyFile(bkProjExePath, exePath); err != nil {
 		return err
 	}
-	bkProjBucketsDir := filepath.Join(backupRoot, BucketsFolderName)
+	bkProjBucketsDir := filepath.Join(bkProjRoot, BucketsFolderName)
 	return util.Mkdir(bkProjBucketsDir)
 }
