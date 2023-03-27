@@ -77,7 +77,7 @@ function init() {
 
 function initProjectInfo() {
   axiosGet({
-    url: "/api/project-config",
+    url: "/api/project-info",
     alert: AppAlert,
     onSuccess: (resp) => {
       const project = resp.data;

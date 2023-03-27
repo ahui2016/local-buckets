@@ -38,8 +38,18 @@ func parseValidate(form any, c *fiber.Ctx) error {
 	return validate.Struct(form)
 }
 
-func getProjectConfig(c *fiber.Ctx) error {
+func getProjectInfo(c *fiber.Ctx) error {
 	return c.JSON(model.ProjectInfo{Project: ProjectConfig, Path: ProjectRoot})
+}
+
+func getProjectStatus(c *fiber.Ctx) error {
+	return c.JSON(model.ProjectStatus{Project: ProjectConfig, Path: ProjectRoot})
+}
+
+func getBKProjStat(c *fiber.Ctx) error {
+	bkProj := *ProjectConfig
+	bkProj.IsBackup = true
+	return c.JSON(model.ProjectStatus{Project: &bkProj, Path: ProjectRoot})
 }
 
 func checkPassword(c *fiber.Ctx) error {

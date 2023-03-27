@@ -12,9 +12,9 @@ func main() {
 	app.Static("/", PublicFolder)
 
 	api := app.Group("/api", sleep)
-	api.Get("/project-config", getProjectConfig) // resp.data: Project
-	api.Get("/all-buckets", getAllBuckets)       // resp.data: null | Bucket[]
-	api.Post("/create-bucket", createBucket)     // resp.data: Bucket
+	api.Get("/project-info", getProjectInfo) // resp.data: ProjectInfo
+	api.Get("/all-buckets", getAllBuckets)   // resp.data: null | Bucket[]
+	api.Post("/create-bucket", createBucket) // resp.data: Bucket
 	api.Post("/change-password", changePassword)
 	api.Get("/waiting-folder", getWaitingFolder) // resp.data: TextMsg
 	api.Get("/waiting-files", getWaitingFiles)   // resp.data: File[] | ErrSameNameFiles
@@ -29,6 +29,8 @@ func main() {
 
 	api.Post("/create-bk-proj", createBKProjHandler)
 	api.Post("/delete-bk-proj", deleteBKProjHandler)
+	api.Get("/project-status", getProjectStatus) // resp.data: ProjectStatus
+	api.Get("/bk-project-status", getBKProjStat) // resp.data: ProjectStatus
 
 	log.Fatal(app.Listen(ProjectConfig.Host))
 }

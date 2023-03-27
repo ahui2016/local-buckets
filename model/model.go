@@ -30,11 +30,7 @@ type Project struct {
 	RecentFilesLimit int64    `json:"recent_files_limit"`
 	IsBackup         bool     `json:"is_backup"`
 	BackupProjects   []string `json:"backup_projects"`
-}
-
-type ProjectInfo struct {
-	*Project
-	Path string `json:"path"`
+	LastBackupAt     string   `json:"last_backup_at"` // RFC3339
 }
 
 func NewProject(title string, cipherkey string) *Project {
@@ -44,6 +40,20 @@ func NewProject(title string, cipherkey string) *Project {
 		CipherKey:        cipherkey,
 		RecentFilesLimit: 100,
 	}
+}
+
+type ProjectInfo struct {
+	*Project
+	Path string `json:"path"`
+}
+
+type ProjectStatus struct {
+	*Project
+	Path              string
+	TotalSize         int64 // 全部檔案體積合計
+	FilesCount        int64 // 檔案數量合計
+	WaitingCheckCount int64 // 待檢查檔案數量合計
+	DamagedCount      int64 // 損壞檔案數量合計
 }
 
 // Bucket 倉庫
