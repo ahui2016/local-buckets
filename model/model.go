@@ -28,6 +28,7 @@ type Project struct {
 	Subtitle         string   `json:"subtitle"`
 	CipherKey        string   `json:"cipherkey"` // 被加密的真正密鑰
 	RecentFilesLimit int64    `json:"recent_files_limit"`
+	CheckInterval    int64    `jso:"check_interval"` // 檢查周期, 單位: day
 	IsBackup         bool     `json:"is_backup"`
 	BackupProjects   []string `json:"backup_projects"`
 	LastBackupAt     string   `json:"last_backup_at"` // RFC3339
@@ -39,6 +40,7 @@ func NewProject(title string, cipherkey string) *Project {
 		Title:            title,
 		CipherKey:        cipherkey,
 		RecentFilesLimit: 100,
+		CheckInterval:    30,
 	}
 }
 

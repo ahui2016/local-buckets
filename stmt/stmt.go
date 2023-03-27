@@ -41,9 +41,7 @@ const InsertBucket = `INSERT INTO bucket (
 ) VALUES (?, ?, ?, ?, ?);`
 
 const GetAllBuckets = `SELECT * FROM bucket;`
-
 const GetBucket = `SELECT * FROM bucket WHERE id=?;`
-
 const CountFilesInBucket = `SELECT count(*) FROM file WHERE bucketid=?;`
 
 const InsertFile = `INSERT INTO file (
@@ -60,9 +58,11 @@ const UpdateFileInfo = `UPDATE file SET name=?, notes=?,
 const MoveFileToBucket = `UPDATE file SET bucketid=? WHERE id=?;`
 
 const GetFileByID = `SELECT * FROM file WHERE id=?;`
-
 const GetFileByName = `SELECT * FROM file WHERE name=?;`
-
 const GetFileByChecksum = `SELECT * FROM file WHERE checksum=?;`
-
 const GetRecentFiles = `SELECT * FROM file ORDER BY utime DESC LIMIT ?;`
+
+const CountAllFiles = `SELECT count(*) FROM file;`
+const CountFilesNeedCheck = `SELECT count(*) FROM file WHERE checked<?;`
+const CountDamagedFiles = `SELECT count(*) FROM file WHERE damaged=TRUE;`
+const TotalSize = `SELECT COALESCE(sum(size),0) as totalsize FROM file;`

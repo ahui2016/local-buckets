@@ -209,6 +209,9 @@ function createProjStat(projStat) {
   let projType = "Source (源專案)";
   if (projStat.is_backup) projType = "Destination (備份專案)";
 
+  let lastBackup = projStat.last_backup_at.substr(0, 16);
+  if (projStat.last_backup_at == "") lastBackup = "Not Yet";
+
   return cc("div", {
     classes: "card mb-2",
     children: [
@@ -227,7 +230,7 @@ function createProjStat(projStat) {
               m("dt").addClass("col-sm-3").text("上次備份時間: "),
               m("dt")
                 .addClass("col-sm-9 text-muted")
-                .text(projStat.last_backup_at.substr(0, 16)),
+                .text(lastBackup),
 
               m("dt").addClass("col-sm-3").text("占用空間: "),
               m("dt")

@@ -2,7 +2,9 @@ package database
 
 import (
 	"database/sql"
+	"time"
 
+	"github.com/ahui2016/local-buckets/model"
 	"github.com/ahui2016/local-buckets/stmt"
 	"github.com/ahui2016/local-buckets/util"
 )
@@ -127,4 +129,11 @@ func getFiles(tx TX, query string, args ...any) (files []*File, err error) {
 	}
 	err = rows.Err()
 	return
+}
+
+func countFilesNeedCheck(tx TX, interval int64) (int64, error) {
+	now := time.Now().Unix()
+	interval = interval * 24 * 60 * 60 // 单位 "日" 转为 "秒"
+	needCheckDate := time.Unix(now-interval, 0).Format(model.RFC3339)
+	return getInt1(tx, stmt.CountFilesNeedCheck, needCheckDate)
 }

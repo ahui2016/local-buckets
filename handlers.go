@@ -43,7 +43,11 @@ func getProjectInfo(c *fiber.Ctx) error {
 }
 
 func getProjectStatus(c *fiber.Ctx) error {
-	return c.JSON(model.ProjectStatus{Project: ProjectConfig, Path: ProjectRoot})
+	projStat, err := db.GetProjStat(ProjectConfig)
+	if err != nil {
+		return err
+	}
+	return c.JSON(projStat)
 }
 
 func getBKProjStat(c *fiber.Ctx) error {

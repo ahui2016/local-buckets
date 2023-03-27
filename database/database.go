@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"path/filepath"
 
 	"github.com/ahui2016/local-buckets/model"
 	"github.com/ahui2016/local-buckets/stmt"
@@ -19,6 +20,7 @@ type (
 	Bucket           = model.Bucket
 	File             = model.File
 	Project          = model.Project
+	ProjectStatus    = model.ProjectStatus
 	ErrSameNameFiles = model.ErrSameNameFiles
 )
 
@@ -232,4 +234,21 @@ func RemoveChecksum(files []*File) []*File {
 		files[i].Checksum = ""
 	}
 	return files
+}
+
+func (db *DB) GetProjStat(projCfg *Project) (ProjectStatus, error) {
+	totalSize, e1 := getInt1(db.DB, stmt.TotalSize)
+	allFilesCount, e2 := getInt1(db.DB, stmt.CountAllFiles)
+	needCheckCount, e3 := countFilesNeedCheck(db.DB, projCfg.CheckInterval)
+	damagedCount, e4 := getInt1(db.DB, stmt.CountDamagedFiles)
+	err := util.WrapErrors(e1, e2, e3, e4)
+	projStat := ProjectStatus{
+		Project:           projCfg,
+		Path:              filepath.Dir(db.Path),
+		TotalSize:         totalSize,
+		FilesCount:        allFilesCount,
+		WaitingCheckCount: needCheckCount,
+		DamagedCount:      damagedCount,
+	}
+	return projStat, err
 }
