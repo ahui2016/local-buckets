@@ -109,37 +109,7 @@ function BKProjItem(projPath) {
                 .addClass("me-2")
                 .on("click", (event) => {
                   event.preventDefault();
-                  MJBS.disable(UseBtn);
-                  axiosGet({
-                    url: "/api/bk-project-status",
-                    alert: ItemAlert,
-                    onSuccess: (resp) => {
-                      bkProjStat = resp.data;
-                      const BKProjStat = createProjStat(bkProjStat);
-                      ProjectsStatusArea.elem().append(
-                        m("div").addClass("my-2 text-center").html(`
-                            <!-- https://icons.getbootstrap.com/icons/arrow-down/ -->
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="3rem"
-                              height="3rem"
-                              fill="currentColor"
-                              class="bi bi-arrow-down"
-                              viewBox="0 0 16 16"
-                            >
-                              <path
-                                fill-rule="evenodd"
-                                d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1z"
-                              />
-                            </svg>`),
-                        m(BKProjStat)
-                      );
-                      BKProjListArea.hide();
-                    },
-                    onAlways: () => {
-                      MJBS.enable(UseBtn);
-                    },
-                  });
+                  getBKProject(projPath, ItemAlert, UseBtn);
                 }),
               m(DelBtn).on("click", (event) => {
                 event.preventDefault();
@@ -228,9 +198,7 @@ function createProjStat(projStat) {
             .addClass("row")
             .append(
               m("dt").addClass("col-sm-3").text("上次備份時間: "),
-              m("dt")
-                .addClass("col-sm-9 text-muted")
-                .text(lastBackup),
+              m("dt").addClass("col-sm-9 text-muted").text(lastBackup),
 
               m("dt").addClass("col-sm-3").text("占用空間: "),
               m("dt")
@@ -291,6 +259,42 @@ function getMainProject() {
   });
 }
 
+const IconDownArrow = `
+<!-- https://icons.getbootstrap.com/icons/arrow-down/ -->
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="3rem"
+  height="3rem"
+  fill="currentColor"
+  class="bi bi-arrow-down"
+  viewBox="0 0 16 16"
+>
+  <path
+    fill-rule="evenodd"
+    d="M8 1a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L7.5 13.293V1.5A.5.5 0 0 1 8 1z"
+  />
+</svg>`;
+
+function getBKProject(bkProjRoot, alert, btn) {
+  MJBS.disable(btn);
+  axiosPost({
+    url: "/api/bk-project-status",
+    alert: alert,
+    body: { text: bkProjRoot },
+    onSuccess: (resp) => {
+      const bkProjStat = resp.data;
+      const BKProjStat = createProjStat(bkProjStat);
+      ProjectsStatusArea.elem().append(
+        m("div").addClass("my-2 text-center").html(IconDownArrow),
+        m(BKProjStat)
+      );
+      BKProjListArea.hide();
+    },
+    onAlways: () => {
+      MJBS.enable(btn);
+    },
+  });
+}
 function initBKProjects(projects) {
   if (projects && projects.length > 0) {
     BKProjListArea.show();

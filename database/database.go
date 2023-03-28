@@ -26,7 +26,6 @@ type (
 
 type DB struct {
 	Path             string
-	ProjectPath      string
 	RecentFilesLimit int64
 	DB               *sql.DB
 	cipherKey        HexString
@@ -50,20 +49,17 @@ func (db *DB) mustBegin() *sql.Tx {
 	return lo.Must(db.DB.Begin())
 }
 
-func (db *DB) Open(
-	dbPath, pjPath string, cipherKey HexString, projCfg *Project,
-) (err error) {
+func (db *DB) Open(dbPath string, projCfg *Project) (err error) {
 	const turnOnForeignKeys = "?_pragma=foreign_keys(1)"
 	if db.DB, err = sql.Open("sqlite", dbPath+turnOnForeignKeys); err != nil {
 		return
 	}
-	db.Path = dbPath
-	db.ProjectPath = pjPath
-	db.RecentFilesLimit = projCfg.RecentFilesLimit
 	if err = db.Exec(stmt.CreateTables); err != nil {
 		return
 	}
-	db.cipherKey = cipherKey
+	db.Path = dbPath
+	db.RecentFilesLimit = projCfg.RecentFilesLimit
+	db.cipherKey = projCfg.CipherKey
 	return nil
 }
 

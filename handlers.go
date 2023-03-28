@@ -8,11 +8,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ahui2016/local-buckets/database"
 	"github.com/ahui2016/local-buckets/model"
 	"github.com/ahui2016/local-buckets/stmt"
 	"github.com/ahui2016/local-buckets/util"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/pelletier/go-toml/v2"
 	"github.com/samber/lo"
 )
 
@@ -48,12 +50,6 @@ func getProjectStatus(c *fiber.Ctx) error {
 		return err
 	}
 	return c.JSON(projStat)
-}
-
-func getBKProjStat(c *fiber.Ctx) error {
-	bkProj := *ProjectConfig
-	bkProj.IsBackup = true
-	return c.JSON(model.ProjectStatus{Project: &bkProj, Path: ProjectRoot})
 }
 
 func checkPassword(c *fiber.Ctx) error {
@@ -475,4 +471,42 @@ func createBackupProject(bkProjRoot string) error {
 	}
 	bkProjBucketsDir := filepath.Join(bkProjRoot, BucketsFolderName)
 	return util.Mkdir(bkProjBucketsDir)
+}
+
+func getBKProjStat(c *fiber.Ctx) error {
+	form := new(model.OneTextForm)
+	if err := parseValidate(form, c); err != nil {
+		return err
+	}
+	bkProjRoot := form.Text
+	if util.PathIsNotExist(bkProjRoot) {
+		return c.Status(404).SendString("not found: " + bkProjRoot)
+	}
+	bk, bkConfig, err := openBackupDB(bkProjRoot)
+	if err != nil {
+		return err
+	}
+	defer bk.DB.Close()
+
+	bkProjStat, err := bk.GetProjStat(bkConfig)
+	if err != nil {
+		return err
+	}
+	return c.JSON(bkProjStat)
+}
+
+func openBackupDB(bkProjRoot string) (*database.DB, *Project, error) {
+	bkPath := filepath.Join(bkProjRoot, DatabaseFileName)
+	bkProjCfgPath := filepath.Join(bkProjRoot, ProjectTOML)
+	data, err := os.ReadFile(bkProjCfgPath)
+	if err != nil {
+		return nil, nil, err
+	}
+	var bkProjCfg Project
+	if err := toml.Unmarshal(data, &bkProjCfg); err != nil {
+		return nil, nil, err
+	}
+	bk := new(database.DB)
+	err = bk.Open(bkPath, &bkProjCfg)
+	return bk, &bkProjCfg, err
 }
