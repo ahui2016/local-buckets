@@ -12,10 +12,11 @@ import (
 )
 
 type (
-	Project   = model.Project
-	Bucket    = model.Bucket
-	File      = model.File
-	MovedFile = model.MovedFile
+	Project       = model.Project
+	Bucket        = model.Bucket
+	File          = model.File
+	MovedFile     = model.MovedFile
+	ProjectStatus = model.ProjectStatus
 )
 
 const (

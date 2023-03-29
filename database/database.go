@@ -216,6 +216,10 @@ func (db *DB) GetFileByID(id int64) (File, error) {
 	return scanFile(row)
 }
 
+func (db *DB) GetAllFiles() (files []*File, err error) {
+	return getFiles(db.DB, stmt.GetAllFiles)
+}
+
 func (db *DB) GetRecentFiles() (files []*File, err error) {
 	files, err = getFiles(db.DB, stmt.GetRecentFiles, db.RecentFilesLimit)
 	if err != nil {

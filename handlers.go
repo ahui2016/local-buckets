@@ -16,6 +16,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/pelletier/go-toml/v2"
 	"github.com/samber/lo"
+	"tcw.im/go-disk-usage/du"
 )
 
 const OK = http.StatusOK
@@ -482,31 +483,68 @@ func getBKProjStat(c *fiber.Ctx) error {
 	if util.PathIsNotExist(bkProjRoot) {
 		return c.Status(404).SendString("not found: " + bkProjRoot)
 	}
-	bk, bkConfig, err := openBackupDB(bkProjRoot)
-	if err != nil {
-		return err
-	}
+	bk, bkProjStat, err := openBackupDB(bkProjRoot)
 	defer bk.DB.Close()
-
-	bkProjStat, err := bk.GetProjStat(bkConfig)
 	if err != nil {
 		return err
 	}
 	return c.JSON(bkProjStat)
 }
 
-func openBackupDB(bkProjRoot string) (*database.DB, *Project, error) {
+// 注意 open 后应立即 defer bk.DB.Close()
+func openBackupDB(bkProjRoot string) (bk *database.DB, bkProjStat *ProjectStatus, err error) {
 	bkPath := filepath.Join(bkProjRoot, DatabaseFileName)
 	bkProjCfgPath := filepath.Join(bkProjRoot, ProjectTOML)
 	data, err := os.ReadFile(bkProjCfgPath)
 	if err != nil {
-		return nil, nil, err
+		return
 	}
 	var bkProjCfg Project
-	if err := toml.Unmarshal(data, &bkProjCfg); err != nil {
-		return nil, nil, err
+	if err = toml.Unmarshal(data, &bkProjCfg); err != nil {
+		return
 	}
-	bk := new(database.DB)
-	err = bk.Open(bkPath, &bkProjCfg)
-	return bk, &bkProjCfg, err
+	if err = bk.Open(bkPath, &bkProjCfg); err != nil {
+		return
+	}
+	*bkProjStat, err = bk.GetProjStat(&bkProjCfg)
+	return
+}
+
+// syncToBackupProject 以源仓库为准单向同步，
+// 最终效果相当于清空备份仓库后把主仓库的全部文件复制到备份仓库。
+func syncToBackupProject(bkProjRoot string) error {
+	projStat, err := db.GetProjStat(ProjectConfig)
+	if err != nil {
+		return err
+	}
+	bk, bkProjStat, err := openBackupDB(bkProjRoot)
+	defer bk.DB.Close()
+	if err != nil {
+		return err
+	}
+	if projStat.DamagedCount+bkProjStat.DamagedCount > 0 {
+		return fmt.Errorf("damaged found (發現損毀檔案, 必須修復後才可備份)")
+	}
+	if err := checkBackupDiskUsage(bkProjRoot, bkProjStat, &projStat); err != nil {
+		return err
+	}
+
+	dbFiles, e1 := db.GetAllFiles()
+	bkFiles, e2 := bk.GetAllFiles()
+	if err := util.WrapErrors(e1, e2); err != nil {
+		return err
+	}
+}
+
+func checkBackupDiskUsage(bkProjRoot string, bkStat, projStat *ProjectStatus) error {
+	diskInfo := du.DiskInfo(bkProjRoot)
+	addUp := projStat.TotalSize - bkStat.TotalSize // 備份後將會增加的體積
+	if addUp <= 0 {
+		return nil
+	}
+	var margin uint64 = 1 << 30 // 1GB (現在U盤也是100GB起步了)
+	if uint64(addUp)+margin > diskInfo.Available {
+		return fmt.Errorf("not enough space (備份專案空間不足)")
+	}
+	return nil
 }
