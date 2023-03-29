@@ -153,6 +153,8 @@ func (db *DB) UpdateFileInfo(file *File) error {
 		file.Keywords, file.Type, file.Like, file.CTime, file.UTime, file.ID)
 }
 
+func (db *DB) UpdateBackupFileInfo(file *File) error {}
+
 func (db *DB) MoveFileToBucket(fileID int64, BucketID string) error {
 	return db.Exec(stmt.MoveFileToBucket, BucketID, fileID)
 }

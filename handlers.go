@@ -44,7 +44,7 @@ func parseValidate(form any, c *fiber.Ctx) error {
 }
 
 func getProjectInfo(c *fiber.Ctx) error {
-	return c.JSON(model.ProjectInfo{Project: ProjectConfig, Path: ProjectRoot})
+	return c.JSON(ProjectInfo{Project: ProjectConfig, Path: ProjectRoot})
 }
 
 func getProjectStatus(c *fiber.Ctx) error {
@@ -153,7 +153,7 @@ func overwriteFile(c *fiber.Ctx) error {
 		return err
 	}
 
-	waitingFile := new(model.MovedFile)
+	waitingFile := new(MovedFile)
 	waitingFile.Src = filepath.Join(WaitingFolder, form.Text) // filename = form.Text
 
 	// 这个 file 主要是为了获取新文件的 checksum, size 等数据.
@@ -180,7 +180,7 @@ func overwriteFile(c *fiber.Ctx) error {
 
 	// tempFile 把旧文件临时移动到安全的地方
 	// 在文件名区分大小写的系统里, 要注意 file.Name 与 fileInDB.Name 可能不同.
-	tempFile := model.MovedFile{
+	tempFile := MovedFile{
 		Src: filepath.Join(BucketsFolder, file.BucketID, fileInDB.Name),
 		Dst: filepath.Join(TempFolder, fileInDB.Name),
 	}
@@ -556,7 +556,16 @@ func syncToBackupProject(bkProjRoot string) error {
 		}
 	}
 
+	// 如果一个文件存在于两个仓库中，则进一步对比其 checksum，不一致则拷贝覆盖。
+	for _, file := range dbFiles {
+		bkFile, err := bk.GetFileByID(file.ID)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return err
+		}
+	}
+
 	// 如果一个文件存在于主仓库中，但不存在于备份仓库中，则直接拷贝。
+	// 这一步应该在更新 checksum 不同的文件之后，避免 checksum 冲突。
 	for _, file := range dbFiles {
 		_, err := bk.GetFileByID(file.ID)
 		if errors.Is(err, sql.ErrNoRows) {
@@ -572,9 +581,40 @@ func syncToBackupProject(bkProjRoot string) error {
 		}
 	}
 
-	// 如果一个文件存在于两个仓库中，则进一步对比其 hash，按需拷贝覆盖。
-
 	return bkTX.Commit()
+}
+
+func overwriteBKFile(bkBuckets, bkTemp string, file, bkFile *File, bk *database.DB) error {
+	// tempFile 把旧文件临时移动到安全的地方
+	tempFile := MovedFile{
+		Src: filepath.Join(bkBuckets, bkFile.BucketID, bkFile.Name),
+		Dst: filepath.Join(bkTemp, bkFile.Name),
+	}
+	if err := tempFile.Move(); err != nil {
+		return err
+	}
+
+	// 复制新文件到备份仓库, 如果出错, 必须把旧文件移回原位.
+	newFile := MovedFile{
+		Src: filepath.Join(BucketsFolder, file.BucketID, file.Name),
+		Dst: filepath.Join(bkBuckets, file.BucketID, file.Name),
+	}
+	if err := newFile.Move(); err != nil {
+		err2 := tempFile.Rollback()
+		return util.WrapErrors(err, err2)
+	}
+
+	// TODO:
+
+	// 更新数据库信息, 如果出错, 要把 newFile 和 tempFile 都移回原位.
+	if err := bk.UpdateBackupFileInfo(file); err != nil {
+		err2 := newFile.Rollback()
+		err3 := tempFile.Rollback()
+		return util.WrapErrors(err, err2, err3)
+	}
+
+	// 最后删除 tempFile.
+	return os.Remove(tempFile.Dst)
 }
 
 func checkBackupDiskUsage(bkProjRoot string, bkStat, projStat *ProjectStatus) error {
