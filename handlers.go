@@ -1,6 +1,8 @@
 package main
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -534,6 +536,45 @@ func syncToBackupProject(bkProjRoot string) error {
 	if err := util.WrapErrors(e1, e2); err != nil {
 		return err
 	}
+
+	bkTX := bk.MustBegin()
+	defer bkTX.Rollback()
+
+	bkBuckets := filepath.Join(bkProjRoot, BucketsFolderName)
+	bkTemp := filepath.Join(bkProjRoot, TempFolderName)
+
+	// 如果一个文件存在于备份仓库中，但不存在于主仓库中，
+	// 那么说明该文件已被彻底删除，因此在备份仓库中也需要删除它。
+	for _, bkFile := range bkFiles {
+		_, err := db.GetFileByID(bkFile.ID)
+		if errors.Is(err, sql.ErrNoRows) {
+			if err2 := database.DeleteFile(bk.DB, bkBuckets, bkTemp, bkFile); err2 != nil {
+				return err2
+			}
+		} else if err != nil {
+			return err
+		}
+	}
+
+	// 如果一个文件存在于主仓库中，但不存在于备份仓库中，则直接拷贝。
+	for _, file := range dbFiles {
+		_, err := bk.GetFileByID(file.ID)
+		if errors.Is(err, sql.ErrNoRows) {
+			dstFile := filepath.Join(bkBuckets, file.Name)
+			srcFile := filepath.Join(BucketsFolder, file.Name)
+			if err := util.CopyFile(dstFile, srcFile); err != nil {
+				return err
+			}
+			if err := bk.InsertFileWithID(file); err != nil {
+				err2 := os.Remove(dstFile)
+				return util.WrapErrors(err, err2)
+			}
+		}
+	}
+
+	// 如果一个文件存在于两个仓库中，则进一步对比其 hash，按需拷贝覆盖。
+
+	return bkTX.Commit()
 }
 
 func checkBackupDiskUsage(bkProjRoot string, bkStat, projStat *ProjectStatus) error {

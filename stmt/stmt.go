@@ -62,6 +62,7 @@ const GetFileByName = `SELECT * FROM file WHERE name=?;`
 const GetFileByChecksum = `SELECT * FROM file WHERE checksum=?;`
 const GetRecentFiles = `SELECT * FROM file ORDER BY utime DESC LIMIT ?;`
 const GetAllFiles = `SELECT * FROM file;`
+const DeleteFile = `DELETE FROM file WHERE id=?;`
 
 const CountAllFiles = `SELECT count(*) FROM file;`
 const CountFilesNeedCheck = `SELECT count(*) FROM file WHERE checked<?;`

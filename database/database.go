@@ -21,6 +21,7 @@ type (
 	File             = model.File
 	Project          = model.Project
 	ProjectStatus    = model.ProjectStatus
+	MovedFile        = model.MovedFile
 	ErrSameNameFiles = model.ErrSameNameFiles
 )
 
@@ -45,7 +46,7 @@ func (db *DB) Query(query string, args ...any) (*sql.Rows, error) {
 	return db.DB.Query(query, args...)
 }
 
-func (db *DB) mustBegin() *sql.Tx {
+func (db *DB) MustBegin() *sql.Tx {
 	return lo.Must(db.DB.Begin())
 }
 
@@ -122,10 +123,15 @@ func (db *DB) InsertFile(file *File) (*File, error) {
 	return &f, err
 }
 
+// InsertFileWithID 主要用于复制文档到备份专案.
+func (db *DB) InsertFileWithID(file *File) error {
+	return insertFileWithID(db.DB, file)
+}
+
 // InsertFiles inserts files into the database.
 // 注意, 在使用该函数之前, 请先使用 db.CheckSameFiles() 检查全部等待处理的檔案.
 func (db *DB) InsertFiles(files []*File) error {
-	tx := db.mustBegin()
+	tx := db.MustBegin()
 	defer tx.Rollback()
 
 	for _, file := range files {

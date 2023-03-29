@@ -2,6 +2,8 @@ package database
 
 import (
 	"database/sql"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/ahui2016/local-buckets/model"
@@ -82,6 +84,27 @@ func insertFile(tx TX, f *File) error {
 	return err
 }
 
+func insertFileWithID(tx TX, f *File) error {
+	_, err := tx.Exec(
+		stmt.InsertFile,
+		f.ID,
+		f.Checksum,
+		f.BucketID,
+		f.Name,
+		f.Notes,
+		f.Keywords,
+		f.Size,
+		f.Type,
+		f.Like,
+		f.CTime,
+		f.UTime,
+		f.Checked,
+		f.Damaged,
+		f.Deleted,
+	)
+	return err
+}
+
 func scanFile(row Row) (f File, err error) {
 	err = row.Scan(
 		&f.ID,
@@ -136,4 +159,20 @@ func countFilesNeedCheck(tx TX, interval int64) (int64, error) {
 	interval = interval * 24 * 60 * 60 // 单位 "日" 转为 "秒"
 	needCheckDate := time.Unix(now-interval, 0).Format(model.RFC3339)
 	return getInt1(tx, stmt.CountFilesNeedCheck, needCheckDate)
+}
+
+// DeleteFile 刪除檔案, 包括從數據庫中刪除和從硬碟中刪除.
+func DeleteFile(tx TX, bucketsDir, tempDir string, file *File) error {
+	moved := MovedFile{
+		Src: filepath.Join(bucketsDir, file.BucketID, file.Name),
+		Dst: filepath.Join(tempDir, file.Name),
+	}
+	if err := moved.Move(); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(stmt.DeleteFile, file.ID); err != nil {
+		err2 := moved.Rollback()
+		return util.WrapErrors(err, err2)
+	}
+	return os.Remove(moved.Dst)
 }
