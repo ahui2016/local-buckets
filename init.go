@@ -16,7 +16,9 @@ type (
 	Bucket        = model.Bucket
 	File          = model.File
 	MovedFile     = model.MovedFile
+	ProjectInfo   = model.ProjectInfo
 	ProjectStatus = model.ProjectStatus
+	TX            = database.TX
 )
 
 const (

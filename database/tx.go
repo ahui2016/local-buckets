@@ -28,6 +28,11 @@ func getInt1(tx TX, query string, arg ...any) (n int64, err error) {
 	return
 }
 
+func TxGetFileByID(tx TX, id int64) (File, error) {
+	row := tx.QueryRow(stmt.GetFileByID, id)
+	return scanFile(row)
+}
+
 func insertBucket(tx TX, b *Bucket) error {
 	_, err := tx.Exec(
 		stmt.InsertBucket,
@@ -84,7 +89,8 @@ func insertFile(tx TX, f *File) error {
 	return err
 }
 
-func insertFileWithID(tx TX, f *File) error {
+// InsertFileWithID 主要用于复制文档到备份仓库.
+func InsertFileWithID(tx TX, f *File) error {
 	_, err := tx.Exec(
 		stmt.InsertFile,
 		f.ID,
@@ -175,4 +181,12 @@ func DeleteFile(tx TX, bucketsDir, tempDir string, file *File) error {
 		return util.WrapErrors(err, err2)
 	}
 	return os.Remove(moved.Dst)
+}
+
+// UpdateBackupFileInfo 更新一个文档的大多数信息, 但不更新 Checked 和 Damaged.
+func UpdateBackupFileInfo(tx TX, file *File) error {
+	_, err := tx.Exec(stmt.UpdateBackupFileInfo, file.Checksum, file.BucketID,
+		file.Name, file.Notes, file.Keywords, file.Size, file.Type,
+		file.Like, file.CTime, file.UTime, file.Deleted, file.ID)
+	return err
 }

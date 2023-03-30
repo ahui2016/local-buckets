@@ -123,11 +123,6 @@ func (db *DB) InsertFile(file *File) (*File, error) {
 	return &f, err
 }
 
-// InsertFileWithID 主要用于复制文档到备份专案.
-func (db *DB) InsertFileWithID(file *File) error {
-	return insertFileWithID(db.DB, file)
-}
-
 // InsertFiles inserts files into the database.
 // 注意, 在使用该函数之前, 请先使用 db.CheckSameFiles() 检查全部等待处理的檔案.
 func (db *DB) InsertFiles(files []*File) error {
@@ -152,8 +147,6 @@ func (db *DB) UpdateFileInfo(file *File) error {
 	return db.Exec(stmt.UpdateFileInfo, file.Name, file.Notes,
 		file.Keywords, file.Type, file.Like, file.CTime, file.UTime, file.ID)
 }
-
-func (db *DB) UpdateBackupFileInfo(file *File) error {}
 
 func (db *DB) MoveFileToBucket(fileID int64, BucketID string) error {
 	return db.Exec(stmt.MoveFileToBucket, BucketID, fileID)

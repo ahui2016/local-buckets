@@ -138,3 +138,5 @@ modernc.org/tcl v1.15.1 h1:mOQwiEK4p7HruMZcwKTZPw/aqtGM4aY00uzWhlKKYws=
 modernc.org/token v1.0.1 h1:A3qvTqOwexpfZZeyI0FeGPDlSWX5pjZu9hF4lU+EKWg=
 modernc.org/token v1.0.1/go.mod h1:UGzOrNV1mAFSEB63lOFHIpNRUVMvYTc6yu1SMY/XTDM=
 modernc.org/z v1.7.0 h1:xkDw/KepgEjeizO2sNco+hqYkU12taxQFqPEmgm1GWE=
+tcw.im/go-disk-usage v0.1.1 h1:YRYJPIPA5rrWVoIRlZaLUhCEqWWpp7YXDhxPteFf31M=
+tcw.im/go-disk-usage v0.1.1/go.mod h1:f5eAEDC4HBmFpjcgjqKqlbLLUAGq/WZTaV+iY0wb9TM=
