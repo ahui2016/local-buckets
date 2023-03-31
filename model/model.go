@@ -72,9 +72,6 @@ type Bucket struct {
 	Title    string `json:"title"`
 	Subtitle string `json:"subtitle"`
 
-	// 容量 (最多可容納多少個檔案)
-	Capacity int64 `json:"capacity"`
-
 	// 是否加密 (在創建時決定, 不可更改) (密碼在 ProjectConfig 中統一設定)
 	Encrypted bool `json:"encrypted"`
 }
@@ -92,7 +89,6 @@ func NewBucket(form *CreateBucketForm) (*Bucket, error) {
 	b := new(Bucket)
 	b.Name = form.Name
 	b.Title = form.Name
-	b.Capacity = 1024
 	b.Encrypted = form.Encrypted
 	return b, nil
 }

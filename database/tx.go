@@ -40,7 +40,6 @@ func insertBucket(tx TX, b *Bucket) error {
 		b.Name,
 		b.Title,
 		b.Subtitle,
-		b.Capacity,
 		b.Encrypted,
 	)
 	return err
@@ -52,19 +51,18 @@ func scanBucket(row Row) (b Bucket, err error) {
 		&b.Name,
 		&b.Title,
 		&b.Subtitle,
-		&b.Capacity,
 		&b.Encrypted,
 	)
 	return
 }
 
-func scanBuckets(rows *sql.Rows) (all []Bucket, err error) {
+func scanBuckets(rows *sql.Rows) (all []*Bucket, err error) {
 	for rows.Next() {
 		b, err := scanBucket(rows)
 		if err != nil {
 			return nil, err
 		}
-		all = append(all, b)
+		all = append(all, &b)
 	}
 	err = util.WrapErrors(rows.Err(), rows.Close())
 	return
@@ -136,13 +134,13 @@ func scanFile(row Row) (f File, err error) {
 	return
 }
 
-func scanFiles(rows *sql.Rows) (all []File, err error) {
+func scanFiles(rows *sql.Rows) (all []*File, err error) {
 	for rows.Next() {
 		f, err := scanFile(rows)
 		if err != nil {
 			return nil, err
 		}
-		all = append(all, f)
+		all = append(all, &f)
 	}
 	err = util.WrapErrors(rows.Err(), rows.Close())
 	return
@@ -153,16 +151,7 @@ func getFiles(tx TX, query string, args ...any) (files []*File, err error) {
 	if err != nil {
 		return
 	}
-	defer rows.Close()
-	for rows.Next() {
-		file, err := scanFile(rows)
-		if err != nil {
-			return nil, err
-		}
-		files = append(files, &file)
-	}
-	err = rows.Err()
-	return
+	return scanFiles(rows)
 }
 
 func countFilesNeedCheck(tx TX, interval int64) (int64, error) {
@@ -194,5 +183,12 @@ func UpdateBackupFileInfo(tx TX, file *File) error {
 		file.Checksum, file.BucketID, file.BucketName,
 		file.Name, file.Notes, file.Keywords, file.Size, file.Type,
 		file.Like, file.CTime, file.UTime, file.Deleted, file.ID)
+	return err
+}
+
+// UpdateBucketInfo 主要用于更新备份仓库的信息.
+func UpdateBucketInfo(tx TX, bucket *Bucket) error {
+	_, err := tx.Exec(stmt.UpdateBucket,
+		bucket.Name, bucket.Title, bucket.Subtitle, bucket.ID)
 	return err
 }

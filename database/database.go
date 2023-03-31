@@ -90,7 +90,7 @@ func (db *DB) ChangePassword(oldPwd, newPwd string) (HexString, error) {
 	return db.cipherKey, nil
 }
 
-func (db *DB) GetAllBuckets() ([]Bucket, error) {
+func (db *DB) GetAllBuckets() ([]*Bucket, error) {
 	rows, err := db.Query(stmt.GetAllBuckets)
 	if err != nil {
 		return nil, err

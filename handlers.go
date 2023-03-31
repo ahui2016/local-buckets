@@ -211,18 +211,12 @@ func uploadNewFiles(c *fiber.Ctx) error {
 	form := new(model.OneTextForm)
 	err1 := parseValidate(form, c)
 	bucket, err2 := db.GetBucketByName(form.Text) // bucketName = form.Text
-	count, err3 := db.GetInt1(stmt.CountFilesInBucket, form.Text)
-	if err := util.WrapErrors(err1, err2, err3); err != nil {
+	if err := util.WrapErrors(err1, err2); err != nil {
 		return err
 	}
 	files, err := checkAndGetWaitingFiles()
 	if err != nil {
 		return err
-	}
-	filesLength := int64(len(files))
-	if filesLength+count > bucket.Capacity {
-		return fmt.Errorf(
-			"待上傳檔案(%d) + 已有檔案(%d) > 倉庫容量(%d)", filesLength, count, bucket.Capacity)
 	}
 
 	// 以上是检查阶段
@@ -528,7 +522,41 @@ func syncBackup(c *fiber.Ctx) error {
 	return projCfgBackupNow(bkProjStat)
 }
 
-// TODO: 还有仓库本身需要同步呀！
+// Bug: 不能使用 tx
+// 同步仓库信息到备份仓库 (包括仓库资料夹重命名)
+func syncBuckets(bk *database.DB, bkTX TX) error {
+	dbBuckets, e1 := db.GetAllBuckets()
+	bkBuckets, e2 := bk.GetAllBuckets()
+	if err := util.WrapErrors(e1, e2); err != nil {
+		return err
+	}
+
+	for _, bucket := range dbBuckets {
+		bkBucket, err := bk.GetBucket(bucket.ID)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return err
+		}
+		// 如果仓库资料夹名称发生了改变, 则备份仓库的资料夹也要重命名
+		oldName := bkBucket.Name
+		newName := bucket.Name
+		if bkBucket.Name != bucket.Name {
+			if err := os.Rename(oldName, newName); err != nil {
+				return err
+			}
+		}
+		if bkBucket.Name != bucket.Name ||
+			bkBucket.Title != bucket.Title ||
+			bkBucket.Subtitle != bucket.Subtitle {
+			if err := database.UpdateBucketInfo(bkTX, bucket); err != nil {
+				err2 := os.Rename(newName, oldName)
+				return util.WrapErrors(err, err2)
+			}
+		}
+	}
+
+}
+
+// Bug: 不能使用 tx
 // syncToBackupProject 以源仓库为准单向同步，
 // 最终效果相当于清空备份仓库后把主仓库的全部文档复制到备份仓库。
 func syncToBackupProject(bkProjRoot string) (*ProjectStatus, error) {

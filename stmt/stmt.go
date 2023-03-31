@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS bucket
 	name         TEXT      NOT NULL COLLATE NOCASE UNIQUE,
 	title        TEXT      NOT NULL COLLATE NOCASE UNIQUE,
 	subtitle     TEXT      NOT NULL,
-	capacity     INTEGER   NOT NULL,
 	encrypted    BOOLEAN   NOT NULL
 );
 
@@ -40,8 +39,11 @@ CREATE INDEX IF NOT EXISTS idx_file_checked     ON file(checked);
 `
 
 const InsertBucket = `INSERT INTO bucket (
-	id, name, title, subtitle, capacity, encrypted
-) VALUES (?, ?, ?, ?, ?, ?);`
+	id, name, title, subtitle, encrypted
+) VALUES (?, ?, ?, ?, ?);`
+
+const UpdateBucket = `UPDATE bucket
+	SET name=?, title=?, subtitle=? WHERE id=?;`
 
 const GetAllBuckets = `SELECT * FROM bucket;`
 const GetBucket = `SELECT * FROM bucket WHERE id=?;`
