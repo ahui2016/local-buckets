@@ -17,8 +17,8 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/pelletier/go-toml/v2"
+	"github.com/ricochet2200/go-disk-usage/du"
 	"github.com/samber/lo"
-	"tcw.im/go-disk-usage/du"
 )
 
 const OK = http.StatusOK
@@ -74,8 +74,7 @@ func changePassword(c *fiber.Ctx) error {
 		return err
 	}
 	ProjectConfig.CipherKey = cipherKey
-	writeProjectConfig()
-	return nil
+	return writeProjectConfig()
 }
 
 // TODO: 输入密码后才包含加密仓库
@@ -486,10 +485,10 @@ func getBKProjStat(c *fiber.Ctx) error {
 		return c.Status(404).SendString("not found: " + bkProjRoot)
 	}
 	bk, bkProjStat, err := openBackupDB(bkProjRoot)
-	defer bk.DB.Close()
 	if err != nil {
 		return err
 	}
+	defer bk.DB.Close()
 	return c.JSON(bkProjStat)
 }
 
@@ -501,6 +500,8 @@ func openBackupDB(bkProjRoot string) (bk *database.DB, bkProjStat *ProjectStatus
 	if err != nil {
 		return
 	}
+	bk = new(database.DB)
+	bkProjStat = new(ProjectStatus)
 	var bkProjCfg Project
 	if err = toml.Unmarshal(data, &bkProjCfg); err != nil {
 		return
@@ -512,29 +513,40 @@ func openBackupDB(bkProjRoot string) (bk *database.DB, bkProjStat *ProjectStatus
 	return
 }
 
+func syncBackup(c *fiber.Ctx) error {
+	form := new(model.OneTextForm)
+	if err := parseValidate(form, c); err != nil {
+		return err
+	}
+	bkProjStat, err := syncToBackupProject(form.Text)
+	if err != nil {
+		return err
+	}
+	return projCfgBackupNow(bkProjStat)
+}
+
+// TODO: 还有仓库本身需要同步呀！
 // syncToBackupProject 以源仓库为准单向同步，
 // 最终效果相当于清空备份仓库后把主仓库的全部文档复制到备份仓库。
-func syncToBackupProject(bkProjRoot string) error {
+func syncToBackupProject(bkProjRoot string) (*ProjectStatus, error) {
 	projStat, err := db.GetProjStat(ProjectConfig)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	bk, bkProjStat, err := openBackupDB(bkProjRoot)
-	defer bk.DB.Close()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if projStat.DamagedCount+bkProjStat.DamagedCount > 0 {
-		return fmt.Errorf("damaged found (發現損毀檔案, 必須修復後才可備份)")
-	}
+	defer bk.DB.Close()
+
 	if err := checkBackupDiskUsage(bkProjRoot, bkProjStat, &projStat); err != nil {
-		return err
+		return nil, err
 	}
 
 	dbFiles, e1 := db.GetAllFiles()
 	bkFiles, e2 := bk.GetAllFiles()
 	if err := util.WrapErrors(e1, e2); err != nil {
-		return err
+		return nil, err
 	}
 
 	bkTX := bk.MustBegin()
@@ -543,24 +555,25 @@ func syncToBackupProject(bkProjRoot string) error {
 	bkBuckets := filepath.Join(bkProjRoot, BucketsFolderName)
 	bkTemp := filepath.Join(bkProjRoot, TempFolderName)
 
-	// 如果一个文档同时存在于两个专案中, 则对比其 bucketid, 不一致则移动文档.
-	for _, file := range dbFiles {
-		bkFile, err := bk.GetFileByID(file.ID)
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return err
-		}
-		if file.BucketID != bkFile.BucketID {
-			if err := moveBKFileToBucket(bkBuckets, file.BucketID, &bkFile, bkTX); err != nil {
-				return err
-			}
-		}
-	}
-
 	// 如果一个文档存在于备份仓库中，但不存在于主仓库中，
 	// 那么说明该文档已被彻底删除，因此在备份仓库中也需要删除它。
 	for _, bkFile := range bkFiles {
 		if err := deleteBKFile(bkBuckets, bkTemp, bkFile, bkTX); err != nil {
-			return err
+			return nil, err
+		}
+	}
+
+	// 如果一个文档同时存在于两个专案中, 则对比其 bucketid, 不一致则移动文档.
+	// Bug: 有很低的可能性发生文档名称冲突，知道就行，暂时可以偷懒不处理。
+	for _, file := range dbFiles {
+		bkFile, err := bk.GetFileByID(file.ID)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+		if file.BucketID != bkFile.BucketID {
+			if err := moveBKFileToBucket(bkBuckets, file.BucketID, &bkFile, bkTX); err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -569,10 +582,10 @@ func syncToBackupProject(bkProjRoot string) error {
 	for _, file := range dbFiles {
 		bkFile, err := bk.GetFileByID(file.ID)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return err
+			return nil, err
 		}
 		if err := overwriteBKFile(bkBuckets, bkTemp, file, &bkFile, bkTX); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
@@ -581,13 +594,13 @@ func syncToBackupProject(bkProjRoot string) error {
 	for _, file := range dbFiles {
 		bkFile, err := bk.GetFileByID(file.ID)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return err
+			return nil, err
 		}
 		if filesHaveSameProperties(&bkFile, file) {
 			continue
 		}
 		if err := database.UpdateBackupFileInfo(bkTX, file); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
@@ -595,11 +608,12 @@ func syncToBackupProject(bkProjRoot string) error {
 	// 这一步应该在更新 checksum 不同的文档之后，避免 checksum 冲突。
 	for _, file := range dbFiles {
 		if err := insertBKFile(bkBuckets, file, bkTX); err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	return bkTX.Commit()
+	err = bkTX.Commit()
+	return bkProjStat, err
 }
 
 func moveBKFileToBucket(bkBuckets, newBucketID string, bkFile *File, bkTX TX) error {
@@ -688,13 +702,13 @@ func overwriteBKFile(bkBuckets, bkTemp string, file, bkFile *File, bkTX TX) erro
 }
 
 func checkBackupDiskUsage(bkProjRoot string, bkStat, projStat *ProjectStatus) error {
-	diskInfo := du.DiskInfo(bkProjRoot)
+	usage := du.NewDiskUsage(bkProjRoot)
 	addUp := projStat.TotalSize - bkStat.TotalSize // 備份後將會增加的體積
 	if addUp <= 0 {
 		return nil
 	}
 	var margin uint64 = 1 << 30 // 1GB (現在U盤也是100GB起步了)
-	if uint64(addUp)+margin > diskInfo.Available {
+	if uint64(addUp)+margin > usage.Available() {
 		return fmt.Errorf("not enough space (備份專案空間不足)")
 	}
 	return nil

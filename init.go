@@ -70,8 +70,8 @@ func readProjectConfig() {
 	lo.Must0(toml.Unmarshal(data, &ProjectConfig))
 }
 
-func writeProjectConfig() {
-	lo.Must0(util.WriteTOML(ProjectConfig, ProjectConfigPath))
+func writeProjectConfig() error {
+	return util.WriteTOML(ProjectConfig, ProjectConfigPath)
 }
 
 func initProjectConfig() {
@@ -79,10 +79,20 @@ func initProjectConfig() {
 		title := filepath.Base(ProjectRoot)
 		cipherkey := database.DefaultCipherKey()
 		ProjectConfig = model.NewProject(title, cipherkey)
-		writeProjectConfig()
+		lo.Must0(writeProjectConfig())
 		return
 	}
 	readProjectConfig()
+}
+
+// 更新备份时间
+func projCfgBackupNow(bkProjStat *ProjectStatus) error {
+	ProjectConfig.LastBackupAt = model.Now()
+	err1 := writeProjectConfig()
+	bkProjCfgPath := filepath.Join(bkProjStat.Root, ProjectTOML)
+	bkProjStat.LastBackupAt = ProjectConfig.LastBackupAt
+	err2 := util.WriteTOML(bkProjStat.Project, bkProjCfgPath)
+	return util.WrapErrors(err1, err2)
 }
 
 func addBKProjToConfig(bkProjRoot string) error {

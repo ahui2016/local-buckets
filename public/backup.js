@@ -1,6 +1,6 @@
 $("title").text("Backup (備份專案) - Local Buckets");
 
-let bkProjStat = null;
+let mainProjStat = null;
 
 const PageAlert = MJBS.createAlert();
 const PageLoading = MJBS.createLoading(null, "large");
@@ -9,6 +9,7 @@ const BKProjPathInput = MJBS.createInput("text", "required");
 const BKProjCreateBtn = MJBS.createButton("Create");
 const BKProjCreateAlert = MJBS.createAlert();
 
+// 表单: 创建一个新的备份专案
 const CreateBKProjForm = cc("form", {
   attr: { autocomplete: "off" },
   children: [
@@ -52,6 +53,7 @@ const CreateBKProjForm = cc("form", {
   ],
 });
 
+// 按钮区域: 点击该按钮可显示表单 (用于创建新备份专案的表单)
 const CreateBKProjLinkArea = cc("div", { css: { display: "inline" } });
 
 const navBar = m("div")
@@ -84,6 +86,7 @@ const navBar = m("div")
       )
   );
 
+// 备份专案列表, 用户可选择使用哪个备份专案
 const BKProjList = cc("div", { classes: "accordion" });
 const BKProjListArea = cc("div", {
   children: [m("h4").text("請選擇備份目的地:"), m(BKProjList)],
@@ -175,6 +178,7 @@ function BKProjItem(projPath) {
   });
 }
 
+// 根据 ProjectStatus 展示专案状态, "源专案" 与 "备份专案" 都使用该函数.
 function createProjStat(projStat) {
   let projType = "Source (源專案)";
   if (projStat.is_backup) projType = "Destination (備份專案)";
@@ -223,6 +227,35 @@ function createProjStat(projStat) {
   });
 }
 
+const BackupButton = MJBS.createButton("Backup");
+const RepairButton = MJBS.createButton("Repair", "danger");
+const BackupBtnAlert = MJBS.createAlert();
+const BackupButtonsArea = cc("div", {
+  classes: "text-center my-5",
+  children: [m(BackupBtnAlert).addClass("mb-2")],
+});
+
+BackupButtonsArea.appendBackupButton = (bkProjRoot) => {
+  BackupButtonsArea.elem().append(
+    m(BackupButton).on("click", (event) => {
+      event.preventDefault();
+      MJBS.disable(BackupButton);
+      axiosPost({
+        url: "/api/sync-backup",
+        alert: BackupBtnAlert,
+        body: { text: bkProjRoot },
+        onSuccess: () => {
+          BackupButton.hide();
+          BackupBtnAlert.insert("success", "備份完成!");
+        },
+        onAlways: () => {
+          MJBS.enable(BackupButton);
+        },
+      });
+    })
+  );
+};
+
 const ProjectsStatusArea = cc("div");
 
 $("#root")
@@ -247,7 +280,7 @@ function getMainProject() {
     url: "/api/project-status",
     alert: PageAlert,
     onSuccess: (resp) => {
-      const mainProjStat = resp.data;
+      mainProjStat = resp.data;
       initBKProjects(mainProjStat.backup_projects);
 
       const MainProjStat = createProjStat(mainProjStat);
@@ -286,8 +319,24 @@ function getBKProject(bkProjRoot, alert, btn) {
       const BKProjStat = createProjStat(bkProjStat);
       ProjectsStatusArea.elem().append(
         m("div").addClass("my-2 text-center").html(IconDownArrow),
-        m(BKProjStat)
+        m(BKProjStat),
+        m(BackupButtonsArea)
       );
+      if (mainProjStat.TotalSize - bkProjStat.TotalSize > 100 * GB) {
+        BackupBtnAlert.insert(
+          "warning",
+          "注意, 待備份資料超過 100GB, 可能需要很長時間, 請確保電腦電量充足."
+        );
+      }
+      if (bkProjStat.DamagedCount + mainProjStat.DamagedCount > 0) {
+        BackupBtnAlert.insert(
+          "warning",
+          "damaged found (發現損毀檔案, 必須修復後才可備份)"
+        );
+        BackupButtonsArea.elem().append(m(RepairButton));
+      } else {
+        BackupButtonsArea.appendBackupButton(bkProjRoot);
+      }
       BKProjListArea.hide();
     },
     onAlways: () => {

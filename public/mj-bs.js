@@ -699,22 +699,4 @@ function fileSizeToString(fileSize, fixed) {
 
 const DateFormatYMD = "YYYY-MM-DD";
 const RootCss = { maxWidth: "992px" };
-
-// 糊塗記帳預設金額
-const predefinedAmounts = [
-  0, 5, 10, 15, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 300, 400, 500,
-  600, 700, 800, 900, 1000, 1500, 2000, 3000, 4000, 5000, 6000, 7000, 8000,
-  9000, 10000,
-];
-
-function showPageNav_by_day(today, pageNav) {
-  const oneDay = 24 * 60 * 60;
-  const timestamp = dayjs(today).unix();
-  const tomorrow = dayjs.unix(timestamp + oneDay).format(DateFormatYMD);
-  const yesterday = dayjs.unix(timestamp - oneDay).format(DateFormatYMD);
-
-  pageNav.show();
-  pageNav.setThisPage(today);
-  pageNav.setPreviousPage(`?day=${yesterday}`, `⬅️${yesterday}`);
-  pageNav.setNextPage(`?day=${tomorrow}`, `${tomorrow}➡️`);
-}
+const GB = 1 << 30;

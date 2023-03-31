@@ -46,16 +46,16 @@ func NewProject(title string, cipherkey string) *Project {
 
 type ProjectInfo struct {
 	*Project
-	Path string `json:"path"`
+	Path string `json:"path"` // sqlite 数据库文件路径
 }
 
 type ProjectStatus struct {
 	*Project
-	Path              string
-	TotalSize         int64 // 全部檔案體積合計
-	FilesCount        int64 // 檔案數量合計
-	WaitingCheckCount int64 // 待檢查檔案數量合計
-	DamagedCount      int64 // 損壞檔案數量合計
+	Root              string // 专案根目录
+	TotalSize         int64  // 全部檔案體積合計
+	FilesCount        int64  // 檔案數量合計
+	WaitingCheckCount int64  // 待檢查檔案數量合計
+	DamagedCount      int64  // 損壞檔案數量合計
 }
 
 // Bucket 倉庫
@@ -182,6 +182,7 @@ func (f *File) Rename(name string) {
 	f.Type = typeByFilename(name)
 }
 
+// Now return time.Now().Format(RFC3339)
 func Now() string {
 	return time.Now().Format(RFC3339)
 }

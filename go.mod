@@ -6,6 +6,7 @@ require (
 	github.com/go-playground/validator/v10 v10.11.2
 	github.com/gofiber/fiber/v2 v2.42.0
 	github.com/pelletier/go-toml/v2 v2.0.7
+	github.com/ricochet2200/go-disk-usage/du v0.0.0-20210707232629-ac9918953285
 	github.com/samber/lo v1.37.0
 	golang.org/x/crypto v0.5.0
 	modernc.org/sqlite v1.21.0
@@ -46,5 +47,4 @@ require (
 	modernc.org/opt v0.1.3 // indirect
 	modernc.org/strutil v1.1.3 // indirect
 	modernc.org/token v1.0.1 // indirect
-	tcw.im/go-disk-usage v0.1.1 // indirect
 )

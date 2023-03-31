@@ -245,7 +245,7 @@ func (db *DB) GetProjStat(projCfg *Project) (ProjectStatus, error) {
 	err := util.WrapErrors(e1, e2, e3, e4)
 	projStat := ProjectStatus{
 		Project:           projCfg,
-		Path:              filepath.Dir(db.Path),
+		Root:              filepath.Dir(db.Path),
 		TotalSize:         totalSize,
 		FilesCount:        allFilesCount,
 		WaitingCheckCount: needCheckCount,
