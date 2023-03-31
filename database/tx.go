@@ -36,7 +36,8 @@ func TxGetFileByID(tx TX, id int64) (File, error) {
 func insertBucket(tx TX, b *Bucket) error {
 	_, err := tx.Exec(
 		stmt.InsertBucket,
-		b.ID,
+		// b.ID, 自增ID
+		b.Name,
 		b.Title,
 		b.Subtitle,
 		b.Capacity,
@@ -48,6 +49,7 @@ func insertBucket(tx TX, b *Bucket) error {
 func scanBucket(row Row) (b Bucket, err error) {
 	err = row.Scan(
 		&b.ID,
+		&b.Name,
 		&b.Title,
 		&b.Subtitle,
 		&b.Capacity,
@@ -74,6 +76,7 @@ func insertFile(tx TX, f *File) error {
 		// f.ID, 自增ID
 		f.Checksum,
 		f.BucketID,
+		f.BucketName,
 		f.Name,
 		f.Notes,
 		f.Keywords,
@@ -96,6 +99,7 @@ func InsertFileWithID(tx TX, f *File) error {
 		f.ID,
 		f.Checksum,
 		f.BucketID,
+		f.BucketName,
 		f.Name,
 		f.Notes,
 		f.Keywords,
@@ -116,6 +120,7 @@ func scanFile(row Row) (f File, err error) {
 		&f.ID,
 		&f.Checksum,
 		&f.BucketID,
+		&f.BucketName,
 		&f.Name,
 		&f.Notes,
 		&f.Keywords,
@@ -170,7 +175,7 @@ func countFilesNeedCheck(tx TX, interval int64) (int64, error) {
 // DeleteFile 刪除檔案, 包括從數據庫中刪除和從硬碟中刪除.
 func DeleteFile(tx TX, bucketsDir, tempDir string, file *File) error {
 	moved := MovedFile{
-		Src: filepath.Join(bucketsDir, file.BucketID, file.Name),
+		Src: filepath.Join(bucketsDir, file.BucketName, file.Name),
 		Dst: filepath.Join(tempDir, file.Name),
 	}
 	if err := moved.Move(); err != nil {
@@ -185,7 +190,8 @@ func DeleteFile(tx TX, bucketsDir, tempDir string, file *File) error {
 
 // UpdateBackupFileInfo 更新一个文档的大多数信息, 但不更新 Checked 和 Damaged.
 func UpdateBackupFileInfo(tx TX, file *File) error {
-	_, err := tx.Exec(stmt.UpdateBackupFileInfo, file.Checksum, file.BucketID,
+	_, err := tx.Exec(stmt.UpdateBackupFileInfo,
+		file.Checksum, file.BucketID, file.BucketName,
 		file.Name, file.Notes, file.Keywords, file.Size, file.Type,
 		file.Like, file.CTime, file.UTime, file.Deleted, file.ID)
 	return err

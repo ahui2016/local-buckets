@@ -39,7 +39,7 @@ const BucketSelectGroup = cc("div", {
 function BucketItem(bucket) {
   return cc("option", {
     id: "B-" + bucket.id,
-    attr: { value: bucket.id, title: bucket.id },
+    attr: { value: bucket.name, title: bucket.name },
     text: bucket.title,
   });
 }
@@ -67,15 +67,15 @@ const UploadButtonArea = cc("div", {
     m(UploadAlert),
     m(UploadButton).on("click", (event) => {
       event.preventDefault();
-      const bucketid = BucketSelect.elem().val();
-      if (!bucketid) {
+      const bucket_name = BucketSelect.elem().val();
+      if (!bucket_name) {
         UploadAlert.insert("warning", "請選擇一個倉庫");
         return;
       }
       MJBS.disable(UploadButton); // --------------------- disable
       axiosPost({
         url: "/api/upload-new-files",
-        body: { text: bucketid },
+        body: { text: bucket_name },
         alert: UploadAlert,
         onSuccess: () => {
           UploadAlert.clear().insert("success", "上傳成功");
@@ -103,14 +103,14 @@ $("#root")
 init();
 
 async function init() {
-  if ((await initBucketSelect()) == "fail") {
+  if ((await initBuckets()) == "fail") {
     return;
   }
   getWaitingFolder();
   getWaitingFiles();
 }
 
-function initBucketSelect() {
+function initBuckets() {
   return new Promise((resolve) => {
     axiosGet({
       url: "/api/all-buckets",

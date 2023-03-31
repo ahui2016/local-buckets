@@ -98,8 +98,13 @@ func (db *DB) GetAllBuckets() ([]Bucket, error) {
 	return scanBuckets(rows)
 }
 
-func (db *DB) GetBucket(id string) (Bucket, error) {
+func (db *DB) GetBucket(id int64) (Bucket, error) {
 	row := db.QueryRow(stmt.GetBucket, id)
+	return scanBucket(row)
+}
+
+func (db *DB) GetBucketByName(name string) (Bucket, error) {
+	row := db.QueryRow(stmt.GetBucketByName, name)
 	return scanBucket(row)
 }
 
@@ -148,8 +153,8 @@ func (db *DB) UpdateFileInfo(file *File) error {
 		file.Keywords, file.Type, file.Like, file.CTime, file.UTime, file.ID)
 }
 
-func (db *DB) MoveFileToBucket(fileID int64, BucketID string) error {
-	return db.Exec(stmt.MoveFileToBucket, BucketID, fileID)
+func (db *DB) MoveFileToBucket(fileID, bucketID int64, bucketName string) error {
+	return db.Exec(stmt.MoveFileToBucket, bucketID, bucketName, fileID)
 }
 
 // CheckSameFiles 检查有无同名/相同内容的檔案,
@@ -194,7 +199,7 @@ func (db *DB) CheckSameChecksum(file *File) error {
 	same, err := db.GetFileByChecksum(file.Checksum)
 	if err == nil && len(same.Name) > 0 {
 		return fmt.Errorf(
-			"相同内容的檔案已存在: %s ↔ %s/%s", file.Name, same.BucketID, same.Name)
+			"相同内容的檔案已存在: %s ↔ %s/%s", file.Name, same.BucketName, same.Name)
 	}
 	if errors.Is(err, sql.ErrNoRows) {
 		err = nil

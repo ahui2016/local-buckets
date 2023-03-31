@@ -60,10 +60,12 @@ type ProjectStatus struct {
 
 // Bucket 倉庫
 type Bucket struct {
-	// 倉庫 ID, 同時也是倉庫資料夾名.
+	// 自增數字ID
+	ID int64 `json:"id"`
+
+	// 倉庫資料夾名, 不分大小寫.
 	// 只能使用 0-9, a-z, A-Z, _(下劃線), -(連字號), .(點)
-	// 注意, 在數據庫中, ID 是不分大小寫的.
-	ID string `json:"id"`
+	Name string `json:"name"`
 
 	// 倉庫標題和副標題, 可使用任何語言任意字符.
 	// 其中, Title 在數據庫中是 COLLATE NOCASE UNIQUE.
@@ -79,17 +81,17 @@ type Bucket struct {
 
 // CreateBucketForm 用於新建倉庫, 由前端傳給后端.
 type CreateBucketForm struct {
-	ID        string `json:"id" validate:"required"`
+	Name      string `json:"name" validate:"required"`
 	Encrypted bool   `json:"encrypted"`
 }
 
 func NewBucket(form *CreateBucketForm) (*Bucket, error) {
-	if err := checkFilename(form.ID); err != nil {
+	if err := checkFilename(form.Name); err != nil {
 		return nil, err
 	}
 	b := new(Bucket)
-	b.ID = form.ID
-	b.Title = form.ID
+	b.Name = form.Name
+	b.Title = form.Name
 	b.Capacity = 1024
 	b.Encrypted = form.Encrypted
 	return b, nil
@@ -98,20 +100,21 @@ func NewBucket(form *CreateBucketForm) (*Bucket, error) {
 // File 檔案.
 // Notes 與 Keywords 本質上是一樣的, 只是一行字符串, 用來輔助搜尋.
 type File struct {
-	ID       int64  `json:"id"`       // 自動數字ID
-	Checksum string `json:"checksum"` // NOT NULL UNIQUE
-	BucketID string `json:"bucketid"` // Bucket.ID
-	Name     string `json:"name"`     // 檔案名
-	Notes    string `json:"notes"`    // 備註
-	Keywords string `json:"keywords"` // 關鍵詞, 便於搜尋
-	Size     int64  `json:"size"`     // length in bytes for regular files
-	Type     string `json:"type"`     // 檔案類型, 例: text/js, office/docx
-	Like     int64  `json:"like"`     // 點贊
-	CTime    string `json:"ctime"`    // RFC3339 檔案入庫時間
-	UTime    string `json:"utime"`    // RFC3339 檔案更新時間
-	Checked  string `json:"checked"`  // RFC3339 上次校驗檔案完整性的時間
-	Damaged  bool   `json:"damaged"`  // 上次校驗結果 (檔案是否損壞)
-	Deleted  bool   `json:"deleted"`  // 把檔案标记为 "已删除"
+	ID         int64  `json:"id"`          // 自增數字ID
+	Checksum   string `json:"checksum"`    // NOT NULL UNIQUE
+	BucketID   int64  `json:"bucketid"`    // Bucket.ID
+	BucketName string `json:"bucket_name"` // Bucket.Name
+	Name       string `json:"name"`        // 檔案名
+	Notes      string `json:"notes"`       // 備註
+	Keywords   string `json:"keywords"`    // 關鍵詞, 便於搜尋
+	Size       int64  `json:"size"`        // length in bytes for regular files
+	Type       string `json:"type"`        // 檔案類型, 例: text/js, office/docx
+	Like       int64  `json:"like"`        // 點贊
+	CTime      string `json:"ctime"`       // RFC3339 檔案入庫時間
+	UTime      string `json:"utime"`       // RFC3339 檔案更新時間
+	Checked    string `json:"checked"`     // RFC3339 上次校驗檔案完整性的時間
+	Damaged    bool   `json:"damaged"`     // 上次校驗結果 (檔案是否損壞)
+	Deleted    bool   `json:"deleted"`     // 把檔案标记为 "已删除"
 }
 
 // NewWaitingFile 根据 filePath 生成新檔案,
@@ -129,18 +132,12 @@ func NewWaitingFile(filePath string) (*File, error) {
 	now := Now()
 	f := new(File)
 	f.Checksum = checksum
-	f.BucketID = ""
 	f.Name = basename
-	f.Notes = ""
-	f.Keywords = ""
 	f.Size = info.Size()
 	f.Type = typeByFilename(basename)
-	f.Like = 0
 	f.CTime = now
 	f.UTime = now
 	f.Checked = now
-	f.Damaged = false
-	f.Deleted = false
 	return f, nil
 }
 
@@ -159,18 +156,12 @@ func NewFile(root, bucketID, basename string) (*File, error) {
 	}
 	f := new(File)
 	f.Checksum = checksum
-	f.BucketID = bucketID
 	f.Name = basename
-	f.Notes = ""
-	f.Keywords = ""
 	f.Size = info.Size()
 	f.Type = typeByFilename(basename)
-	f.Like = 0
 	f.CTime = now
 	f.UTime = now
 	f.Checked = now
-	f.Damaged = false
-	f.Deleted = false
 	return f, nil
 }
 
@@ -248,8 +239,8 @@ type UpdateFileInfoForm struct {
 }
 
 type MoveFileToBucketForm struct {
-	FileID   int64  `json:"file_id" validate:"required,gt=0"`
-	BucketID string `json:"bucket_id" validate:"required"`
+	FileID   int64 `json:"file_id" validate:"required,gt=0"`
+	BucketID int64 `json:"bucket_id" validate:"required,gt=0"`
 }
 
 type MovedFile struct {
@@ -285,7 +276,7 @@ func NewErrSameNameFiles(file File) ErrSameNameFiles {
 
 func (e ErrSameNameFiles) Error() string {
 	return fmt.Sprintf(
-		"倉庫中已有同名檔案(檔案名稱不分大小寫): %s/%s", e.File.BucketID, e.File.Name)
+		"倉庫中已有同名檔案(檔案名稱不分大小寫): %s/%s", e.File.BucketName, e.File.Name)
 }
 
 // GetMIME returns the content-type of a file extension.

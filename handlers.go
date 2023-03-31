@@ -95,7 +95,7 @@ func createBucket(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	createBucketFolder(form.ID)
+	createBucketFolder(form.Name)
 	return c.JSON(bucket)
 }
 
@@ -164,15 +164,16 @@ func overwriteFile(c *fiber.Ctx) error {
 		return err
 	}
 
-	// 这个 fileInDB 主要是为了获取 File.ID 和 BucketID.
+	// 这个 fileInDB 主要是为了获取 File.ID 和 BucketID, BucketName.
 	fileInDB, err := db.GetFileByName(file.Name)
 	if err != nil {
 		return err
 	}
 	file.ID = fileInDB.ID
 	file.BucketID = fileInDB.BucketID
+	file.BucketName = fileInDB.BucketName
 
-	waitingFile.Dst = filepath.Join(BucketsFolder, file.BucketID, file.Name)
+	waitingFile.Dst = filepath.Join(BucketsFolder, file.BucketName, file.Name)
 
 	// 以上是收集信息及检查错误
 	// 以下开始操作文档和数据库
@@ -180,7 +181,7 @@ func overwriteFile(c *fiber.Ctx) error {
 	// tempFile 把旧文档临时移动到安全的地方
 	// 在文档名区分大小写的系统里, 要注意 file.Name 与 fileInDB.Name 可能不同.
 	tempFile := MovedFile{
-		Src: filepath.Join(BucketsFolder, file.BucketID, fileInDB.Name),
+		Src: filepath.Join(BucketsFolder, file.BucketName, fileInDB.Name),
 		Dst: filepath.Join(TempFolder, fileInDB.Name),
 	}
 	if err = tempFile.Move(); err != nil {
@@ -209,7 +210,7 @@ func overwriteFile(c *fiber.Ctx) error {
 func uploadNewFiles(c *fiber.Ctx) error {
 	form := new(model.OneTextForm)
 	err1 := parseValidate(form, c)
-	bucket, err2 := db.GetBucket(form.Text) // bucketID = form.Text
+	bucket, err2 := db.GetBucketByName(form.Text) // bucketName = form.Text
 	count, err3 := db.GetInt1(stmt.CountFilesInBucket, form.Text)
 	if err := util.WrapErrors(err1, err2, err3); err != nil {
 		return err
@@ -227,7 +228,7 @@ func uploadNewFiles(c *fiber.Ctx) error {
 	// 以上是检查阶段
 	// 以下是实际执行阶段
 
-	files = setBucketID(bucket.ID, files)
+	files = setBucketID(bucket.ID, bucket.Name, files)
 	movedFiles, err := moveWaitingFiles(files)
 	if err != nil {
 		err2 := rollbackMovedFiles(movedFiles)
@@ -263,15 +264,16 @@ func moveWaitingFiles(files []*File) (movedFiles []MovedFile, err error) {
 func moveWaitingFileToBucket(file *File) (MovedFile, error) {
 	movedFile := MovedFile{
 		Src: filepath.Join(WaitingFolder, file.Name),
-		Dst: filepath.Join(BucketsFolder, file.BucketID, file.Name),
+		Dst: filepath.Join(BucketsFolder, file.BucketName, file.Name),
 	}
 	err := movedFile.Move()
 	return movedFile, err
 }
 
-func setBucketID(bucketID string, files []*File) []*File {
+func setBucketID(bucketID int64, bucketName string, files []*File) []*File {
 	for _, file := range files {
 		file.BucketID = bucketID
+		file.BucketName = bucketName
 	}
 	return files
 }
@@ -346,18 +348,19 @@ func moveFileToBucket(c *fiber.Ctx) error {
 	if err := parseValidate(form, c); err != nil {
 		return err
 	}
-	file, err := db.GetFileByID(form.FileID)
-	if err != nil {
+	file, err1 := db.GetFileByID(form.FileID)
+	bucket, err2 := db.GetBucket(form.BucketID)
+	if err := util.WrapErrors(err1, err2); err != nil {
 		return err
 	}
 	moved := MovedFile{
-		Src: filepath.Join(BucketsFolder, file.BucketID, file.Name),
-		Dst: filepath.Join(BucketsFolder, form.BucketID, file.Name),
+		Src: filepath.Join(BucketsFolder, file.BucketName, file.Name),
+		Dst: filepath.Join(BucketsFolder, bucket.Name, file.Name),
 	}
 	if err := moved.Move(); err != nil {
 		return err
 	}
-	if err := db.MoveFileToBucket(form.FileID, form.BucketID); err != nil {
+	if err := db.MoveFileToBucket(form.FileID, bucket.ID, bucket.Name); err != nil {
 		err2 := moved.Rollback()
 		return util.WrapErrors(err, err2)
 	}
@@ -399,8 +402,8 @@ func updateFileInfo(c *fiber.Ctx) error {
 		if err := db.CheckSameFilename(form.Name); err != nil {
 			return err
 		}
-		moved.Src = filepath.Join(BucketsFolder, file.BucketID, file.Name)
-		moved.Dst = filepath.Join(BucketsFolder, file.BucketID, form.Name)
+		moved.Src = filepath.Join(BucketsFolder, file.BucketName, file.Name)
+		moved.Dst = filepath.Join(BucketsFolder, file.BucketName, form.Name)
 		if err := moved.Move(); err != nil {
 			return err
 		}
@@ -571,7 +574,7 @@ func syncToBackupProject(bkProjRoot string) (*ProjectStatus, error) {
 			return nil, err
 		}
 		if file.BucketID != bkFile.BucketID {
-			if err := moveBKFileToBucket(bkBuckets, file.BucketID, &bkFile, bkTX); err != nil {
+			if err := moveBKFileToBucket(bkBuckets, file.BucketName, &bkFile, bkTX); err != nil {
 				return nil, err
 			}
 		}
@@ -616,15 +619,15 @@ func syncToBackupProject(bkProjRoot string) (*ProjectStatus, error) {
 	return bkProjStat, err
 }
 
-func moveBKFileToBucket(bkBuckets, newBucketID string, bkFile *File, bkTX TX) error {
+func moveBKFileToBucket(bkBuckets, newBucketName string, bkFile *File, bkTX TX) error {
 	moved := MovedFile{
-		Src: filepath.Join(bkBuckets, bkFile.BucketID, bkFile.Name),
-		Dst: filepath.Join(bkBuckets, newBucketID, bkFile.Name),
+		Src: filepath.Join(bkBuckets, bkFile.BucketName, bkFile.Name),
+		Dst: filepath.Join(bkBuckets, newBucketName, bkFile.Name),
 	}
 	if err := moved.Move(); err != nil {
 		return err
 	}
-	if _, err := bkTX.Exec(stmt.MoveFileToBucket, newBucketID, bkFile.ID); err != nil {
+	if _, err := bkTX.Exec(stmt.MoveFileToBucket, newBucketName, bkFile.ID); err != nil {
 		err2 := moved.Rollback()
 		return util.WrapErrors(err, err2)
 	}
@@ -675,7 +678,7 @@ func insertBKFile(bkBuckets string, file *File, bkTX TX) error {
 func overwriteBKFile(bkBuckets, bkTemp string, file, bkFile *File, bkTX TX) error {
 	// tempFile 把旧文档临时移动到安全的地方
 	tempFile := MovedFile{
-		Src: filepath.Join(bkBuckets, bkFile.BucketID, bkFile.Name),
+		Src: filepath.Join(bkBuckets, bkFile.BucketName, bkFile.Name),
 		Dst: filepath.Join(bkTemp, bkFile.Name),
 	}
 	if err := tempFile.Move(); err != nil {
@@ -683,8 +686,8 @@ func overwriteBKFile(bkBuckets, bkTemp string, file, bkFile *File, bkTX TX) erro
 	}
 
 	// 复制新文档到备份仓库, 如果出错, 必须把旧文档移回原位.
-	newFileDst := filepath.Join(bkBuckets, file.BucketID, file.Name)
-	newFileSrc := filepath.Join(BucketsFolder, file.BucketID, file.Name)
+	newFileDst := filepath.Join(bkBuckets, file.BucketName, file.Name)
+	newFileSrc := filepath.Join(BucketsFolder, file.BucketName, file.Name)
 	if err := util.CopyFile(newFileDst, newFileSrc); err != nil {
 		err2 := tempFile.Rollback()
 		return util.WrapErrors(err, err2)

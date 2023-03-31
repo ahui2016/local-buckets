@@ -177,7 +177,7 @@ function initEditFileForm(fileID) {
         const file = resp.data;
 
         IdInput.setVal(file.id);
-        BucketInput.setVal(file.bucketid);
+        BucketInput.setVal(file.bucket_name);
         NameInput.setVal(file.name);
         NotesInput.setVal(file.notes);
         KeywordsInput.setVal(file.keywords);
@@ -232,8 +232,8 @@ function initBucketSelect(currentbucketID) {
 
       for (const bucket of buckets) {
         if (bucket.id == currentbucketID) {
-          let val = bucket.id;
-          if (bucket.id != bucket.title) val = `${bucket.id} (${bucket.title})`;
+          let val = bucket.name;
+          if (bucket.name != bucket.title) val = `${bucket.name} (${bucket.title})`;
           BucketInput.setVal(val);
         } else {
           const item = BucketItem(bucket);
