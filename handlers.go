@@ -78,8 +78,8 @@ func changePassword(c *fiber.Ctx) error {
 }
 
 // TODO: 输入密码后才包含加密仓库
-func getAllBuckets(c *fiber.Ctx) error {
-	buckets, err := db.GetAllBuckets()
+func autoGetBuckets(c *fiber.Ctx) error {
+	buckets, err := db.AutoGetBuckets()
 	if err != nil {
 		return err
 	}

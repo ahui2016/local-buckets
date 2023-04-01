@@ -13,9 +13,9 @@ func main() {
 	app.Static("/", PublicFolder)
 
 	api := app.Group("/api", sleep)
-	api.Get("/project-info", getProjectInfo) // resp.data: ProjectInfo
-	api.Get("/all-buckets", getAllBuckets)   // resp.data: null | Bucket[]
-	api.Post("/create-bucket", createBucket) // resp.data: Bucket
+	api.Get("/project-info", getProjectInfo)     // resp.data: ProjectInfo
+	api.Get("/auto-get-buckets", autoGetBuckets) // resp.data: null | Bucket[]
+	api.Post("/create-bucket", createBucket)     // resp.data: Bucket
 	api.Post("/change-password", changePassword)
 	api.Get("/waiting-folder", getWaitingFolder) // resp.data: TextMsg
 	api.Get("/waiting-files", getWaitingFiles)   // resp.data: File[] | ErrSameNameFiles

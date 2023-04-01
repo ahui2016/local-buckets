@@ -91,6 +91,23 @@ func (db *DB) ChangePassword(oldPwd, newPwd string) (HexString, error) {
 	return db.cipherKey, nil
 }
 
+// AutoGetBuckets 根据数据库的状态自动获取公开仓库或全部仓库
+func (db *DB) AutoGetBuckets() ([]*Bucket, error) {
+	var (
+		rows *sql.Rows
+		err  error
+	)
+	if db.aesgcm == nil {
+		rows, err = db.Query(stmt.GetPublicBuckets)
+	} else {
+		rows, err = db.Query(stmt.GetAllBuckets)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return scanBuckets(rows)
+}
+
 func (db *DB) GetAllBuckets() ([]*Bucket, error) {
 	rows, err := db.Query(stmt.GetAllBuckets)
 	if err != nil {

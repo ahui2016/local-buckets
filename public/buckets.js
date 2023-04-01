@@ -81,7 +81,7 @@ function init() {
 
 function getBuckets() {
   axiosGet({
-    url: "/api/all-buckets",
+    url: "/api/auto-get-buckets",
     alert: PageAlert,
     onSuccess: (resp) => {
       const buckets = resp.data;

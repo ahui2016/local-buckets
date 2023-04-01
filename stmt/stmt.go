@@ -49,6 +49,8 @@ const UpdateBucketName = `UPDATE bucket SET name=? WHERE id=?;`
 const UpdateBucketTitle = `UPDATE bucket SET title=?, subtitle=? WHERE id=?;`
 
 const GetAllBuckets = `SELECT * FROM bucket;`
+const GetPublicBuckets = `SELECT * FROM bucket WHERE encrypted=FALSE;`
+const GetPrivateBuckets = `SELECT * FROM bucket WHERE encrypted=TRUE;`
 const GetBucket = `SELECT * FROM bucket WHERE id=?;`
 const GetBucketByName = `SELECT * FROM bucket WHERE name=?;`
 const CountFilesInBucket = `SELECT count(*) FROM file WHERE bucket_name=?;`
