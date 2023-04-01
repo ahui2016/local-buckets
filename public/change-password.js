@@ -1,3 +1,5 @@
+$("title").text("Change Password (更改密碼) - Local Buckets");
+
 const navBar = m("div")
   .addClass("row")
   .append(
@@ -59,8 +61,11 @@ const ChangePwdForm = cc("form", {
         },
         alert: PageAlert,
         onSuccess: () => {
-          PageAlert.clear();
-          PageAlert.insert("success", "已成功更換密碼");
+          OldPasswordInput.setVal('');
+          NewPasswordInput.setVal('');
+          ConfirmPwdInput.setVal('');
+          ChangePwdBtn.hide();
+          PageAlert.clear().insert("success", "已成功更換密碼");
         },
         onAlways: () => {
           MJBS.enable(ChangePwdBtn);  // ------------------- enable
@@ -71,7 +76,7 @@ const ChangePwdForm = cc("form", {
 });
 
 $("#root")
-  .css(RootCss)
+  .css({ maxWidth: "768px" })
   .append(
     navBar.addClass("my-3"),
     m(PageAlert).addClass("my-5"),

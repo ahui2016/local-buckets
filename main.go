@@ -16,7 +16,6 @@ func main() {
 	api.Get("/project-info", getProjectInfo)     // resp.data: ProjectInfo
 	api.Get("/auto-get-buckets", autoGetBuckets) // resp.data: null | Bucket[]
 	api.Post("/create-bucket", createBucket)     // resp.data: Bucket
-	api.Post("/change-password", changePassword)
 	api.Get("/waiting-folder", getWaitingFolder) // resp.data: TextMsg
 	api.Get("/waiting-files", getWaitingFiles)   // resp.data: File[] | ErrSameNameFiles
 	api.Post("/upload-new-files", uploadNewFiles)
@@ -33,6 +32,9 @@ func main() {
 	api.Get("/project-status", getProjectStatus)  // resp.data: ProjectStatus
 	api.Post("/bk-project-status", getBKProjStat) // resp.data: ProjectStatus
 	api.Post("/sync-backup", syncBackup)
+
+	api.Post("/change-password", changePassword)
+	api.Post("/admin-login", adminLogin)
 
 	log.Fatal(app.Listen(ProjectConfig.Host))
 }

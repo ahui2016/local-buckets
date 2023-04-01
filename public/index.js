@@ -58,6 +58,7 @@ const LinkList = cc("div", {
     createIndexItem("Create Bucket", "create-bucket.html", "新建倉庫"),
     createIndexItem("Change Password", "change-password.html", "更改密碼"),
     createIndexItem("Backup", "backup.html", "備份專案"),
+    createIndexItem("Admin Login", "admin-login.html", "管理登入"),
   ],
 });
 

@@ -77,6 +77,15 @@ func changePassword(c *fiber.Ctx) error {
 	return writeProjectConfig()
 }
 
+func adminLogin(c *fiber.Ctx) error {
+	form := new(model.OneTextForm)
+	if err := parseValidate(form, c); err != nil {
+		return err
+	}
+	_, err := db.SetAESGCM(form.Text)
+	return err
+}
+
 // TODO: 输入密码后才包含加密仓库
 func autoGetBuckets(c *fiber.Ctx) error {
 	buckets, err := db.AutoGetBuckets()
