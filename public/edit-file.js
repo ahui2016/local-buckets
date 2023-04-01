@@ -217,7 +217,7 @@ function BucketItem(bucket) {
 
 function initBucketSelect(currentbucketName) {
   axiosGet({
-    url: "/api/all-buckets",
+    url: "/api/auto-get-buckets",
     alert: MoveToBucketAlert,
     onSuccess: (resp) => {
       const buckets = resp.data;
@@ -233,7 +233,8 @@ function initBucketSelect(currentbucketName) {
       for (const bucket of buckets) {
         if (bucket.name == currentbucketName) {
           let val = bucket.name;
-          if (bucket.name != bucket.title) val = `${bucket.name} (${bucket.title})`;
+          if (bucket.name != bucket.title)
+            val = `${bucket.name} (${bucket.title})`;
           BucketInput.setVal(val);
         } else {
           const item = BucketItem(bucket);

@@ -86,6 +86,19 @@ func adminLogin(c *fiber.Ctx) error {
 	return err
 }
 
+func logoutHandler(c *fiber.Ctx) error {
+	db.Logout()
+	return nil
+}
+
+func getLoginStatus(c *fiber.Ctx) error {
+	status := model.OneTextForm{Text: "logged-out"}
+	if db.IsLoggedIn() {
+		status.Text = "logged-in"
+	}
+	return c.JSON(status)
+}
+
 // TODO: 输入密码后才包含加密仓库
 func autoGetBuckets(c *fiber.Ctx) error {
 	buckets, err := db.AutoGetBuckets()

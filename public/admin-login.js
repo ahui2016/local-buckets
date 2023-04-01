@@ -19,6 +19,31 @@ const navBar = m("div")
   );
 
 const PageAlert = MJBS.createAlert();
+const PageLoading = MJBS.createLoading();
+
+const LogoutBtn = MJBS.createButton("Logout", "warning");
+const LogoutBtnArea = cc("div", {
+  classes: "text-center",
+  children: [
+    m(LogoutBtn).on("click", (event) => {
+      event.preventDefault();
+      MJBS.disable(LogoutBtn);
+      axiosGet({
+        url: "/api/logout",
+        alert: PageAlert,
+        onSuccess: () => {
+          PageAlert.clear().insert("warning", "已登出");
+          LogoutBtnArea.hide();
+          LoginForm.show();
+          MJBS.focus(PasswordInput);
+        },
+        onAlways: () => {
+          MJBS.enable(LogoutBtn);
+        },
+      });
+    }),
+  ],
+});
 
 const PasswordInput = MJBS.createInput("password", "required");
 const LoginBtn = MJBS.createButton("Submit", "primary", "submit");
@@ -40,8 +65,9 @@ const LoginForm = cc("form", {
         body: { text: pwd },
         alert: PageAlert,
         onSuccess: () => {
-          PasswordInput.setVal('');
+          PasswordInput.setVal("");
           LoginForm.hide();
+          LogoutBtnArea.show();
           PageAlert.clear().insert("success", "已成功登入");
         },
         onAlways: () => {
@@ -57,11 +83,33 @@ $("#root")
   .append(
     navBar.addClass("my-3"),
     m(PageAlert).addClass("my-5"),
-    m(LoginForm).addClass("my-5")
+    m(PageLoading).addClass("my-5"),
+    m(LoginForm).addClass("my-5").hide(),
+    m(LogoutBtnArea).addClass("my-5").hide()
   );
 
 init();
 
 function init() {
-  MJBS.focus(PasswordInput);
+  getLoginStatus();
+}
+
+function getLoginStatus() {
+  axiosGet({
+    url: "/api/login-status",
+    alert: PageAlert,
+    onSuccess: (resp) => {
+      const loginStatus = resp.data;
+      if (loginStatus.text == "logged-in") {
+        PageAlert.clear().insert("light", "已登入");
+        LogoutBtnArea.show();
+      } else {
+        LoginForm.show();
+        MJBS.focus(PasswordInput);
+      }
+    },
+    onAlways: () => {
+      PageLoading.hide();
+    },
+  });
 }

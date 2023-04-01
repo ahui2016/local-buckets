@@ -70,6 +70,17 @@ func (db *DB) GetInt1(query string, arg ...any) (int64, error) {
 	return getInt1(db.DB, query, arg...)
 }
 
+func (db *DB) IsLoggedIn() bool {
+	if db.aesgcm == nil {
+		return false
+	}
+	return true
+}
+
+func (db *DB) Logout() {
+	db.aesgcm = nil
+}
+
 func (db *DB) SetAESGCM(password string) (realKey []byte, err error) {
 	aesgcm := newGCM(password)
 	realKey, err = decrypt(db.cipherKey, aesgcm)

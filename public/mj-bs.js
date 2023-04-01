@@ -376,7 +376,7 @@ MJBS.createInput = function (type = "text", required = null, id = null) {
     prop: { required: required == "required" ? true : false },
   });
 
-  if (type == "text" || type == "number") {
+  if (type == "text" || type == "number" || type == "password") {
     self.setVal = (val) => {
       self.elem().val(val);
     };

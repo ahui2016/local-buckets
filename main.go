@@ -33,6 +33,8 @@ func main() {
 	api.Post("/bk-project-status", getBKProjStat) // resp.data: ProjectStatus
 	api.Post("/sync-backup", syncBackup)
 
+	api.Get("/login-status", getLoginStatus) // resp.data: OneTextForm
+	api.Get("/logout", logoutHandler)
 	api.Post("/change-password", changePassword)
 	api.Post("/admin-login", adminLogin)
 
