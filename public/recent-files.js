@@ -41,7 +41,7 @@ function FileItem(file) {
     id: "F-" + file.id,
     classes: "card mb-4",
     children: [
-      m("div").addClass("card-header").text(`${file.bucketid}/${file.name}`),
+      m("div").addClass("card-header").text(`${file.bucket_name}/${file.name}`),
       m("div")
         .addClass("card-body")
         .append(

@@ -36,9 +36,9 @@ const ProjectInfo = cc("div", {
       .addClass("card-body")
       .append(
         m(ProjectInfoLoading).addClass("my-3"),
-        m("div").addClass("Project-Title card-title fw-bold"),
-        m("div").addClass("Project-Subtitle text-muted"),
-        m("div").addClass("Project-Path text-muted")
+        m("div").addClass("Project-Title card-title fw-bold mb-0"),
+        m("div").addClass("Project-Subtitle text-muted mt-0"),
+        m("div").addClass("Project-Path text-muted mt-1")
       ),
   ],
 });

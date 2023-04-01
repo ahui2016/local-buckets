@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS file
 (
 	id          INTEGER   PRIMARY KEY,
 	checksum    TEXT      NOT NULL COLLATE NOCASE UNIQUE,
-	bucket_name TEXT      REFERENCES bucket(id) ON UPDATE CASCADE,
+	bucket_name TEXT      REFERENCES bucket(name) ON UPDATE CASCADE,
 	name        TEXT      NOT NULL COLLATE NOCASE UNIQUE,
 	notes       TEXT      NOT NULL,
 	keywords    TEXT      NOT NULL,
@@ -37,6 +37,10 @@ CREATE INDEX IF NOT EXISTS idx_file_checked     ON file(checked);
 `
 
 const InsertBucket = `INSERT INTO bucket (
+	name, title, subtitle, encrypted
+) VALUES (?, ?, ?, ?);`
+
+const InsertBucketWithID = `INSERT INTO bucket (
 	id, name, title, subtitle, encrypted
 ) VALUES (?, ?, ?, ?, ?);`
 
@@ -53,6 +57,11 @@ const InsertFile = `INSERT INTO file (
 	checksum, bucket_name, name,  notes,   keywords, size,   type,
 	like,     ctime,       utime, checked, damaged,  deleted
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
+
+const InsertFileWithID = `INSERT INTO file (
+	id,   checksum, bucket_name, name,  notes,   keywords, size,
+	type, like,     ctime,       utime, checked, damaged,  deleted
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
 
 const UpdateFileContent = `UPDATE file
 	SET checksum=?, size=?, utime=?, damaged=FALSE WHERE id=?;`

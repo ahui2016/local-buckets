@@ -79,6 +79,7 @@ const UploadButtonArea = cc("div", {
         alert: UploadAlert,
         onSuccess: () => {
           UploadAlert.clear().insert("success", "上傳成功");
+          UploadButton.hide();
         },
         onAlways: () => {
           MJBS.enable(UploadButton); // ------------------- enable
@@ -125,6 +126,7 @@ function initBuckets() {
             "warning",
             "沒有倉庫, 請返回首頁, 點擊 Create Bucket 新建倉庫."
           );
+          PageLoading.hide();
           resolve("fail");
         }
       },

@@ -519,77 +519,6 @@ func syncBackup(c *fiber.Ctx) error {
 	return projCfgBackupNow(bkProjStat)
 }
 
-// 同步仓库信息到备份仓库 (包括仓库资料夹重命名)
-// 注意这里不能使用事务 TX, 因为一旦回滚, 批量恢复资料夹名称太麻烦了.
-func syncBuckets(bkBucketsDir string, bk *database.DB) error {
-	allDBBuckets, e1 := db.GetAllBuckets()
-	allBKBuckets, e2 := bk.GetAllBuckets()
-	if err := util.WrapErrors(e1, e2); err != nil {
-		return err
-	}
-	for _, bkBucket := range allBKBuckets {
-		bucket, err := db.GetBucket(bkBucket.ID)
-		// 如果源仓库不存在, 则备份仓库也应删除.
-		// Bug: 这里不删除备份仓库的资料夹, 因为此时里面可能还有文件. 留着资料夹好像问题不大, 暂时不处理这个 bug.
-		if errors.Is(err, sql.ErrNoRows) || bucket.ID == 0 {
-			err = nil
-			if err := bk.DeleteBucket(bkBucket.ID); err != nil {
-				return err
-			}
-			continue // 这句是必须的
-		}
-		if err != nil {
-			return err
-		}
-		// 从这里开始 bucket 和 bkBucket 同时存在, 是同一个仓库的新旧版本.
-
-		// 如果仓库资料夹名称发生了改变, 则备份仓库的资料夹也要重命名
-		oldName := bkBucket.Name
-		newName := bucket.Name
-		if oldName != newName {
-			if err := renameBucket(oldName, newName, bkBucketsDir, bucket.ID); err != nil {
-				return err
-			}
-			// 这里不能 continue
-		}
-
-		// 处理完 Name, 剩下有可能改变的就只有 Title 和 Subtitle 了.
-		if bkBucket.Title != bucket.Title || bkBucket.Subtitle != bucket.Subtitle {
-			if err := bk.UpdateBucketTitle(&bucket); err != nil {
-				return err
-			}
-		}
-	}
-
-	// 新增仓库
-	for _, bucket := range allDBBuckets {
-		bkBucket, err := bk.GetBucket(bucket.ID)
-		if errors.Is(err, sql.ErrNoRows) || bkBucket.ID == 0 {
-			err = nil
-			if err := bk.InsertBucketWithID(bucket); err != nil {
-				return err
-			}
-		}
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func renameBucket(oldName, newName, buckets string, bucketid int64) error {
-	oldpath := filepath.Join(buckets, oldName)
-	newpath := filepath.Join(buckets, newName)
-	if err := os.Rename(oldpath, newpath); err != nil {
-		return err
-	}
-	if err := db.UpdateBucketName(newName, bucketid); err != nil {
-		err2 := os.Rename(newpath, oldpath)
-		return util.WrapErrors(err, err2)
-	}
-	return nil
-}
-
 // syncToBackupProject 以源仓库为准单向同步，
 // 最终效果相当于清空备份仓库后把主仓库的全部文档复制到备份仓库。
 // 注意这里不能使用事务 TX, 因为一旦回滚, 批量恢复文档名称太麻烦了.
@@ -678,6 +607,82 @@ func syncToBackupProject(bkProjRoot string) (*ProjectStatus, error) {
 	return bkProjStat, err
 }
 
+// 同步仓库信息到备份仓库 (包括仓库资料夹重命名)
+// 注意这里不能使用事务 TX, 因为一旦回滚, 批量恢复资料夹名称太麻烦了.
+func syncBuckets(bkBucketsDir string, bk *database.DB) error {
+	allDBBuckets, e1 := db.GetAllBuckets()
+	allBKBuckets, e2 := bk.GetAllBuckets()
+	if err := util.WrapErrors(e1, e2); err != nil {
+		return err
+	}
+	for _, bkBucket := range allBKBuckets {
+		bucket, err := db.GetBucket(bkBucket.ID)
+		// 如果源仓库不存在, 则备份仓库也应删除.
+		// Bug: 这里不删除备份仓库的资料夹, 因为此时里面可能还有文件. 留着资料夹好像问题不大, 暂时不处理这个 bug.
+		if errors.Is(err, sql.ErrNoRows) || bucket.ID == 0 {
+			err = nil
+			if err := bk.DeleteBucket(bkBucket.ID); err != nil {
+				return err
+			}
+			continue // 这句是必须的
+		}
+		if err != nil {
+			return err
+		}
+		// 从这里开始 bucket 和 bkBucket 同时存在, 是同一个仓库的新旧版本.
+
+		// 如果仓库资料夹名称发生了改变, 则备份仓库的资料夹也要重命名
+		oldName := bkBucket.Name
+		newName := bucket.Name
+		if oldName != newName {
+			if err := renameBucket(oldName, newName, bkBucketsDir, bucket.ID); err != nil {
+				return err
+			}
+			// 这里不能 continue
+		}
+
+		// 处理完 Name, 剩下有可能改变的就只有 Title 和 Subtitle 了.
+		if bkBucket.Title != bucket.Title || bkBucket.Subtitle != bucket.Subtitle {
+			if err := bk.UpdateBucketTitle(&bucket); err != nil {
+				return err
+			}
+		}
+	}
+
+	// 新增仓库
+	for _, bucket := range allDBBuckets {
+		bkBucket, err := bk.GetBucket(bucket.ID)
+		if errors.Is(err, sql.ErrNoRows) || bkBucket.ID == 0 {
+			err = nil
+			bucketPath := filepath.Join(bkBucketsDir, bucket.Name)
+			if err2 := util.Mkdir(bucketPath); err2 != nil {
+				return err2
+			}
+			if err := bk.InsertBucketWithID(bucket); err != nil {
+				err2 := os.Remove(bucketPath)
+				return util.WrapErrors(err, err2)
+			}
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func renameBucket(oldName, newName, buckets string, bucketid int64) error {
+	oldpath := filepath.Join(buckets, oldName)
+	newpath := filepath.Join(buckets, newName)
+	if err := os.Rename(oldpath, newpath); err != nil {
+		return err
+	}
+	if err := db.UpdateBucketName(newName, bucketid); err != nil {
+		err2 := os.Rename(newpath, oldpath)
+		return util.WrapErrors(err, err2)
+	}
+	return nil
+}
+
 func moveBKFileToBucket(
 	bkBucketsDir, newBucketName string, bkFile *File, bk *database.DB,
 ) error {
@@ -713,8 +718,9 @@ func filesHaveSameProperties(bkFile, file *File) bool {
 func insertBKFile(bkBuckets string, file *File, bk *database.DB) error {
 	_, err := bk.GetFileByID(file.ID)
 	if errors.Is(err, sql.ErrNoRows) {
-		dstFile := filepath.Join(bkBuckets, file.Name)
-		srcFile := filepath.Join(BucketsFolder, file.Name)
+		err = nil
+		dstFile := filepath.Join(bkBuckets, file.BucketName, file.Name)
+		srcFile := filepath.Join(BucketsFolder, file.BucketName, file.Name)
 		if err := util.CopyFile(dstFile, srcFile); err != nil {
 			return err
 		}

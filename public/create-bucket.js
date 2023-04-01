@@ -54,6 +54,7 @@ const CreateBucketForm = cc("form", {
           const bucket = resp.data;
           // window.location.href = `edit-bucket.html?id=${bucket.id}&new=true`;
           PageAlert.insert("success", JSON.stringify(bucket));
+          CreateBucketBtn.hide();
         },
         onAlways: () => {
           MJBS.enable(CreateBucketBtn); // --------------------- enable

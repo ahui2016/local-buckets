@@ -45,7 +45,7 @@ func insertBucket(tx TX, b *Bucket) error {
 
 func insertBucketWithID(tx TX, b *Bucket) error {
 	_, err := tx.Exec(
-		stmt.InsertBucket,
+		stmt.InsertBucketWithID,
 		b.ID,
 		b.Name,
 		b.Title,
@@ -102,7 +102,7 @@ func insertFile(tx TX, f *File) error {
 // insertFileWithID 主要用于复制文档到备份仓库.
 func insertFileWithID(tx TX, f *File) error {
 	_, err := tx.Exec(
-		stmt.InsertFile,
+		stmt.InsertFileWithID,
 		f.ID,
 		f.Checksum,
 		f.BucketName,
