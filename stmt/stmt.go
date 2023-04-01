@@ -42,8 +42,9 @@ const InsertBucket = `INSERT INTO bucket (
 	id, name, title, subtitle, encrypted
 ) VALUES (?, ?, ?, ?, ?);`
 
-const UpdateBucket = `UPDATE bucket
-	SET name=?, title=?, subtitle=? WHERE id=?;`
+const DeleteBucket = `DELETE FROM bucket WHERE id=?;`
+const UpdateBucketName = `UPDATE bucket SET name=? WHERE id=?;`
+const UpdateBucketTitle = `UPDATE bucket SET title=?, subtitle=? WHERE id=?;`
 
 const GetAllBuckets = `SELECT * FROM bucket;`
 const GetBucket = `SELECT * FROM bucket WHERE id=?;`

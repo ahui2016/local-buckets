@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/ahui2016/local-buckets/model"
@@ -108,15 +109,20 @@ func (db *DB) GetBucketByName(name string) (Bucket, error) {
 	return scanBucket(row)
 }
 
-func (db *DB) InsertBucket(form *model.CreateBucketForm) (bucket *Bucket, err error) {
-	bucket, err = model.NewBucket(form)
+func (db *DB) InsertBucket(form *model.CreateBucketForm) (*Bucket, error) {
+	bucket, err := model.NewBucket(form)
 	if err != nil {
-		return
+		return nil, err
 	}
 	if err = insertBucket(db.DB, bucket); err != nil {
 		return nil, err
 	}
-	return
+	b, err := db.GetBucketByName(bucket.Name)
+	return &b, err
+}
+
+func (db *DB) InsertBucketWithID(bucket *Bucket) error {
+	return insertBucketWithID(db.DB, bucket)
 }
 
 // InsertFile 主要用于同名檔案冲突时的逐一处理.
@@ -126,6 +132,10 @@ func (db *DB) InsertFile(file *File) (*File, error) {
 	}
 	f, err := db.GetFileByChecksum(file.Checksum)
 	return &f, err
+}
+
+func (db *DB) InsertFileWithID(file *File) error {
+	return insertFileWithID(db.DB, file)
 }
 
 // InsertFiles inserts files into the database.
@@ -257,4 +267,40 @@ func (db *DB) GetProjStat(projCfg *Project) (ProjectStatus, error) {
 		DamagedCount:      damagedCount,
 	}
 	return projStat, err
+}
+
+// UpdateBackupFileInfo 更新一个文档的大多数信息, 但不更新 Checked 和 Damaged.
+func (db *DB) UpdateBackupFileInfo(file *File) error {
+	return db.Exec(stmt.UpdateBackupFileInfo,
+		file.Checksum, file.BucketID, file.BucketName,
+		file.Name, file.Notes, file.Keywords, file.Size, file.Type,
+		file.Like, file.CTime, file.UTime, file.Deleted, file.ID)
+}
+
+// DeleteFile 刪除檔案, 包括從數據庫中刪除和從硬碟中刪除.
+func (db *DB) DeleteFile(bucketsDir, tempDir string, file *File) error {
+	tempFile := MovedFile{
+		Src: filepath.Join(bucketsDir, file.BucketName, file.Name),
+		Dst: filepath.Join(tempDir, file.Name),
+	}
+	if err := tempFile.Move(); err != nil {
+		return err
+	}
+	if err := db.Exec(stmt.DeleteFile, file.ID); err != nil {
+		err2 := tempFile.Rollback()
+		return util.WrapErrors(err, err2)
+	}
+	return os.Remove(tempFile.Dst)
+}
+
+func (db *DB) DeleteBucket(bucketid int64) error {
+	return db.Exec(stmt.DeleteBucket, bucketid)
+}
+
+func (db *DB) UpdateBucketName(newName string, bucketid int64) error {
+	return db.Exec(stmt.UpdateBucketName, newName, bucketid)
+}
+
+func (db *DB) UpdateBucketTitle(bucket *Bucket) error {
+	return db.Exec(stmt.UpdateBucketTitle, bucket.Title, bucket.Subtitle, bucket.ID)
 }
