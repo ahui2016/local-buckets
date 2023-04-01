@@ -46,9 +46,9 @@ const MoveToBucketGroup = cc("div", {
       event.preventDefault();
       const body = {
         file_id: IdInput.intVal(),
-        bucket_id: BucketSelect.elem().val(),
+        bucket_name: BucketSelect.elem().val(),
       };
-      if (!body.bucket_id) {
+      if (!body.bucket_name) {
         MoveToBucketAlert.insert("warning", "請選擇一個倉庫");
         return;
       }
@@ -60,7 +60,7 @@ const MoveToBucketGroup = cc("div", {
         body: body,
         onSuccess: () => {
           MoveToBucketAlert.clear().insert("success", "移動檔案成功!");
-          initBucketSelect(body.bucket_id);
+          initBucketSelect(body.bucket_name);
         },
         onAlways: () => {
           MJBS.enable(MoveToBucketBtn);
@@ -164,7 +164,7 @@ async function init() {
   }
   fileID = parseInt(fileID);
   const file = await initEditFileForm(fileID);
-  initBucketSelect(file.bucketid);
+  initBucketSelect(file.bucket_name);
 }
 
 function initEditFileForm(fileID) {
@@ -210,12 +210,12 @@ function initEditFileForm(fileID) {
 function BucketItem(bucket) {
   return cc("option", {
     id: "B-" + bucket.id,
-    attr: { value: bucket.id, title: bucket.id },
+    attr: { value: bucket.name, title: bucket.name },
     text: bucket.title,
   });
 }
 
-function initBucketSelect(currentbucketID) {
+function initBucketSelect(currentbucketName) {
   axiosGet({
     url: "/api/all-buckets",
     alert: MoveToBucketAlert,
@@ -231,7 +231,7 @@ function initBucketSelect(currentbucketID) {
       );
 
       for (const bucket of buckets) {
-        if (bucket.id == currentbucketID) {
+        if (bucket.name == currentbucketName) {
           let val = bucket.name;
           if (bucket.name != bucket.title) val = `${bucket.name} (${bucket.title})`;
           BucketInput.setVal(val);

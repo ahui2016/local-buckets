@@ -14,7 +14,6 @@ CREATE TABLE IF NOT EXISTS file
 (
 	id          INTEGER   PRIMARY KEY,
 	checksum    TEXT      NOT NULL COLLATE NOCASE UNIQUE,
-	bucketid    INTEGER   REFERENCES bucket(id) ON UPDATE CASCADE,
 	bucket_name TEXT      REFERENCES bucket(id) ON UPDATE CASCADE,
 	name        TEXT      NOT NULL COLLATE NOCASE UNIQUE,
 	notes       TEXT      NOT NULL,
@@ -29,7 +28,6 @@ CREATE TABLE IF NOT EXISTS file
 	deleted     BOOLEAN   NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_file_bucketid    ON file(bucketid);
 CREATE INDEX IF NOT EXISTS idx_file_bucket_name ON file(bucket_name);
 CREATE INDEX IF NOT EXISTS idx_file_notes       ON file(notes);
 CREATE INDEX IF NOT EXISTS idx_file_keywords    ON file(keywords);
@@ -49,12 +47,12 @@ const UpdateBucketTitle = `UPDATE bucket SET title=?, subtitle=? WHERE id=?;`
 const GetAllBuckets = `SELECT * FROM bucket;`
 const GetBucket = `SELECT * FROM bucket WHERE id=?;`
 const GetBucketByName = `SELECT * FROM bucket WHERE name=?;`
-const CountFilesInBucket = `SELECT count(*) FROM file WHERE bucketid=?;`
+const CountFilesInBucket = `SELECT count(*) FROM file WHERE bucket_name=?;`
 
 const InsertFile = `INSERT INTO file (
-	checksum, bucketid, bucket_name, name,  notes,   keywords, size,
-	type,     like,     ctime,       utime, checked, damaged,  deleted
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
+	checksum, bucket_name, name,  notes,   keywords, size,   type,
+	like,     ctime,       utime, checked, damaged,  deleted
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
 
 const UpdateFileContent = `UPDATE file
 	SET checksum=?, size=?, utime=?, damaged=FALSE WHERE id=?;`
@@ -63,11 +61,10 @@ const UpdateFileInfo = `UPDATE file SET name=?, notes=?,
 	keywords=?, type=?, like=?, ctime=?, utime=? WHERE id=?;`
 
 const UpdateBackupFileInfo = `UPDATE file SET
-	checksum=?, bucketid=?, bucket_name, name=?,  notes=?, keywords=?,
-	size=?,     type=?,     like=?,      ctime=?, utime=?, deleted=?
-WHERE id=?;`
+	checksum=?, bucket_name, name=?,  notes=?, keywords=?, size=?,
+	type=?,     like=?,      ctime=?, utime=?, deleted=? WHERE id=?;`
 
-const MoveFileToBucket = `UPDATE file SET bucketid=?, bucket_name=? WHERE id=?;`
+const MoveFileToBucket = `UPDATE file SET bucket_name=? WHERE id=?;`
 
 const GetFileByID = `SELECT * FROM file WHERE id=?;`
 const GetFileByName = `SELECT * FROM file WHERE name=?;`

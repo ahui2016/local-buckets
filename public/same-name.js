@@ -39,7 +39,7 @@ const SameNameFile = cc('dl', {classes: 'row'});
 SameNameFile.init = (file) => {
   SameNameFile.elem().append(
     m('dt').addClass('col-sm-2').text("Bucket: "),
-    m('dt').addClass('col-sm-10 text-muted').text(file.bucketid),
+    m('dt').addClass('col-sm-10 text-muted').text(file.bucket_name),
 
     m('dt').addClass('col-sm-2').text("File Name: "),
     m('dt').addClass('col-sm-10 text-muted').text(file.name)

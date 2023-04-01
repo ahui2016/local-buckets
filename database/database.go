@@ -163,8 +163,8 @@ func (db *DB) UpdateFileInfo(file *File) error {
 		file.Keywords, file.Type, file.Like, file.CTime, file.UTime, file.ID)
 }
 
-func (db *DB) MoveFileToBucket(fileID, bucketID int64, bucketName string) error {
-	return db.Exec(stmt.MoveFileToBucket, bucketID, bucketName, fileID)
+func (db *DB) MoveFileToBucket(fileID int64, bucketName string) error {
+	return db.Exec(stmt.MoveFileToBucket, bucketName, fileID)
 }
 
 // CheckSameFiles 检查有无同名/相同内容的檔案,
@@ -271,8 +271,7 @@ func (db *DB) GetProjStat(projCfg *Project) (ProjectStatus, error) {
 
 // UpdateBackupFileInfo 更新一个文档的大多数信息, 但不更新 Checked 和 Damaged.
 func (db *DB) UpdateBackupFileInfo(file *File) error {
-	return db.Exec(stmt.UpdateBackupFileInfo,
-		file.Checksum, file.BucketID, file.BucketName,
+	return db.Exec(stmt.UpdateBackupFileInfo, file.Checksum, file.BucketName,
 		file.Name, file.Notes, file.Keywords, file.Size, file.Type,
 		file.Like, file.CTime, file.UTime, file.Deleted, file.ID)
 }

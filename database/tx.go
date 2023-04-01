@@ -83,7 +83,6 @@ func insertFile(tx TX, f *File) error {
 		stmt.InsertFile,
 		// f.ID, 自增ID
 		f.Checksum,
-		f.BucketID,
 		f.BucketName,
 		f.Name,
 		f.Notes,
@@ -106,7 +105,6 @@ func insertFileWithID(tx TX, f *File) error {
 		stmt.InsertFile,
 		f.ID,
 		f.Checksum,
-		f.BucketID,
 		f.BucketName,
 		f.Name,
 		f.Notes,
@@ -127,7 +125,6 @@ func scanFile(row Row) (f File, err error) {
 	err = row.Scan(
 		&f.ID,
 		&f.Checksum,
-		&f.BucketID,
 		&f.BucketName,
 		&f.Name,
 		&f.Notes,

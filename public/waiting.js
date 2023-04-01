@@ -38,7 +38,7 @@ const BucketSelectGroup = cc("div", {
 
 function BucketItem(bucket) {
   return cc("option", {
-    id: "B-" + bucket.id,
+    id: "B-" + bucket.name,
     attr: { value: bucket.name, title: bucket.name },
     text: bucket.title,
   });

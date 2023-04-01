@@ -164,13 +164,12 @@ func overwriteFile(c *fiber.Ctx) error {
 		return err
 	}
 
-	// 这个 fileInDB 主要是为了获取 File.ID 和 BucketID, BucketName.
+	// 这个 fileInDB 主要是为了获取 File.ID 和 BucketName.
 	fileInDB, err := db.GetFileByName(file.Name)
 	if err != nil {
 		return err
 	}
 	file.ID = fileInDB.ID
-	file.BucketID = fileInDB.BucketID
 	file.BucketName = fileInDB.BucketName
 
 	waitingFile.Dst = filepath.Join(BucketsFolder, file.BucketName, file.Name)
@@ -222,7 +221,7 @@ func uploadNewFiles(c *fiber.Ctx) error {
 	// 以上是检查阶段
 	// 以下是实际执行阶段
 
-	files = setBucketID(bucket.ID, bucket.Name, files)
+	files = setBucketName(bucket.Name, files)
 	movedFiles, err := moveWaitingFiles(files)
 	if err != nil {
 		err2 := rollbackMovedFiles(movedFiles)
@@ -264,9 +263,8 @@ func moveWaitingFileToBucket(file *File) (MovedFile, error) {
 	return movedFile, err
 }
 
-func setBucketID(bucketID int64, bucketName string, files []*File) []*File {
+func setBucketName(bucketName string, files []*File) []*File {
 	for _, file := range files {
-		file.BucketID = bucketID
 		file.BucketName = bucketName
 	}
 	return files
@@ -342,19 +340,18 @@ func moveFileToBucket(c *fiber.Ctx) error {
 	if err := parseValidate(form, c); err != nil {
 		return err
 	}
-	file, err1 := db.GetFileByID(form.FileID)
-	bucket, err2 := db.GetBucket(form.BucketID)
-	if err := util.WrapErrors(err1, err2); err != nil {
+	file, err := db.GetFileByID(form.FileID)
+	if err != nil {
 		return err
 	}
 	moved := MovedFile{
 		Src: filepath.Join(BucketsFolder, file.BucketName, file.Name),
-		Dst: filepath.Join(BucketsFolder, bucket.Name, file.Name),
+		Dst: filepath.Join(BucketsFolder, form.BucketName, file.Name),
 	}
 	if err := moved.Move(); err != nil {
 		return err
 	}
-	if err := db.MoveFileToBucket(form.FileID, bucket.ID, bucket.Name); err != nil {
+	if err := db.MoveFileToBucket(form.FileID, form.BucketName); err != nil {
 		err2 := moved.Rollback()
 		return util.WrapErrors(err, err2)
 	}
@@ -641,11 +638,11 @@ func syncToBackupProject(bkProjRoot string) (*ProjectStatus, error) {
 		}
 		// 从这里开始 dbFile 和 bkFile 同时存在, 是同一个文档的新旧版本.
 
-		// 对比 bucketid, 不一致则移动文档.
+		// 对比 BucketName, 不一致则移动文档.
 		// Bug: 有很低的可能性发生文档名称冲突，知道就行，暂时可以偷懒不处理。
-		if dbFile.BucketID != bkFile.BucketID {
+		if dbFile.BucketName != bkFile.BucketName {
 			if err := moveBKFileToBucket(
-				bkBucketsDir, dbFile.BucketName, dbFile.BucketID, bkFile, bk); err != nil {
+				bkBucketsDir, dbFile.BucketName, bkFile, bk); err != nil {
 				return nil, err
 			}
 			// 这里不能 continue
@@ -660,7 +657,7 @@ func syncToBackupProject(bkProjRoot string) (*ProjectStatus, error) {
 			continue // 这句是必须的, 因为在 overwriteBKFile 里会更新文档的全部属性.
 		}
 
-		// 前面已经对比过 checksum 和 bucketid, 现在对比其他属性，
+		// 前面已经对比过 Checksum 和 BucketName, 现在对比其他属性，
 		// 如果不一致则更新属性。
 		if filesHaveSameProperties(bkFile, &dbFile) {
 			continue
@@ -682,7 +679,7 @@ func syncToBackupProject(bkProjRoot string) (*ProjectStatus, error) {
 }
 
 func moveBKFileToBucket(
-	bkBucketsDir, newBucketName string, newBucketID int64, bkFile *File, bk *database.DB,
+	bkBucketsDir, newBucketName string, bkFile *File, bk *database.DB,
 ) error {
 	moved := MovedFile{
 		Src: filepath.Join(bkBucketsDir, bkFile.BucketName, bkFile.Name),
@@ -691,7 +688,7 @@ func moveBKFileToBucket(
 	if err := moved.Move(); err != nil {
 		return err
 	}
-	if err := bk.Exec(stmt.MoveFileToBucket, newBucketID, newBucketName, bkFile.ID); err != nil {
+	if err := bk.Exec(stmt.MoveFileToBucket, newBucketName, bkFile.ID); err != nil {
 		err2 := moved.Rollback()
 		return util.WrapErrors(err, err2)
 	}
@@ -699,8 +696,8 @@ func moveBKFileToBucket(
 }
 
 // 備份專案中的檔案 與 源專案中的檔案, 兩者的屬性相同嗎?
-// 只對比一部分屬性. 在執行本函數之前, 應先同步 checksum 和 bucketid,
-// 因此在這裡不對比 checksum, size 和 bucketid.
+// 只對比一部分屬性. 在執行本函數之前, 應先同步 Checksum 和 BucketName,
+// 因此在這裡不對比 Checksum, Size 和 BucketName.
 // 另外, Checked 和 Damaged 也不對比.
 func filesHaveSameProperties(bkFile, file *File) bool {
 	return file.Name == bkFile.Name &&

@@ -98,7 +98,6 @@ func NewBucket(form *CreateBucketForm) (*Bucket, error) {
 type File struct {
 	ID         int64  `json:"id"`          // 自增數字ID
 	Checksum   string `json:"checksum"`    // NOT NULL UNIQUE
-	BucketID   int64  `json:"bucketid"`    // Bucket.ID
 	BucketName string `json:"bucket_name"` // Bucket.Name
 	Name       string `json:"name"`        // 檔案名
 	Notes      string `json:"notes"`       // 備註
@@ -126,30 +125,6 @@ func NewWaitingFile(filePath string) (*File, error) {
 	}
 	basename := filepath.Base(filePath)
 	now := Now()
-	f := new(File)
-	f.Checksum = checksum
-	f.Name = basename
-	f.Size = info.Size()
-	f.Type = typeByFilename(basename)
-	f.CTime = now
-	f.UTime = now
-	f.Checked = now
-	return f, nil
-}
-
-// NewFile 根据 root, bucketID, basename 生成新檔案,
-// 其中 root 是專案根目录.
-func NewFile(root, bucketID, basename string) (*File, error) {
-	now := Now()
-	filePath := filepath.Join(root, bucketID, basename)
-	info, err := os.Lstat(filePath)
-	if err != nil {
-		return nil, err
-	}
-	checksum, err := util.FileSum512(filePath)
-	if err != nil {
-		return nil, err
-	}
 	f := new(File)
 	f.Checksum = checksum
 	f.Name = basename
@@ -235,8 +210,8 @@ type UpdateFileInfoForm struct {
 }
 
 type MoveFileToBucketForm struct {
-	FileID   int64 `json:"file_id" validate:"required,gt=0"`
-	BucketID int64 `json:"bucket_id" validate:"required,gt=0"`
+	FileID     int64  `json:"file_id" validate:"required,gt=0"`
+	BucketName string `json:"bucket_name" validate:"required"`
 }
 
 type MovedFile struct {
