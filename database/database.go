@@ -72,7 +72,7 @@ func (db *DB) GetInt1(query string, arg ...any) (int64, error) {
 }
 
 func (db *DB) IsLoggedIn() bool {
-	return db.aesgcm == nil
+	return db.aesgcm != nil
 }
 
 func (db *DB) Logout() {

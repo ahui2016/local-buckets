@@ -114,7 +114,7 @@ type File struct {
 
 // FilePlus 檔案以及更多資訊.
 type FilePlus struct {
-	*File
+	File
 	Encrypted bool `json:"encrypted"`
 }
 
