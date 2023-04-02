@@ -82,8 +82,20 @@ const GetFileByName = `SELECT * FROM file WHERE name=?;`
 const GetFileByChecksum = `SELECT * FROM file WHERE checksum=?;`
 const GetAllFiles = `SELECT * FROM file;`
 const DeleteFile = `DELETE FROM file WHERE id=?;`
-const GetAllRecentFiles = `SELECT * FROM file ORDER BY utime DESC LIMIT ?;`
-const GetPublicRecentFiles = `SELECT * FROM file
+
+const GetAllRecentFiles = `SELECT file.id, file.checksum, file.bucket_name,
+	file.name,    file.notes,   file.keywords, file.size,
+	file.type,    file.like,    file.ctime,    file.utime,
+	file.checked, file.damaged, file.deleted,  bucket.encrypted
+FROM file
+	INNER JOIN bucket ON file.bucket_name = bucket.name
+	ORDER BY utime DESC LIMIT ?;`
+
+const GetPublicRecentFiles = `SELECT file.id, file.checksum, file.bucket_name,
+	file.name,    file.notes,   file.keywords, file.size,
+	file.type,    file.like,    file.ctime,    file.utime,
+	file.checked, file.damaged, file.deleted,  bucket.encrypted
+FROM file
 	INNER JOIN bucket ON file.bucket_name = bucket.name
 	WHERE bucket.encrypted=FALSE
 	ORDER BY file.utime DESC LIMIT ?;`

@@ -55,15 +55,6 @@ func getProjectStatus(c *fiber.Ctx) error {
 	return c.JSON(projStat)
 }
 
-func checkPassword(c *fiber.Ctx) error {
-	form := new(model.OneTextForm)
-	if err := parseValidate(form, c); err != nil {
-		return err
-	}
-	_, err := db.SetAESGCM(form.Text) // password = form.Text
-	return err
-}
-
 func changePassword(c *fiber.Ctx) error {
 	form := new(model.ChangePwdForm)
 	if err := parseValidate(form, c); err != nil {
@@ -82,7 +73,7 @@ func adminLogin(c *fiber.Ctx) error {
 	if err := parseValidate(form, c); err != nil {
 		return err
 	}
-	_, err := db.SetAESGCM(form.Text)
+	_, err := db.SetAESGCM(form.Text) // password = form.Text
 	return err
 }
 
@@ -99,7 +90,6 @@ func getLoginStatus(c *fiber.Ctx) error {
 	return c.JSON(status)
 }
 
-// TODO: 输入密码后才包含加密仓库
 func autoGetBuckets(c *fiber.Ctx) error {
 	buckets, err := db.AutoGetBuckets()
 	if err != nil {
@@ -244,65 +234,52 @@ func uploadNewFiles(c *fiber.Ctx) error {
 	// 以下是实际执行阶段
 
 	files = setBucketName(bucket.Name, files)
-	movedFiles, err := moveWaitingFiles(files, bucket.Encrypted)
-	if err != nil {
-		err2 := rollbackMovedFiles(movedFiles)
-		return util.WrapErrors(err, err2)
-	}
-	if err := db.InsertFiles(files); err != nil {
-		err2 := rollbackMovedFiles(movedFiles)
-		return util.WrapErrors(err, err2)
+	for _, file := range files {
+		if bucket.Encrypted {
+			if err := encryptMoveWaitingFile(file); err != nil {
+				return err
+			}
+		} else {
+			if err := moveWaitingFileToBucket(file); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }
 
-func rollbackMovedFiles(movedFiles []MovedFile) (allErr error) {
-	for _, file := range movedFiles {
-		if err := file.Rollback(); err != nil {
-			allErr = util.WrapErrors(allErr, err)
-		}
+func encryptMoveWaitingFile(file *File) error {
+	// srcPath 是待上传的原始文档
+	srcPath := filepath.Join(WaitingFolder, file.Name)
+	// dstPath 是加密后保存到加密仓库中的文档
+	dstPath := filepath.Join(BucketsFolder, file.BucketName, file.Name)
+	// EncryptFile 读取 srcPath 的文件, 加密后保存到 dstPath.
+	if err := db.EncryptFile(srcPath, dstPath); err != nil {
+		return err
 	}
-	return
+	// 插入新文档到数据库
+	if err := db.InsertFile(file); err != nil {
+		// 如果数据库出错, 要删除刚才的加密文档
+		err2 := os.Remove(dstPath)
+		return util.WrapErrors(err, err2)
+	}
+	// 一切正常, 可以删除原始文档
+	return os.Remove(srcPath)
 }
 
-func moveWaitingFiles(files []*File, encrypted bool) (movedFiles []MovedFile, err error) {
-	for _, file := range files {
-		// TODO
-		movedFile, err := moveWaitingFileToBucket(file)
-		if err != nil {
-			return nil, err
-		}
-		movedFiles = append(movedFiles, movedFile)
-	}
-	return
-}
-
-func encryptMoveWaitingFile(file *File) (*MovedFile, error) {
+func moveWaitingFileToBucket(file *File) error {
 	movedFile := MovedFile{
 		Src: filepath.Join(WaitingFolder, file.Name),
 		Dst: filepath.Join(BucketsFolder, file.BucketName, file.Name),
 	}
-	if err := db.EncryptFile(movedFile.Dst, movedFile.Src); err != nil {
-		return nil, err
+	if err := movedFile.Move(); err != nil {
+		return err
 	}
-	tempFile := MovedFile{
-		Src: filepath.Join(WaitingFolder, file.Name),
-		Dst: filepath.Join(TempFolder, file.Name),
+	if err := db.InsertFile(file); err != nil {
+		err2 := movedFile.Rollback()
+		return util.WrapErrors(err, err2)
 	}
-	if err := tempFile.Move(); err != nil {
-		err2 := os.Remove(movedFile.Dst)
-		return nil, util.WrapErrors(err, err2)
-	}
-	return &tempFile, nil
-}
-
-func moveWaitingFileToBucket(file *File) (MovedFile, error) {
-	movedFile := MovedFile{
-		Src: filepath.Join(WaitingFolder, file.Name),
-		Dst: filepath.Join(BucketsFolder, file.BucketName, file.Name),
-	}
-	err := movedFile.Move()
-	return movedFile, err
+	return nil
 }
 
 func setBucketName(bucketName string, files []*File) []*File {

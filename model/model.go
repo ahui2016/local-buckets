@@ -112,6 +112,12 @@ type File struct {
 	Deleted    bool   `json:"deleted"`     // 把檔案标记为 "已删除"
 }
 
+// FilePlus 檔案以及更多資訊.
+type FilePlus struct {
+	*File
+	Encrypted bool `json:"encrypted"`
+}
+
 // NewWaitingFile 根据 filePath 生成新檔案,
 // 其中 filePath 是等待上传的檔案的路径.
 func NewWaitingFile(filePath string) (*File, error) {

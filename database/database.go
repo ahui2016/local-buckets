@@ -20,6 +20,7 @@ type (
 	Base64String     = string
 	Bucket           = model.Bucket
 	File             = model.File
+	FilePlus         = model.FilePlus
 	Project          = model.Project
 	ProjectStatus    = model.ProjectStatus
 	MovedFile        = model.MovedFile
@@ -71,10 +72,7 @@ func (db *DB) GetInt1(query string, arg ...any) (int64, error) {
 }
 
 func (db *DB) IsLoggedIn() bool {
-	if db.aesgcm == nil {
-		return false
-	}
-	return true
+	return db.aesgcm == nil
 }
 
 func (db *DB) Logout() {
@@ -149,8 +147,12 @@ func (db *DB) InsertBucketWithID(bucket *Bucket) error {
 	return insertBucketWithID(db.DB, bucket)
 }
 
-// InsertFile 主要用于同名檔案冲突时的逐一处理.
-func (db *DB) InsertFile(file *File) (*File, error) {
+func (db *DB) InsertFile(file *File) error {
+	return insertFile(db.DB, file)
+}
+
+// InsertAndReturnFile 主要用于同名檔案冲突时的逐一处理.
+func (db *DB) InsertAndReturnFile(file *File) (*File, error) {
 	if err := insertFile(db.DB, file); err != nil {
 		return nil, err
 	}
@@ -162,9 +164,9 @@ func (db *DB) InsertFileWithID(file *File) error {
 	return insertFileWithID(db.DB, file)
 }
 
-// InsertFiles inserts files into the database.
+// 该函数可能可以删除。
 // 注意, 在使用该函数之前, 请先使用 db.CheckSameFiles() 检查全部等待处理的檔案.
-func (db *DB) InsertFiles(files []*File) error {
+func (db *DB) insertFiles(files []*File) error {
 	tx := db.MustBegin()
 	defer tx.Rollback()
 
@@ -260,19 +262,19 @@ func (db *DB) GetAllFiles() (files []*File, err error) {
 	return getFiles(db.DB, stmt.GetAllFiles)
 }
 
-func (db *DB) GetRecentFiles() (files []*File, err error) {
+func (db *DB) GetRecentFiles() (files []*FilePlus, err error) {
 	query := stmt.GetPublicRecentFiles
 	if db.IsLoggedIn() {
 		query = stmt.GetAllRecentFiles
 	}
-	if files, err = getFiles(db.DB, query, db.RecentFilesLimit); err != nil {
+	if files, err = getFilesPlus(db.DB, query, db.RecentFilesLimit); err != nil {
 		return
 	}
 	files = RemoveChecksum(files)
 	return
 }
 
-func RemoveChecksum(files []*File) []*File {
+func RemoveChecksum(files []*FilePlus) []*FilePlus {
 	for i := range files {
 		files[i].Checksum = ""
 	}

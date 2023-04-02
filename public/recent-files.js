@@ -28,20 +28,27 @@ function FileItem(file) {
     .addClass("mb-2 FileItemBodyRowOne")
     .append(m("div").addClass("text-right FileItemBadges"));
 
-  const bodyRowTwoLeft = m("div").addClass("col text-start").append(span("❤").hide());
+  const bodyRowTwoLeft = m("div")
+    .addClass("col text-start")
+    .append(span("❤").hide());
   const bodyRowTwoRight = m("div")
     .addClass("col text-end")
     .append(
-      span(`(${fileSizeToString(file.size)})`).addClass('me-2'),
-      span(file.utime.substr(0, 10)).attr({title: file.utime}).addClass('me-2'),
-      MJBS.createLinkElem('edit-file.html?id='+file.id, {text:'info'})
+      span(`(${fileSizeToString(file.size)})`).addClass("me-2"),
+      span(file.utime.substr(0, 10))
+        .attr({ title: file.utime })
+        .addClass("me-2"),
+      MJBS.createLinkElem("edit-file.html?id=" + file.id, { text: "info" })
     );
+
+  let headerText = `${file.bucket_name}/${file.name}`;
+  if (file.encrypted) headerText = "🔒" + headerText;
 
   const self = cc("div", {
     id: "F-" + file.id,
     classes: "card mb-4",
     children: [
-      m("div").addClass("card-header").text(`${file.bucket_name}/${file.name}`),
+      m("div").addClass("card-header").text(headerText),
       m("div")
         .addClass("card-body")
         .append(

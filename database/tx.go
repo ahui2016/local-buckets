@@ -26,7 +26,8 @@ func getInt1(tx TX, query string, arg ...any) (n int64, err error) {
 	return
 }
 
-func TxGetFileByID(tx TX, id int64) (File, error) {
+// txGetFileByID 可能可以删除
+func txGetFileByID(tx TX, id int64) (File, error) {
 	row := tx.QueryRow(stmt.GetFileByID, id)
 	return scanFile(row)
 }
@@ -141,9 +142,42 @@ func scanFile(row Row) (f File, err error) {
 	return
 }
 
+func scanFilePlus(row Row) (f FilePlus, err error) {
+	err = row.Scan(
+		&f.ID,
+		&f.Checksum,
+		&f.BucketName,
+		&f.Name,
+		&f.Notes,
+		&f.Keywords,
+		&f.Size,
+		&f.Type,
+		&f.Like,
+		&f.CTime,
+		&f.UTime,
+		&f.Checked,
+		&f.Damaged,
+		&f.Deleted,
+		&f.Encrypted,
+	)
+	return
+}
+
 func scanFiles(rows *sql.Rows) (all []*File, err error) {
 	for rows.Next() {
 		f, err := scanFile(rows)
+		if err != nil {
+			return nil, err
+		}
+		all = append(all, &f)
+	}
+	err = util.WrapErrors(rows.Err(), rows.Close())
+	return
+}
+
+func scanFilesPlus(rows *sql.Rows) (all []*FilePlus, err error) {
+	for rows.Next() {
+		f, err := scanFilePlus(rows)
 		if err != nil {
 			return nil, err
 		}
@@ -159,6 +193,14 @@ func getFiles(tx TX, query string, args ...any) (files []*File, err error) {
 		return
 	}
 	return scanFiles(rows)
+}
+
+func getFilesPlus(tx TX, query string, args ...any) (files []*FilePlus, err error) {
+	rows, err := tx.Query(query, args...)
+	if err != nil {
+		return
+	}
+	return scanFilesPlus(rows)
 }
 
 func countFilesNeedCheck(tx TX, interval int64) (int64, error) {
