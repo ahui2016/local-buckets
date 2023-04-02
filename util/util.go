@@ -174,14 +174,14 @@ func FileSum512(name string) (HexString, error) {
 }
 
 // https://stackoverflow.com/questions/30376921/how-do-you-copy-a-file-in-go
-func CopyFile(destPath, sourcePath string) error {
-	src, err := os.Open(sourcePath)
+func CopyFile(dstPath, srcPath string) error {
+	src, err := os.Open(srcPath)
 	if err != nil {
 		return err
 	}
 	defer src.Close()
 
-	dst, err := os.Create(destPath)
+	dst, err := os.Create(dstPath)
 	if err != nil {
 		return err
 	}
@@ -190,6 +190,20 @@ func CopyFile(destPath, sourcePath string) error {
 	_, err1 := io.Copy(dst, src)
 	err2 := dst.Sync()
 	return WrapErrors(err1, err2)
+}
+
+func CopyAndLockFile(dstPath, srcPath string) error {
+	if err := CopyFile(dstPath, srcPath); err != nil {
+		return err
+	}
+	return LockFile(dstPath)
+}
+
+func CopyAndUnlockFile(dstPath, srcPath string) error {
+	if err := CopyFile(dstPath, srcPath); err != nil {
+		return err
+	}
+	return UnlockFile(dstPath)
 }
 
 func DeleteFiles(files []string) (err error) {

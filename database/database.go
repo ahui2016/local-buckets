@@ -104,15 +104,11 @@ func (db *DB) ChangePassword(oldPwd, newPwd string) (HexString, error) {
 
 // AutoGetBuckets 根据数据库的状态自动获取公开仓库或全部仓库
 func (db *DB) AutoGetBuckets() ([]*Bucket, error) {
-	var (
-		rows *sql.Rows
-		err  error
-	)
-	if db.aesgcm == nil {
-		rows, err = db.Query(stmt.GetPublicBuckets)
-	} else {
-		rows, err = db.Query(stmt.GetAllBuckets)
+	query := stmt.GetPublicBuckets
+	if db.IsLoggedIn() {
+		query = stmt.GetAllBuckets
 	}
+	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
 	}
@@ -265,8 +261,11 @@ func (db *DB) GetAllFiles() (files []*File, err error) {
 }
 
 func (db *DB) GetRecentFiles() (files []*File, err error) {
-	files, err = getFiles(db.DB, stmt.GetRecentFiles, db.RecentFilesLimit)
-	if err != nil {
+	query := stmt.GetPublicRecentFiles
+	if db.IsLoggedIn() {
+		query = stmt.GetAllRecentFiles
+	}
+	if files, err = getFiles(db.DB, query, db.RecentFilesLimit); err != nil {
 		return
 	}
 	files = RemoveChecksum(files)
@@ -330,4 +329,20 @@ func (db *DB) UpdateBucketName(newName string, bucketid int64) error {
 
 func (db *DB) UpdateBucketTitle(bucket *Bucket) error {
 	return db.Exec(stmt.UpdateBucketTitle, bucket.Title, bucket.Subtitle, bucket.ID)
+}
+
+// EncryptFile 读取 srcPath 的文件, 加密后保存到 dstPath.
+func (db *DB) EncryptFile(srcPath, dstPath string) error {
+	if util.PathIsExist(dstPath) {
+		return fmt.Errorf("file exists: %s", dstPath)
+	}
+	data, err := os.ReadFile(srcPath)
+	if err != nil {
+		return err
+	}
+	encrypted, err := encrypt(data, db.aesgcm)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(dstPath, encrypted, 0666)
 }

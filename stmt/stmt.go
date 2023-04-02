@@ -80,9 +80,13 @@ const MoveFileToBucket = `UPDATE file SET bucket_name=? WHERE id=?;`
 const GetFileByID = `SELECT * FROM file WHERE id=?;`
 const GetFileByName = `SELECT * FROM file WHERE name=?;`
 const GetFileByChecksum = `SELECT * FROM file WHERE checksum=?;`
-const GetRecentFiles = `SELECT * FROM file ORDER BY utime DESC LIMIT ?;`
 const GetAllFiles = `SELECT * FROM file;`
 const DeleteFile = `DELETE FROM file WHERE id=?;`
+const GetAllRecentFiles = `SELECT * FROM file ORDER BY utime DESC LIMIT ?;`
+const GetPublicRecentFiles = `SELECT * FROM file
+	INNER JOIN bucket ON file.bucket_name = bucket.name
+	WHERE bucket.encrypted=FALSE
+	ORDER BY file.utime DESC LIMIT ?;`
 
 const CountAllFiles = `SELECT count(*) FROM file;`
 const CountFilesNeedCheck = `SELECT count(*) FROM file WHERE checked<?;`

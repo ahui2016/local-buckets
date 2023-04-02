@@ -244,7 +244,7 @@ func uploadNewFiles(c *fiber.Ctx) error {
 	// 以下是实际执行阶段
 
 	files = setBucketName(bucket.Name, files)
-	movedFiles, err := moveWaitingFiles(files)
+	movedFiles, err := moveWaitingFiles(files, bucket.Encrypted)
 	if err != nil {
 		err2 := rollbackMovedFiles(movedFiles)
 		return util.WrapErrors(err, err2)
@@ -265,8 +265,9 @@ func rollbackMovedFiles(movedFiles []MovedFile) (allErr error) {
 	return
 }
 
-func moveWaitingFiles(files []*File) (movedFiles []MovedFile, err error) {
+func moveWaitingFiles(files []*File, encrypted bool) (movedFiles []MovedFile, err error) {
 	for _, file := range files {
+		// TODO
 		movedFile, err := moveWaitingFileToBucket(file)
 		if err != nil {
 			return nil, err
@@ -274,6 +275,25 @@ func moveWaitingFiles(files []*File) (movedFiles []MovedFile, err error) {
 		movedFiles = append(movedFiles, movedFile)
 	}
 	return
+}
+
+func encryptMoveWaitingFile(file *File) (*MovedFile, error) {
+	movedFile := MovedFile{
+		Src: filepath.Join(WaitingFolder, file.Name),
+		Dst: filepath.Join(BucketsFolder, file.BucketName, file.Name),
+	}
+	if err := db.EncryptFile(movedFile.Dst, movedFile.Src); err != nil {
+		return nil, err
+	}
+	tempFile := MovedFile{
+		Src: filepath.Join(WaitingFolder, file.Name),
+		Dst: filepath.Join(TempFolder, file.Name),
+	}
+	if err := tempFile.Move(); err != nil {
+		err2 := os.Remove(movedFile.Dst)
+		return nil, util.WrapErrors(err, err2)
+	}
+	return &tempFile, nil
 }
 
 func moveWaitingFileToBucket(file *File) (MovedFile, error) {
@@ -484,7 +504,7 @@ func createBackupProject(bkProjRoot string) error {
 	exePath := util.GetExePath()
 	exeName := filepath.Base(exePath)
 	bkProjExePath := filepath.Join(bkProjRoot, exeName)
-	if err := util.CopyFile(bkProjExePath, exePath); err != nil {
+	if err := util.CopyAndLockFile(bkProjExePath, exePath); err != nil {
 		return err
 	}
 	bkProjBucketsDir := filepath.Join(bkProjRoot, BucketsFolderName)
@@ -758,7 +778,7 @@ func insertBKFile(bkBuckets string, file *File, bk *database.DB) error {
 		err = nil
 		dstFile := filepath.Join(bkBuckets, file.BucketName, file.Name)
 		srcFile := filepath.Join(BucketsFolder, file.BucketName, file.Name)
-		if err := util.CopyFile(dstFile, srcFile); err != nil {
+		if err := util.CopyAndLockFile(dstFile, srcFile); err != nil {
 			return err
 		}
 		if err := bk.InsertFileWithID(file); err != nil {
@@ -782,7 +802,7 @@ func overwriteBKFile(bkBucketsDir, bkTemp string, file, bkFile *File, bk *databa
 	// 复制新文档到备份仓库, 如果出错, 必须把旧文档移回原位.
 	newFileDst := filepath.Join(bkBucketsDir, file.BucketName, file.Name)
 	newFileSrc := filepath.Join(BucketsFolder, file.BucketName, file.Name)
-	if err := util.CopyFile(newFileDst, newFileSrc); err != nil {
+	if err := util.CopyAndLockFile(newFileDst, newFileSrc); err != nil {
 		err2 := tempFile.Rollback()
 		return util.WrapErrors(err, err2)
 	}
