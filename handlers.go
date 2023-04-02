@@ -555,6 +555,10 @@ func syncToBackupProject(bkProjRoot string) (*ProjectStatus, error) {
 	}
 	defer bk.DB.Close()
 
+	if bkProjStat, err = syncProjectConfig(bkProjStat); err != nil {
+		return nil, err
+	}
+
 	if err := checkBackupDiskUsage(bkProjRoot, bkProjStat, &projStat); err != nil {
 		return nil, err
 	}
@@ -626,6 +630,17 @@ func syncToBackupProject(bkProjRoot string) (*ProjectStatus, error) {
 		}
 	}
 
+	return bkProjStat, err
+}
+
+// 更新备份专案的 Title, Subtitle, Cipherkey.
+func syncProjectConfig(bkProjStat *ProjectStatus) (*ProjectStatus, error) {
+	bkProjStat.Project.Title = ProjectConfig.Title
+	bkProjStat.Project.Subtitle = ProjectConfig.Subtitle
+	bkProjStat.Project.CipherKey = ProjectConfig.CipherKey
+
+	bkProjCfgPath := filepath.Join(bkProjStat.Root, ProjectTOML)
+	err := util.WriteTOML(bkProjStat.Project, bkProjCfgPath)
 	return bkProjStat, err
 }
 

@@ -39,6 +39,7 @@ const ChangePwdForm = cc("form", {
       "Confirm New Password",
       "再輸入一次新密碼"
     ),
+    MJBS.hiddenButtonElem(),
     m(ChangePwdBtn).on("click", (event) => {
       event.preventDefault();
       const oldPwd = OldPasswordInput.val();
