@@ -19,6 +19,7 @@ func main() {
 	api.Get("/waiting-folder", getWaitingFolder) // resp.data: TextMsg
 	api.Get("/waiting-files", getWaitingFiles)   // resp.data: File[] | ErrSameNameFiles
 	api.Post("/upload-new-files", uploadNewFiles)
+	api.Post("/download-file", downloadFile)
 	api.Post("/rename-waiting-file", renameWaitingFile)
 	api.Post("/overwrite-file", overwriteFile)
 

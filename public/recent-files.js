@@ -18,12 +18,16 @@ const navBar = m("div")
       )
   );
 
+const PageConfig = {};
+
 const PageAlert = MJBS.createAlert();
 const PageLoading = MJBS.createLoading(null, "large");
 
 const FileList = cc("div");
 
 function FileItem(file) {
+  const ItemAlert = MJBS.createAlert();
+
   const bodyRowOne = m("div")
     .addClass("mb-2 FileItemBodyRowOne")
     .append(m("div").addClass("text-right FileItemBadges"));
@@ -38,6 +42,26 @@ function FileItem(file) {
       span(file.utime.substr(0, 10))
         .attr({ title: file.utime })
         .addClass("me-2"),
+      MJBS.createLinkElem("#", { text: "download" })
+        .addClass("me-2")
+        .on("click", (event) => {
+          event.preventDefault();
+          event.currentTarget.style.pointerEvents = "none";
+          axiosPost({
+            url: "/api/download-file",
+            alert: ItemAlert,
+            body: { id: file.id },
+            onSuccess: () => {
+              ItemAlert.insert(
+                "success",
+                `成功下載到 waiting 資料夾 ${PageConfig.waitingFolder}`
+              );
+            },
+            onAlways: () => {
+              event.currentTarget.style.pointerEvents = "auto";
+            },
+          });
+        }),
       MJBS.createLinkElem("edit-file.html?id=" + file.id, { text: "info" })
     );
 
@@ -53,7 +77,8 @@ function FileItem(file) {
         .addClass("card-body")
         .append(
           m("div").append(bodyRowOne),
-          m("div").addClass("row").append(bodyRowTwoLeft, bodyRowTwoRight)
+          m("div").addClass("row").append(bodyRowTwoLeft, bodyRowTwoRight),
+          m(ItemAlert)
         ),
     ],
   });
@@ -100,6 +125,7 @@ $("#root")
 init();
 
 function init() {
+  getWaitingFolder();
   getRecentFiles();
 }
 
@@ -120,6 +146,16 @@ function getRecentFiles() {
     },
     onAlways: () => {
       PageLoading.hide();
+    },
+  });
+}
+
+function getWaitingFolder() {
+  axiosGet({
+    url: "/api/waiting-folder",
+    alert: PageAlert,
+    onSuccess: (resp) => {
+      PageConfig.waitingFolder = resp.data.text;
     },
   });
 }

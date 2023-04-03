@@ -15,6 +15,7 @@ type (
 	Project       = model.Project
 	Bucket        = model.Bucket
 	File          = model.File
+	FilePlus      = model.FilePlus
 	MovedFile     = model.MovedFile
 	ProjectInfo   = model.ProjectInfo
 	ProjectStatus = model.ProjectStatus

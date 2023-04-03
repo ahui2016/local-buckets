@@ -48,8 +48,7 @@ func encrypt(data []byte, aesgcm cipher.AEAD) (encrypted []byte, err error) {
 	return
 }
 
-func decrypt(ciphertext HexString, aesgcm cipher.AEAD) (data []byte, err error) {
-	blob := lo.Must(hex.DecodeString(ciphertext))
+func decrypt(blob []byte, aesgcm cipher.AEAD) (data []byte, err error) {
 	nonce := blob[:NonceSize]
 	encryped := blob[NonceSize:]
 	return aesgcm.Open(nil, nonce, encryped, nil)

@@ -248,6 +248,24 @@ func uploadNewFiles(c *fiber.Ctx) error {
 	return nil
 }
 
+func downloadFile(c *fiber.Ctx) error {
+	form := new(model.FileIdForm)
+	err1 := parseValidate(form, c)
+	file, err2 := db.GetFilePlus(form.ID)
+	if err := util.WrapErrors(err1, err2); err != nil {
+		return err
+	}
+	srcPath := filepath.Join(BucketsFolder, file.BucketName, file.Name)
+	dstPath := filepath.Join(WaitingFolder, file.Name)
+	if util.PathIsExist(dstPath) {
+		return fmt.Errorf("file exists: %s", dstPath)
+	}
+	if file.Encrypted {
+		return db.DecryptFile(srcPath, dstPath)
+	}
+	return util.CopyAndUnlockFile(dstPath, srcPath)
+}
+
 func encryptMoveWaitingFile(file *File) error {
 	// srcPath 是待上传的原始文档
 	srcPath := filepath.Join(WaitingFolder, file.Name)
@@ -257,6 +275,12 @@ func encryptMoveWaitingFile(file *File) error {
 	if err := db.EncryptFile(srcPath, dstPath); err != nil {
 		return err
 	}
+	// 获取加密后的 checksum
+	checksum, err := util.FileSum512(dstPath)
+	if err != nil {
+		return err
+	}
+	file.Checksum = checksum
 	// 插入新文档到数据库
 	if err := db.InsertFile(file); err != nil {
 		// 如果数据库出错, 要删除刚才的加密文档

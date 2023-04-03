@@ -83,6 +83,14 @@ const GetFileByChecksum = `SELECT * FROM file WHERE checksum=?;`
 const GetAllFiles = `SELECT * FROM file;`
 const DeleteFile = `DELETE FROM file WHERE id=?;`
 
+const GetFilePlus = `SELECT file.id, file.checksum, file.bucket_name,
+	file.name,    file.notes,   file.keywords, file.size,
+	file.type,    file.like,    file.ctime,    file.utime,
+	file.checked, file.damaged, file.deleted,  bucket.encrypted
+FROM file
+	INNER JOIN bucket ON file.bucket_name = bucket.name
+	WHERE file.id=?;`
+
 const GetAllRecentFiles = `SELECT file.id, file.checksum, file.bucket_name,
 	file.name,    file.notes,   file.keywords, file.size,
 	file.type,    file.like,    file.ctime,    file.utime,
