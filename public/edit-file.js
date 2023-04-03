@@ -145,7 +145,7 @@ const EditFileForm = cc("form", {
 });
 
 $("#root")
-  .css({ maxWidth: "768px" })
+  .css(RootCss)
   .append(
     navBar.addClass("my-3"),
     m(PageAlert).addClass("my-5"),

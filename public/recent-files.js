@@ -114,7 +114,7 @@ function FileItem(file) {
 }
 
 $("#root")
-  .css(RootCss)
+  .css(RootCssWide)
   .append(
     navBar.addClass("my-3"),
     m(PageAlert).addClass("my-5"),

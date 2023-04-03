@@ -498,6 +498,7 @@ func createBackupProject(bkProjRoot string) error {
 	}
 	bkProjCfg := *ProjectConfig
 	bkProjCfg.IsBackup = true
+	bkProjCfg.LastBackupAt = ""
 	bkProjCfgPath := filepath.Join(bkProjRoot, ProjectTOML)
 	if err := util.WriteTOML(bkProjCfg, bkProjCfgPath); err != nil {
 		return err
@@ -509,7 +510,10 @@ func createBackupProject(bkProjRoot string) error {
 		return err
 	}
 	bkProjBucketsDir := filepath.Join(bkProjRoot, BucketsFolderName)
-	return util.Mkdir(bkProjBucketsDir)
+	bkProjTempDir := filepath.Join(bkProjRoot, TempFolderName)
+	e1 := util.Mkdir(bkProjBucketsDir)
+	e2 := util.Mkdir(bkProjTempDir)
+	return util.WrapErrors(e1, e2)
 }
 
 func getBKProjStat(c *fiber.Ctx) error {

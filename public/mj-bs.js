@@ -698,5 +698,6 @@ function fileSizeToString(fileSize, fixed) {
 // 以下與 mj-bs.js 無關.
 
 const DateFormatYMD = "YYYY-MM-DD";
-const RootCss = { maxWidth: "992px" };
+const RootCss = { maxWidth: "768px" };
+const RootCssWide = { maxWidth: "992px" };
 const GB = 1 << 30;
