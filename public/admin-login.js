@@ -19,7 +19,7 @@ const navBar = m("div")
   );
 
 const PageAlert = MJBS.createAlert();
-const PageLoading = MJBS.createLoading();
+const PageLoading = MJBS.createLoading(null, "large");
 
 const LogoutBtn = MJBS.createButton("Logout", "warning");
 const LogoutBtnArea = cc("div", {

@@ -454,7 +454,10 @@ func updateFileInfo(c *fiber.Ctx) error {
 		err2 := moved.Rollback()
 		return util.WrapErrors(err, err2)
 	}
-	return nil
+	if file, err = db.GetFileByID(file.ID); err != nil {
+		return err
+	}
+	return c.JSON(file)
 }
 
 func checkFileName(name string) error {
@@ -511,8 +514,8 @@ func createBackupProject(bkProjRoot string) error {
 	}
 	bkProjBucketsDir := filepath.Join(bkProjRoot, BucketsFolderName)
 	bkProjTempDir := filepath.Join(bkProjRoot, TempFolderName)
-	e1 := util.Mkdir(bkProjBucketsDir)
-	e2 := util.Mkdir(bkProjTempDir)
+	e1 := util.MkdirIfNotExists(bkProjBucketsDir)
+	e2 := util.MkdirIfNotExists(bkProjTempDir)
 	return util.WrapErrors(e1, e2)
 }
 

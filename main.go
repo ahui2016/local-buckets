@@ -23,9 +23,9 @@ func main() {
 	api.Post("/rename-waiting-file", renameWaitingFile)
 	api.Post("/overwrite-file", overwriteFile)
 
-	api.Get("/recent-files", getRecentFiles) // resp.data: File[]
-	api.Post("/file-info", getFileByID)      // resp.data: File
-	api.Post("/update-file-info", updateFileInfo)
+	api.Get("/recent-files", getRecentFiles)      // resp.data: File[]
+	api.Post("/file-info", getFileByID)           // resp.data: File
+	api.Post("/update-file-info", updateFileInfo) // resp.data: File
 	api.Post("/move-file-to-bucket", moveFileToBucket)
 
 	api.Post("/create-bk-proj", createBKProjHandler)

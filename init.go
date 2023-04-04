@@ -27,6 +27,7 @@ const (
 	DatabaseFileName  = "project.db"
 	WaitingFolderName = "waiting"
 	BucketsFolderName = "buckets"
+	ThumbsFolderName  = "thumbs"
 	TempFolderName    = "temp"
 	PublicFolderName  = "public"
 )
@@ -39,6 +40,7 @@ var (
 	DatabasePath      = filepath.Join(ProjectRoot, DatabaseFileName)
 	WaitingFolder     = filepath.Join(ProjectRoot, WaitingFolderName)
 	BucketsFolder     = filepath.Join(ProjectRoot, BucketsFolderName)
+	ThumbsFolder      = filepath.Join(BucketsFolder, ThumbsFolderName)
 	TempFolder        = filepath.Join(ProjectRoot, TempFolderName)
 	PublicFolder      = filepath.Join(ProjectRoot, PublicFolderName)
 )
@@ -54,10 +56,16 @@ func initDB() {
 }
 
 func createFolders() {
-	util.MkdirIfNotExists(WaitingFolder)
-	util.MkdirIfNotExists(BucketsFolder)
-	util.MkdirIfNotExists(TempFolder)
-	util.MkdirIfNotExists(PublicFolder)
+	folders := []string{
+		BucketsFolder,
+		WaitingFolder,
+		TempFolder,
+		PublicFolder,
+		ThumbsFolder,
+	}
+	for _, folder := range folders {
+		lo.Must0(util.MkdirIfNotExists(folder))
+	}
 }
 
 func createBucketFolder(bucketID string) {

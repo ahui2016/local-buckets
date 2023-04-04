@@ -18,14 +18,48 @@ const navBar = m("div")
       )
   );
 
-const PageConfig = {};
+const rootMarginLeft = "550px";
+
+const PageConfig = {
+  bsFileEditCanvas: null,
+};
 
 const PageAlert = MJBS.createAlert();
 const PageLoading = MJBS.createLoading(null, "large");
 
+const FileEditCanvas = cc("div", {
+  classes: "offcanvas offcanvas-start",
+  css: { width: rootMarginLeft },
+  attr: {
+    "data-bs-scroll": true,
+    "data-bs-backdrop": false,
+    tabindex: -1,
+  },
+  children: [
+    m("div")
+      .addClass("offcanvas-header")
+      .append(
+        m("h5").addClass("offcanvas-title").text("File Info (檔案屬性)"),
+        m("button").addClass("btn-close").attr({
+          type: "button",
+          "data-bs-dismiss": "offcanvas",
+          "aria-label": "Close",
+        })
+      ),
+    m("div")
+      .addClass("offcanvas-body")
+      .append(
+        m(FileInfoPageAlert),
+        m(FileInfoPageLoading).addClass("my-5"),
+        m(EditFileForm).hide()
+      ),
+  ],
+});
+
 const FileList = cc("div");
 
 function FileItem(file) {
+  const fileItemID = "F-" + file.id;
   const ItemAlert = MJBS.createAlert();
 
   const bodyRowOne = m("div")
@@ -62,14 +96,24 @@ function FileItem(file) {
             },
           });
         }),
-      MJBS.createLinkElem("edit-file.html?id=" + file.id, { text: "info" })
+      // MJBS.createLinkElem("edit-file.html?id=" + file.id, { text: "info" })
+      MJBS.createLinkElem("#", { text: "info" })
+        .addClass("FileInfoEditBtn")
+        .on("click", (event) => {
+          event.preventDefault();
+          $("#root").css({ marginLeft: rootMarginLeft });
+          PageConfig.bsFileEditCanvas.show();
+          EditFileForm.hide();
+          FileInfoPageLoading.show();
+          initEditFileForm(file.id, "#" + fileItemID + " .FileInfoEditBtn");
+        })
     );
 
   let headerText = `${file.bucket_name}/${file.name}`;
   if (file.encrypted) headerText = "🔒" + headerText;
 
   const self = cc("div", {
-    id: "F-" + file.id,
+    id: fileItemID,
     classes: "card mb-4",
     children: [
       m("div").addClass("card-header").text(headerText),
@@ -119,12 +163,18 @@ $("#root")
     navBar.addClass("my-3"),
     m(PageAlert).addClass("my-5"),
     m(PageLoading).addClass("my-5"),
-    m(FileList).addClass("my-5")
+    m(FileList).addClass("my-5"),
+    m(FileEditCanvas)
   );
 
 init();
 
 function init() {
+  PageConfig.bsFileEditCanvas = new bootstrap.Offcanvas(FileEditCanvas.id);
+  FileEditCanvas.elem().on("hidden.bs.offcanvas", () => {
+    $("#root").css({ marginLeft: "" });
+  });
+  getBuckets();
   getWaitingFolder();
   getRecentFiles();
 }

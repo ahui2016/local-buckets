@@ -61,11 +61,11 @@ func Mkdir(name string) error {
 
 // MkdirIfNotExists 创建資料夹, 忽略 ErrExist.
 // 在 Windows 里, 文件夹的只读属性不起作用, 为了统一行为, 不把文件夹设为只读.
-func MkdirIfNotExists(name string) {
+func MkdirIfNotExists(name string) error {
 	if PathIsExist(name) {
-		return
+		return nil
 	}
-	lo.Must0(Mkdir(name))
+	return Mkdir(name)
 }
 
 // WriteFile 写檔案, 如果 perm 等于零, 则使用默认权限.
