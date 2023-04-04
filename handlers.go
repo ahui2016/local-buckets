@@ -454,10 +454,11 @@ func updateFileInfo(c *fiber.Ctx) error {
 		err2 := moved.Rollback()
 		return util.WrapErrors(err, err2)
 	}
-	if file, err = db.GetFileByID(file.ID); err != nil {
+	fileplus, err := db.GetFilePlus(file.ID)
+	if err != nil {
 		return err
 	}
-	return c.JSON(file)
+	return c.JSON(fileplus)
 }
 
 func checkFileName(name string) error {

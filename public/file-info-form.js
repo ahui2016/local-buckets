@@ -114,7 +114,6 @@ const EditFileForm = cc("form", {
             body: body,
             onSuccess: (resp) => {
               const file = resp.data;
-              SubmitBtn.hide();
               SubmitBtnAlert.clear().insert("success", "修改成功");
               updateFileItem(file);
             },
@@ -157,6 +156,7 @@ function initEditFileForm(fileID, selfButton) {
       MJBS.disable(DeletedInput);
 
       EditFileForm.show();
+      SubmitBtnAlert.clear();
       initBucketSelect(file.bucket_name);
     },
     onAlways: () => {
@@ -206,4 +206,8 @@ function initBucketSelect(currentbucketName) {
   MJBS.focus(NotesInput);
 }
 
-function updateFileItem(file) {}
+function updateFileItem(file) {
+  const item = FileItem(file);
+  item.elem().replaceWith(m(item));
+  item.init();
+}

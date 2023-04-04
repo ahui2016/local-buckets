@@ -139,7 +139,6 @@ function FileItem(file) {
     if (file.notes) {
       rowOne.append(
         m("div").append(
-          span("Notes: "),
           span(file.notes).addClass("text-muted")
         )
       );
@@ -147,8 +146,7 @@ function FileItem(file) {
     if (file.keywords) {
       rowOne.append(
         m("div").append(
-          span("Keywords: "),
-          span(file.keywords).addClass("text-muted")
+          span(`[${file.keywords}]`).addClass("text-muted")
         )
       );
     }
