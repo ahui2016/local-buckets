@@ -376,15 +376,14 @@ func getFileByID(c *fiber.Ctx) error {
 	return c.JSON(file)
 }
 
-func moveFileToBucket(c *fiber.Ctx) error {
+func moveFileToBucket(c *fiber.Ctx) (err error) {
 	form := new(model.MoveFileToBucketForm)
 	if err := parseValidate(form, c); err != nil {
 		return err
 	}
 	file, e1 := db.GetFilePlus(form.FileID)
 	bucket, e2 := db.GetBucketByName(form.BucketName)
-	err := util.WrapErrors(e1, e2)
-	if err != nil {
+	if err := util.WrapErrors(e1, e2); err != nil {
 		return err
 	}
 
@@ -425,20 +424,19 @@ func moveFileToBucket(c *fiber.Ctx) error {
 }
 
 // direction is "Pri->Pub" or "Pub->Pri"
-func moveFileBetweenPubAndPri(file FilePlus, newBucketName, direction string) error {
+func moveFileBetweenPubAndPri(file FilePlus, newBucketName, direction string) (err error) {
 	srcPath := filepath.Join(BucketsFolder, file.BucketName, file.Name)
 	dstPath := filepath.Join(BucketsFolder, newBucketName, file.Name)
 
-	if direction == "Pri->Pub" {
-		if err := db.DecryptFile(srcPath, dstPath); err != nil {
-			return err
-		}
+	if direction == "Pub->Pri" {
+		err = db.EncryptFile(srcPath, dstPath)
 	} else {
-		if err := db.EncryptFile(srcPath, dstPath); err != nil {
-			return err
-		}
+		err = db.DecryptFile(srcPath, dstPath)
 	}
-	// 获取加密后的 checksum
+	if err != nil {
+		return err
+	}
+	// 获取新的 checksum
 	checksum, err := util.FileSum512(dstPath)
 	if err != nil {
 		return err
