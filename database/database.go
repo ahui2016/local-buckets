@@ -197,6 +197,10 @@ func (db *DB) MoveFileToBucket(fileID int64, bucketName string) error {
 	return db.Exec(stmt.MoveFileToBucket, bucketName, fileID)
 }
 
+func (db *DB) UpdateChecksumAndBucket(fileID int64, checksum, bucketName string) error {
+	return db.Exec(stmt.UpdateChecksumAndBucket, checksum, bucketName, fileID)
+}
+
 // CheckSameFiles 检查有无同名/相同内容的檔案,
 // 发现相同内容的檔案时, 记录全部重复檔案,
 // 但发现同名檔案时, 则立即返回错误 (因为前端需要对同名檔案进行逐个处理).

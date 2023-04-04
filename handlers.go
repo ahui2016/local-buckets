@@ -12,7 +12,6 @@ import (
 
 	"github.com/ahui2016/local-buckets/database"
 	"github.com/ahui2016/local-buckets/model"
-	"github.com/ahui2016/local-buckets/stmt"
 	"github.com/ahui2016/local-buckets/util"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -377,28 +376,79 @@ func getFileByID(c *fiber.Ctx) error {
 	return c.JSON(file)
 }
 
-// TODO: 在加密仓库与公开仓库之间移动文档
 func moveFileToBucket(c *fiber.Ctx) error {
 	form := new(model.MoveFileToBucketForm)
 	if err := parseValidate(form, c); err != nil {
 		return err
 	}
-	file, err := db.GetFileByID(form.FileID)
+	file, e1 := db.GetFilePlus(form.FileID)
+	bucket, e2 := db.GetBucketByName(form.BucketName)
+	err := util.WrapErrors(e1, e2)
 	if err != nil {
 		return err
 	}
+
+	// 先处理在公开仓库与加密仓库之间移动文档的情况
+	if file.Encrypted || bucket.Encrypted {
+		if !db.IsLoggedIn() {
+			return fmt.Errorf("檔案移進或移出加密倉庫需要管理員權限")
+		}
+		if file.Encrypted && !bucket.Encrypted {
+			err = moveFileBetweenPubAndPri(file, bucket.Name, "Pri->Pub")
+		} else if !file.Encrypted && bucket.Encrypted {
+			err = moveFileBetweenPubAndPri(file, bucket.Name, "Pub->Pri")
+		}
+		if err != nil {
+			return err
+		}
+	}
+
+	// 再处理 “公开仓库之间” 或 “加密仓库之间” 移动文档的情况
 	moved := MovedFile{
 		Src: filepath.Join(BucketsFolder, file.BucketName, file.Name),
-		Dst: filepath.Join(BucketsFolder, form.BucketName, file.Name),
+		Dst: filepath.Join(BucketsFolder, bucket.Name, file.Name),
 	}
 	if err := moved.Move(); err != nil {
 		return err
 	}
-	if err := db.MoveFileToBucket(form.FileID, form.BucketName); err != nil {
+	if err := db.MoveFileToBucket(form.FileID, bucket.Name); err != nil {
 		err2 := moved.Rollback()
 		return util.WrapErrors(err, err2)
 	}
-	return nil
+
+	// 最后获取更新后的文件, 返回给前端
+	fileplus, err := db.GetFilePlus(file.ID)
+	if err != nil {
+		return err
+	}
+	return c.JSON(fileplus)
+}
+
+// direction is "Pri->Pub" or "Pub->Pri"
+func moveFileBetweenPubAndPri(file FilePlus, newBucketName, direction string) error {
+	srcPath := filepath.Join(BucketsFolder, file.BucketName, file.Name)
+	dstPath := filepath.Join(BucketsFolder, newBucketName, file.Name)
+
+	if direction == "Pri->Pub" {
+		if err := db.DecryptFile(srcPath, dstPath); err != nil {
+			return err
+		}
+	} else {
+		if err := db.EncryptFile(srcPath, dstPath); err != nil {
+			return err
+		}
+	}
+	// 获取加密后的 checksum
+	checksum, err := util.FileSum512(dstPath)
+	if err != nil {
+		return err
+	}
+	if err := db.UpdateChecksumAndBucket(file.ID, checksum, newBucketName); err != nil {
+		err2 := os.Remove(dstPath)
+		return util.WrapErrors(err, err2)
+	}
+	// 一切正常, 可以删除原始文档
+	return os.Remove(srcPath)
 }
 
 func updateFileInfo(c *fiber.Ctx) error {
@@ -759,7 +809,7 @@ func moveBKFileToBucket(
 	if err := moved.Move(); err != nil {
 		return err
 	}
-	if err := bk.Exec(stmt.MoveFileToBucket, newBucketName, bkFile.ID); err != nil {
+	if err := bk.MoveFileToBucket(bkFile.ID, newBucketName); err != nil {
 		err2 := moved.Rollback()
 		return util.WrapErrors(err, err2)
 	}

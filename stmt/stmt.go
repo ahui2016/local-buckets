@@ -68,14 +68,17 @@ const InsertFileWithID = `INSERT INTO file (
 const UpdateFileContent = `UPDATE file
 	SET checksum=?, size=?, utime=?, damaged=FALSE WHERE id=?;`
 
+const MoveFileToBucket = `UPDATE file SET bucket_name=? WHERE id=?;`
+
+const UpdateChecksumAndBucket = `UPDATE file
+	SET checksum=?, bucket_name=? WHERE id=?;`
+
 const UpdateFileInfo = `UPDATE file SET name=?, notes=?,
 	keywords=?, type=?, like=?, ctime=?, utime=? WHERE id=?;`
 
 const UpdateBackupFileInfo = `UPDATE file SET
 	checksum=?, bucket_name, name=?,  notes=?, keywords=?, size=?,
 	type=?,     like=?,      ctime=?, utime=?, deleted=? WHERE id=?;`
-
-const MoveFileToBucket = `UPDATE file SET bucket_name=? WHERE id=?;`
 
 const GetFileByID = `SELECT * FROM file WHERE id=?;`
 const GetFileByName = `SELECT * FROM file WHERE name=?;`

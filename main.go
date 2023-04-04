@@ -23,10 +23,10 @@ func main() {
 	api.Post("/rename-waiting-file", renameWaitingFile)
 	api.Post("/overwrite-file", overwriteFile)
 
-	api.Get("/recent-files", getRecentFiles)      // resp.data: File[]
-	api.Post("/file-info", getFileByID)           // resp.data: File
-	api.Post("/update-file-info", updateFileInfo) // resp.data: FilePlus
-	api.Post("/move-file-to-bucket", moveFileToBucket)
+	api.Get("/recent-files", getRecentFiles)           // resp.data: File[]
+	api.Post("/file-info", getFileByID)                // resp.data: File
+	api.Post("/update-file-info", updateFileInfo)      // resp.data: FilePlus
+	api.Post("/move-file-to-bucket", moveFileToBucket) // resp.data: FilePlus
 
 	api.Post("/create-bk-proj", createBKProjHandler)
 	api.Post("/delete-bk-proj", deleteBKProjHandler)
