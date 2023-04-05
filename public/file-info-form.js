@@ -39,9 +39,12 @@ const MoveToBucketGroup = cc("div", {
         url: "/api/move-file-to-bucket",
         alert: MoveToBucketAlert,
         body: body,
-        onSuccess: () => {
+        onSuccess: (resp) => {
+          const file = resp.data;
           MoveToBucketAlert.clear().insert("success", "移動檔案成功!");
-          initBucketSelect(body.bucket_name);
+          initBucketSelect(file.bucket_name);
+          updateFileItem(file);
+
         },
         onAlways: () => {
           MJBS.enable(MoveToBucketBtn);

@@ -238,3 +238,8 @@
   - "该仓库内已有 n 个档案, 档案数量太多可能影响性能, 建议创建新仓库,使用新仓库."
 - 可设定是否模拟网络延迟
 - 加密时需要把整个文件读进内存, 因此上传到加密仓库的文件不能太大.
+
+A FAT32 directory can have 65,536 directory entries. Each file and subdirectory takes from 2 to 13 entries, depending on the length of its name.
+
+What is the maximum number of files in a Windows folder?
+Maximum number of files in a single folder: 4,294,967,295

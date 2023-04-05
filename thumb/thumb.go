@@ -1,6 +1,8 @@
 package thumb
 
 import (
+	"errors"
+	"fmt"
 	"image"
 	"log"
 	"math"
@@ -29,11 +31,16 @@ func CheckImage(img []byte) error {
 }
 */
 
+// TOOD: open webp, gif
 // NailWrite reads an image from imgPath, creates a thumbnail of it,
 // and write the thumbnail to thumbPath.
 // Use default quality(85) if quality is set to zero.
 func NailWrite(imgPath, thumbPath string, quality int) error {
 	img, err := imgio.Open(imgPath)
+	if errors.Is(err, image.ErrFormat) {
+		fmt.Println(err, "\n", imgPath)
+		return nil
+	}
 	if err != nil {
 		return err
 	}

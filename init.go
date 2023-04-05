@@ -27,9 +27,10 @@ const (
 	DatabaseFileName  = "project.db"
 	WaitingFolderName = "waiting"
 	BucketsFolderName = "buckets"
-	ThumbsFolderName  = "thumbs"
 	TempFolderName    = "temp"
 	PublicFolderName  = "public"
+	ThumbsFolderName  = "thumbs"
+	DotJPEG           = ".jpeg"
 )
 
 var (
@@ -40,9 +41,9 @@ var (
 	DatabasePath      = filepath.Join(ProjectRoot, DatabaseFileName)
 	WaitingFolder     = filepath.Join(ProjectRoot, WaitingFolderName)
 	BucketsFolder     = filepath.Join(ProjectRoot, BucketsFolderName)
-	ThumbsFolder      = filepath.Join(BucketsFolder, ThumbsFolderName)
 	TempFolder        = filepath.Join(ProjectRoot, TempFolderName)
 	PublicFolder      = filepath.Join(ProjectRoot, PublicFolderName)
+	ThumbsFolder      = filepath.Join(PublicFolder, ThumbsFolderName)
 )
 
 func init() {
@@ -68,9 +69,9 @@ func createFolders() {
 	}
 }
 
-func createBucketFolder(bucketID string) {
-	path := filepath.Join(BucketsFolder, bucketID)
-	util.MkdirIfNotExists(path)
+func createBucketFolder(bucketID string) error {
+	bucketPath := filepath.Join(BucketsFolder, bucketID)
+	return util.MkdirIfNotExists(bucketPath)
 }
 
 func readProjectConfig() {

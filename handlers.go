@@ -12,6 +12,7 @@ import (
 
 	"github.com/ahui2016/local-buckets/database"
 	"github.com/ahui2016/local-buckets/model"
+	"github.com/ahui2016/local-buckets/thumb"
 	"github.com/ahui2016/local-buckets/util"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -157,6 +158,7 @@ func waitingFileNameExists(name string) (ok bool, err error) {
 	return
 }
 
+// TODO: 重新生成缩略图
 func overwriteFile(c *fiber.Ctx) error {
 	form := new(model.OneTextForm)
 	if err := parseValidate(form, c); err != nil {
@@ -215,6 +217,24 @@ func overwriteFile(c *fiber.Ctx) error {
 	return os.Remove(tempFile.Dst)
 }
 
+func downloadFile(c *fiber.Ctx) error {
+	form := new(model.FileIdForm)
+	err1 := parseValidate(form, c)
+	file, err2 := db.GetFilePlus(form.ID)
+	if err := util.WrapErrors(err1, err2); err != nil {
+		return err
+	}
+	srcPath := filepath.Join(BucketsFolder, file.BucketName, file.Name)
+	dstPath := filepath.Join(WaitingFolder, file.Name)
+	if util.PathIsExist(dstPath) {
+		return fmt.Errorf("file exists: %s", dstPath)
+	}
+	if file.Encrypted {
+		return db.DecryptFile(srcPath, dstPath)
+	}
+	return util.CopyAndUnlockFile(dstPath, srcPath)
+}
+
 // uploadNewFiles 只上传新檔案,
 // 若要更新现有檔案, 则使用 overwriteFile() 函数.
 func uploadNewFiles(c *fiber.Ctx) error {
@@ -243,26 +263,18 @@ func uploadNewFiles(c *fiber.Ctx) error {
 				return err
 			}
 		}
+		if err := createThumb(file); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
-func downloadFile(c *fiber.Ctx) error {
-	form := new(model.FileIdForm)
-	err1 := parseValidate(form, c)
-	file, err2 := db.GetFilePlus(form.ID)
-	if err := util.WrapErrors(err1, err2); err != nil {
-		return err
-	}
-	srcPath := filepath.Join(BucketsFolder, file.BucketName, file.Name)
-	dstPath := filepath.Join(WaitingFolder, file.Name)
-	if util.PathIsExist(dstPath) {
-		return fmt.Errorf("file exists: %s", dstPath)
-	}
-	if file.Encrypted {
-		return db.DecryptFile(srcPath, dstPath)
-	}
-	return util.CopyAndUnlockFile(dstPath, srcPath)
+func createThumb(file *File) error {
+	basename := filepath.Base(file.Name)
+	imgPath := filepath.Join(BucketsFolder, file.BucketName, file.Name)
+	thumbPath := filepath.Join(ThumbsFolder, basename+DotJPEG)
+	return thumb.NailWrite(imgPath, thumbPath, 0)
 }
 
 func encryptMoveWaitingFile(file *File) error {
@@ -376,6 +388,7 @@ func getFileByID(c *fiber.Ctx) error {
 	return c.JSON(file)
 }
 
+// TODO: move thumbs
 func moveFileToBucket(c *fiber.Ctx) (err error) {
 	form := new(model.MoveFileToBucketForm)
 	if err := parseValidate(form, c); err != nil {
@@ -387,32 +400,30 @@ func moveFileToBucket(c *fiber.Ctx) (err error) {
 		return err
 	}
 
-	// 先处理在公开仓库与加密仓库之间移动文档的情况
-	if file.Encrypted || bucket.Encrypted {
+	// 先处理在公开仓库与加密仓库之间移动文档的情况 (需要加密或解密)
+	if file.Encrypted != bucket.Encrypted {
 		if !db.IsLoggedIn() {
 			return fmt.Errorf("檔案移進或移出加密倉庫需要管理員權限")
 		}
-		if file.Encrypted && !bucket.Encrypted {
-			err = moveFileBetweenPubAndPri(file, bucket.Name, "Pri->Pub")
-		} else if !file.Encrypted && bucket.Encrypted {
-			err = moveFileBetweenPubAndPri(file, bucket.Name, "Pub->Pri")
-		}
-		if err != nil {
+		direction := lo.Ternary(file.Encrypted, "Pri->Pub", "Pub->Pri")
+		if err = moveFileBetweenPubAndPri(file, bucket.Name, direction); err != nil {
 			return err
 		}
 	}
 
-	// 再处理 “公开仓库之间” 或 “加密仓库之间” 移动文档的情况
-	moved := MovedFile{
-		Src: filepath.Join(BucketsFolder, file.BucketName, file.Name),
-		Dst: filepath.Join(BucketsFolder, bucket.Name, file.Name),
-	}
-	if err := moved.Move(); err != nil {
-		return err
-	}
-	if err := db.MoveFileToBucket(form.FileID, bucket.Name); err != nil {
-		err2 := moved.Rollback()
-		return util.WrapErrors(err, err2)
+	// 再处理 “公开仓库之间” 或 “加密仓库之间” 移动文档的情况 (不需要加密解密)
+	if file.Encrypted == bucket.Encrypted {
+		moved := MovedFile{
+			Src: filepath.Join(BucketsFolder, file.BucketName, file.Name),
+			Dst: filepath.Join(BucketsFolder, bucket.Name, file.Name),
+		}
+		if err := moved.Move(); err != nil {
+			return err
+		}
+		if err := db.MoveFileToBucket(form.FileID, bucket.Name); err != nil {
+			err2 := moved.Rollback()
+			return util.WrapErrors(err, err2)
+		}
 	}
 
 	// 最后获取更新后的文件, 返回给前端
@@ -449,6 +460,7 @@ func moveFileBetweenPubAndPri(file FilePlus, newBucketName, direction string) (e
 	return os.Remove(srcPath)
 }
 
+// TODO: update thumbs filename
 func updateFileInfo(c *fiber.Ctx) error {
 	form := new(model.UpdateFileInfoForm)
 	if err := parseValidate(form, c); err != nil {
@@ -563,9 +575,11 @@ func createBackupProject(bkProjRoot string) error {
 	}
 	bkProjBucketsDir := filepath.Join(bkProjRoot, BucketsFolderName)
 	bkProjTempDir := filepath.Join(bkProjRoot, TempFolderName)
+	bkProjThumbsDir := filepath.Join(bkProjRoot, ThumbsFolderName)
 	e1 := util.MkdirIfNotExists(bkProjBucketsDir)
 	e2 := util.MkdirIfNotExists(bkProjTempDir)
-	return util.WrapErrors(e1, e2)
+	e3 := util.MkdirIfNotExists(bkProjThumbsDir)
+	return util.WrapErrors(e1, e2, e3)
 }
 
 func getBKProjStat(c *fiber.Ctx) error {
@@ -618,6 +632,7 @@ func syncBackup(c *fiber.Ctx) error {
 	return projCfgBackupNow(bkProjStat)
 }
 
+// TODO: copy thumbs
 // syncToBackupProject 以源仓库为准单向同步，
 // 最终效果相当于清空备份仓库后把主仓库的全部文档复制到备份仓库。
 // 注意这里不能使用事务 TX, 因为一旦回滚, 批量恢复文档名称太麻烦了.
