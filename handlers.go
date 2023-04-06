@@ -263,16 +263,20 @@ func uploadNewFiles(c *fiber.Ctx) error {
 				return err
 			}
 		}
-		if err := createThumb(file); err != nil {
+		dbFile, err := db.GetFileByName(file.Name)
+		if err != nil {
+			return err
+		}
+		if err := createThumb(dbFile); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func createThumb(file *File) error {
+func createThumb(file File) error {
 	imgPath := filepath.Join(BucketsFolder, file.BucketName, file.Name)
-	return thumb.NailWrite(imgPath, thumbFilePath(file.Name))
+	return thumb.NailWrite64(imgPath, thumbFilePath(file.ID))
 }
 
 func encryptMoveWaitingFile(file *File) error {
@@ -674,7 +678,7 @@ func syncToBackupProject(bkProjRoot string) (*ProjectStatus, error) {
 		if errors.Is(err, sql.ErrNoRows) {
 			err = nil
 			if err2 := bk.DeleteFile(
-				bkBucketsDir, bkTemp, thumbFilePath(bkFile.Name), bkFile,
+				bkBucketsDir, bkTemp, thumbFilePath(bkFile.ID), bkFile,
 			); err2 != nil {
 				return nil, err2
 			}
@@ -912,5 +916,5 @@ func deleteFile(c *fiber.Ctx) error {
 		return err
 	}
 	return db.DeleteFile(
-		BucketsFolder, TempFolder, thumbFilePath(file.Name), &file)
+		BucketsFolder, TempFolder, thumbFilePath(file.ID), &file)
 }

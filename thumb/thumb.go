@@ -53,6 +53,19 @@ func BytesToThumb(img []byte, thumbPath string) error {
 	return util.CreateFile(thumbPath, buf)
 }
 
+func NailWrite64(imgPath, thumbPath string) error {
+	img, err := os.ReadFile(imgPath)
+	if err != nil {
+		return err
+	}
+	buf, err := Nail(img, 0, 0)
+	if err != nil {
+		return err
+	}
+	img64 := util.Base64Encode(buf.Bytes())
+	return util.WriteFile(thumbPath, []byte(img64), util.NormalFilePerm)
+}
+
 // ResizeLimit resizes the image if it's long side bigger than limit.
 // Use default limit 900 if limit is set to zero.
 // Use default quality 85 if quality is set to zero.

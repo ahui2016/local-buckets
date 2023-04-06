@@ -44,7 +44,6 @@ const MoveToBucketGroup = cc("div", {
           MoveToBucketAlert.clear().insert("success", "移動檔案成功!");
           initBucketSelect(file.bucket_name);
           updateFileItem(file);
-
         },
         onAlways: () => {
           MJBS.enable(MoveToBucketBtn);
@@ -54,6 +53,10 @@ const MoveToBucketGroup = cc("div", {
   ],
 });
 
+const Thumbnail = cc("img", {
+  classes: "img-thumbnail",
+  attr: { alt: "thumbnail" },
+});
 const SubmitBtn = MJBS.createButton("Submit");
 const SubmitBtnAlert = MJBS.createAlert();
 
@@ -61,6 +64,8 @@ const EditFileForm = cc("form", {
   attr: { autocomplete: "off" },
   children: [
     MJBS.hiddenButtonElem(),
+
+    m("div").addClass("text-center").append(m(Thumbnail).hide()),
 
     MJBS.createFormControl(IdInput, "ID"),
     MJBS.createFormControl(
@@ -138,6 +143,8 @@ function initEditFileForm(fileID, selfButton) {
     onSuccess: (resp) => {
       const file = resp.data;
 
+      getThumbnail(file.id);
+
       IdInput.setVal(file.id);
       BucketInput.setVal(file.bucket_name);
       NameInput.setVal(file.name);
@@ -177,6 +184,20 @@ function BucketItem(bucket) {
   });
 }
 
+function getThumbnail(file_id) {
+  axios
+    .get(`/thumbs/${file_id}`)
+    .then((resp) => {
+      Thumbnail.show();
+      Thumbnail.elem().attr({ src: "data:image/jpeg;base64," + resp.data });
+    })
+    .catch((err) => {
+      Thumbnail.hide();
+      MJBS.focus(NotesInput);
+      console.log(axiosErrToStr(err, errorData_toString));
+    });
+}
+
 function getBuckets() {
   axiosGet({
     url: "/api/auto-get-buckets",
@@ -206,7 +227,6 @@ function initBucketSelect(currentbucketName) {
       BucketSelect.elem().append(m(item));
     }
   }
-  MJBS.focus(NotesInput);
 }
 
 function updateFileItem(file) {

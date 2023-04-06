@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/ahui2016/local-buckets/database"
 	"github.com/ahui2016/local-buckets/model"
@@ -117,7 +118,7 @@ func deleteBKProjFromConfig(bkProj string) error {
 	return util.WriteTOML(ProjectConfig, ProjectConfigPath)
 }
 
-func thumbFilePath(filename string) string {
-	basename := filepath.Base(filename)
-	return filepath.Join(ThumbsFolder, basename+DotJPEG)
+func thumbFilePath(fileID int64) string {
+	filename := strconv.FormatInt(fileID, 10)
+	return filepath.Join(ThumbsFolder, filename)
 }

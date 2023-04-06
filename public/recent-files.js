@@ -115,6 +115,7 @@ function FileItem(file) {
         .addClass("FileInfoBtn FileInfoDelBtn me-2")
         .on("click", (event) => {
           event.preventDefault();
+          PageConfig.bsFileEditCanvas.hide();
           MJBS.disable(delBtnID);
           ItemAlert.insert(
             "warning",
