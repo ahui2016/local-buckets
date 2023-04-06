@@ -60,6 +60,10 @@ const FileList = cc("div");
 
 function FileItem(file) {
   const fileItemID = "F-" + file.id;
+  const fileInfoButtons = `#${fileItemID} .FileInfoBtn`;
+  const delBtnID = `#${fileItemID} .FileInfoDelBtn`;
+  const dangerDelBtnID = `#${fileItemID} .FileInfoDangerDelBtn`;
+
   const ItemAlert = MJBS.createAlert();
 
   const bodyRowOne = m("div")
@@ -67,17 +71,17 @@ function FileItem(file) {
     .append(m("div").addClass("text-right FileItemBadges"));
 
   const bodyRowTwoLeft = m("div")
-    .addClass("col text-start")
+    .addClass("col-2 text-start")
     .append(span("❤").hide());
   const bodyRowTwoRight = m("div")
-    .addClass("col text-end")
+    .addClass("col-10 text-end")
     .append(
       span(`(${fileSizeToString(file.size)})`).addClass("me-2"),
       span(file.utime.substr(0, 10))
         .attr({ title: file.utime })
         .addClass("me-2"),
       MJBS.createLinkElem("#", { text: "download" })
-        .addClass("me-2")
+        .addClass("FileInfoBtn me-2")
         .on("click", (event) => {
           event.preventDefault();
           event.currentTarget.style.pointerEvents = "none";
@@ -98,7 +102,7 @@ function FileItem(file) {
         }),
       // MJBS.createLinkElem("edit-file.html?id=" + file.id, { text: "info" })
       MJBS.createLinkElem("#", { text: "info" })
-        .addClass("FileInfoEditBtn")
+        .addClass("FileInfoBtn FileInfoEditBtn me-2")
         .on("click", (event) => {
           event.preventDefault();
           $("#root").css({ marginLeft: rootMarginLeft });
@@ -106,6 +110,39 @@ function FileItem(file) {
           EditFileForm.hide();
           FileInfoPageLoading.show();
           initEditFileForm(file.id, "#" + fileItemID + " .FileInfoEditBtn");
+        }),
+      MJBS.createLinkElem("#", { text: "del" })
+        .addClass("FileInfoBtn FileInfoDelBtn me-2")
+        .on("click", (event) => {
+          event.preventDefault();
+          MJBS.disable(delBtnID);
+          ItemAlert.insert(
+            "warning",
+            "等待 3 秒, 點擊紅色的 DELETE 按鈕刪除檔案 (注意, 不可恢復!)."
+          );
+          setTimeout(() => {
+            $(delBtnID).hide();
+            $(dangerDelBtnID).show();
+          }, 3000);
+        }),
+      MJBS.createLinkElem("#", { text: "DELETE" })
+        .addClass("text-danger FileInfoBtn FileInfoDangerDelBtn")
+        .hide()
+        .on("click", (event) => {
+          event.preventDefault();
+          MJBS.disable(fileInfoButtons);
+          axiosPost({
+            url: "/api/delete-file",
+            alert: ItemAlert,
+            body: { id: file.id },
+            onSuccess: () => {
+              $(fileInfoButtons).hide();
+              ItemAlert.clear().insert("success", "該檔案已被刪除");
+            },
+            onAlways: () => {
+              MJBS.enable(fileInfoButtons);
+            },
+          });
         })
     );
 
@@ -137,17 +174,11 @@ function FileItem(file) {
       badges.append(span("DELETED").addClass("badge text-bg-secondary ms-2"));
     }
     if (file.notes) {
-      rowOne.append(
-        m("div").append(
-          span(file.notes).addClass("text-muted")
-        )
-      );
+      rowOne.append(m("div").append(span(file.notes).addClass("text-muted")));
     }
     if (file.keywords) {
       rowOne.append(
-        m("div").append(
-          span(`[${file.keywords}]`).addClass("text-muted")
-        )
+        m("div").append(span(`[${file.keywords}]`).addClass("text-muted"))
       );
     }
   };

@@ -22,6 +22,7 @@ func main() {
 	api.Post("/download-file", downloadFile)
 	api.Post("/rename-waiting-file", renameWaitingFile)
 	api.Post("/overwrite-file", overwriteFile)
+	api.Post("/delete-file", deleteFile)
 
 	api.Get("/recent-files", getRecentFiles)           // resp.data: File[]
 	api.Post("/file-info", getFileByID)                // resp.data: File

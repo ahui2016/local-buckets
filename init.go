@@ -116,3 +116,8 @@ func deleteBKProjFromConfig(bkProj string) error {
 		})
 	return util.WriteTOML(ProjectConfig, ProjectConfigPath)
 }
+
+func thumbFilePath(filename string) string {
+	basename := filepath.Base(filename)
+	return filepath.Join(ThumbsFolder, basename+DotJPEG)
+}

@@ -32,7 +32,7 @@ type TextMsg struct {
 
 // sleep is a middleware.
 func sleep(c *fiber.Ctx) error {
-	time.Sleep(time.Second)
+	time.Sleep(time.Millisecond * 500)
 	return c.Next()
 }
 
@@ -271,10 +271,8 @@ func uploadNewFiles(c *fiber.Ctx) error {
 }
 
 func createThumb(file *File) error {
-	basename := filepath.Base(file.Name)
 	imgPath := filepath.Join(BucketsFolder, file.BucketName, file.Name)
-	thumbPath := filepath.Join(ThumbsFolder, basename+DotJPEG)
-	return thumb.NailWrite(imgPath, thumbPath, 0)
+	return thumb.NailWrite(imgPath, thumbFilePath(file.Name), 0)
 }
 
 func encryptMoveWaitingFile(file *File) error {
@@ -675,7 +673,9 @@ func syncToBackupProject(bkProjRoot string) (*ProjectStatus, error) {
 		dbFile, err := db.GetFileByID(bkFile.ID)
 		if errors.Is(err, sql.ErrNoRows) {
 			err = nil
-			if err2 := bk.DeleteFile(bkBucketsDir, bkTemp, bkFile); err2 != nil {
+			if err2 := bk.DeleteFile(
+				bkBucketsDir, bkTemp, thumbFilePath(bkFile.Name), bkFile,
+			); err2 != nil {
 				return nil, err2
 			}
 			continue // 这句是必须的
@@ -901,4 +901,16 @@ func checkBackupDiskUsage(bkProjRoot string, bkStat, projStat *ProjectStatus) er
 		return fmt.Errorf("not enough space (備份專案空間不足)")
 	}
 	return nil
+}
+
+// TODO: delete the thumb
+func deleteFile(c *fiber.Ctx) error {
+	form := new(model.FileIdForm)
+	err1 := parseValidate(form, c)
+	file, err2 := db.GetFileByID(form.ID)
+	if err := util.WrapErrors(err1, err2); err != nil {
+		return err
+	}
+	return db.DeleteFile(
+		BucketsFolder, TempFolder, thumbFilePath(file.Name), &file)
 }

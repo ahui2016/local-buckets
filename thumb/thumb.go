@@ -4,10 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"image"
+	_ "image/gif"
 	"log"
 	"math"
 	"os/exec"
 	"strconv"
+
+	_ "golang.org/x/image/webp"
 
 	"github.com/anthonynsimon/bild/imgio"
 	"github.com/anthonynsimon/bild/transform"
@@ -18,8 +21,8 @@ import (
 const (
 	ffmpeg                 = "ffmpeg"
 	ffprobe                = "ffprobe"
-	defaultSize            = 128
-	defaultQuality         = 85
+	defaultSize            = 512
+	defaultQuality         = 98
 	defaultLimit   float64 = 900
 )
 
@@ -34,7 +37,7 @@ func CheckImage(img []byte) error {
 // TOOD: open webp, gif
 // NailWrite reads an image from imgPath, creates a thumbnail of it,
 // and write the thumbnail to thumbPath.
-// Use default quality(85) if quality is set to zero.
+// Use default quality(90) if quality is set to zero.
 func NailWrite(imgPath, thumbPath string, quality int) error {
 	img, err := imgio.Open(imgPath)
 	if errors.Is(err, image.ErrFormat) {
@@ -52,11 +55,11 @@ func NailWrite(imgPath, thumbPath string, quality int) error {
 // Use default limit 900 if limit is set to zero.
 func ResizeLimit(img image.Image, limit int) image.Image {
 	w, h := limitWidthHeight(img.Bounds(), float64(limit))
-	return transform.Resize(img, w, h, transform.Lanczos)
+	return transform.Resize(img, w, h, transform.NearestNeighbor)
 }
 
 // Nail creates a thumbnail of the img.
-// Use default size(128) if size is set to zero.
+// Use default size(512) if size is set to zero.
 func Nail(img image.Image, size int) image.Image {
 	if size == 0 {
 		size = defaultSize
@@ -77,7 +80,7 @@ func cropCenter(img image.Image, w, h int) image.Image {
 	return transform.Crop(img, rect)
 }
 
-// Use default quality(85) if quality is set to zero.
+// Use default quality(90) if quality is set to zero.
 /*
 func jpegEncode(src image.Image, quality int) (*bytes.Buffer, error) {
 	if quality == 0 {

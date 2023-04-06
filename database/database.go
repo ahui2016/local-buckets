@@ -326,7 +326,7 @@ func (db *DB) UpdateBackupFileInfo(file *File) error {
 }
 
 // DeleteFile 刪除檔案, 包括從數據庫中刪除和從硬碟中刪除.
-func (db *DB) DeleteFile(bucketsDir, tempDir string, file *File) error {
+func (db *DB) DeleteFile(bucketsDir, tempDir, thumbPath string, file *File) error {
 	tempFile := MovedFile{
 		Src: filepath.Join(bucketsDir, file.BucketName, file.Name),
 		Dst: filepath.Join(tempDir, file.Name),
@@ -338,6 +338,7 @@ func (db *DB) DeleteFile(bucketsDir, tempDir string, file *File) error {
 		err2 := tempFile.Rollback()
 		return util.WrapErrors(err, err2)
 	}
+	_ = os.Remove(thumbPath)
 	return os.Remove(tempFile.Dst)
 }
 
