@@ -68,6 +68,26 @@ func MkdirIfNotExists(name string) error {
 	return Mkdir(name)
 }
 
+// CreateFile 把 src 的数据写入 filePath, 自动关闭 file.
+func CreateFile(filePath string, src io.Reader) error {
+	file, err := CreateReturnFile(filePath, src)
+	if err == nil {
+		file.Close()
+	}
+	return err
+}
+
+// CreateReturnFile 把 src 的数据写入 filePath
+// 会自动创建或覆盖文件，返回 file, 要记得关闭资源。
+func CreateReturnFile(filePath string, src io.Reader) (*os.File, error) {
+	f, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE, NormalFilePerm)
+	if err != nil {
+		return nil, err
+	}
+	_, err = io.Copy(f, src)
+	return f, err
+}
+
 // WriteFile 写檔案, 如果 perm 等于零, 则使用默认权限.
 func WriteFile(name string, data []byte, perm fs.FileMode) error {
 	if perm == 0 {

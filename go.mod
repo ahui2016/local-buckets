@@ -3,13 +3,14 @@ module github.com/ahui2016/local-buckets
 go 1.20
 
 require (
-	github.com/anthonynsimon/bild v0.13.0
+	github.com/disintegration/imaging v1.6.2
 	github.com/go-playground/validator/v10 v10.11.2
 	github.com/gofiber/fiber/v2 v2.42.0
 	github.com/pelletier/go-toml/v2 v2.0.7
 	github.com/ricochet2200/go-disk-usage/du v0.0.0-20210707232629-ac9918953285
 	github.com/samber/lo v1.37.0
 	golang.org/x/crypto v0.5.0
+	golang.org/x/image v0.6.0
 	modernc.org/sqlite v1.21.0
 )
 
@@ -35,7 +36,6 @@ require (
 	github.com/valyala/fasthttp v1.44.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	golang.org/x/exp v0.0.0-20220303212507-bbda1eaf7a17 // indirect
-	golang.org/x/image v0.6.0 // indirect
 	golang.org/x/mod v0.8.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/text v0.8.0 // indirect

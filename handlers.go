@@ -272,7 +272,7 @@ func uploadNewFiles(c *fiber.Ctx) error {
 
 func createThumb(file *File) error {
 	imgPath := filepath.Join(BucketsFolder, file.BucketName, file.Name)
-	return thumb.NailWrite(imgPath, thumbFilePath(file.Name), 0)
+	return thumb.NailWrite(imgPath, thumbFilePath(file.Name))
 }
 
 func encryptMoveWaitingFile(file *File) error {
