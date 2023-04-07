@@ -12,6 +12,8 @@ func main() {
 
 	app.Static("/", PublicFolder)
 
+	app.Get("/file/:id", previewFile)
+
 	api := app.Group("/api", sleep)
 	api.Get("/project-info", getProjectInfo)     // resp.data: ProjectInfo
 	api.Get("/auto-get-buckets", autoGetBuckets) // resp.data: null | Bucket[]
@@ -25,7 +27,7 @@ func main() {
 	api.Post("/delete-file", deleteFile)
 
 	api.Get("/recent-files", getRecentFiles)           // resp.data: File[]
-	api.Post("/file-info", getFileByID)                // resp.data: File
+	api.Post("/file-info", getFileByID)                // resp.data: FilePlus
 	api.Post("/update-file-info", updateFileInfo)      // resp.data: FilePlus
 	api.Post("/move-file-to-bucket", moveFileToBucket) // resp.data: FilePlus
 

@@ -37,10 +37,12 @@ const BucketSelectGroup = cc("div", {
 });
 
 function BucketItem(bucket) {
+  let text = bucket.title;
+  if (bucket.encrypted) text = "🔒" + text;
   return cc("option", {
     id: "B-" + bucket.name,
     attr: { value: bucket.name, title: bucket.name },
-    text: bucket.title,
+    text: text,
   });
 }
 

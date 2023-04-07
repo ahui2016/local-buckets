@@ -124,7 +124,7 @@ function FileItem(file) {
           setTimeout(() => {
             $(delBtnID).hide();
             $(dangerDelBtnID).show();
-          }, 3000);
+          }, 2000);
         }),
       MJBS.createLinkElem("#", { text: "DELETE" })
         .addClass("text-danger FileInfoBtn FileInfoDangerDelBtn")

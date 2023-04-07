@@ -271,8 +271,14 @@ func (db *DB) GetFilePlus(id int64) (file FilePlus, err error) {
 	if file, err = scanFilePlus(row); err != nil {
 		return
 	}
-	if file.Encrypted && !db.IsLoggedIn() {
-		return file, fmt.Errorf("下載加密檔案需要管理員權限")
+	file.Checksum = ""
+	return
+}
+
+func (db *DB) GetFilePlusByName(name string) (file FilePlus, err error) {
+	row := db.QueryRow(stmt.GetFilePlusByName, name)
+	if file, err = scanFilePlus(row); err != nil {
+		return
 	}
 	file.Checksum = ""
 	return
@@ -370,15 +376,19 @@ func (db *DB) EncryptFile(srcPath, dstPath string) error {
 	return os.WriteFile(dstPath, encrypted, 0666)
 }
 
-// DecryptFile 读取 srcPath 的文件, 解密后保存到 dstPath.
-func (db *DB) DecryptFile(srcPath, dstPath string) error {
-	data, err := os.ReadFile(srcPath)
-	if err != nil {
-		return err
-	}
-	content, err := decrypt(data, db.aesgcm)
+// DecryptSaveFile 读取 srcPath 的文件, 解密后保存到 dstPath.
+func (db *DB) DecryptSaveFile(srcPath, dstPath string) error {
+	content, err := db.DecryptFile(srcPath)
 	if err != nil {
 		return err
 	}
 	return os.WriteFile(dstPath, content, 0666)
+}
+
+func (db *DB) DecryptFile(srcPath string) ([]byte, error) {
+	data, err := os.ReadFile(srcPath)
+	if err != nil {
+		return nil, err
+	}
+	return decrypt(data, db.aesgcm)
 }

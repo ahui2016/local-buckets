@@ -192,7 +192,7 @@ type OneTextForm struct {
 }
 
 type FileIdForm struct {
-	ID int64 `json:"id" validate:"required,gt=0"`
+	ID int64 `json:"id" params:"id" validate:"required,gt=0"`
 }
 
 type ChangePwdForm struct {

@@ -36,8 +36,31 @@ func sleep(c *fiber.Ctx) error {
 	return c.Next()
 }
 
+// requireAdmin is a middleware
+func requireAdmin(c *fiber.Ctx) error {
+	if !db.IsLoggedIn() {
+		return fmt.Errorf("該操作需要管理員權限")
+	}
+	return nil
+}
+
+// 如果处理加密文档或加密仓库, 则需要管理员权限.
+func encryptedRequireAdmin(encrypted bool) error {
+	if encrypted && !db.IsLoggedIn() {
+		return fmt.Errorf("處理加密檔案需要管理員權限")
+	}
+	return nil
+}
+
 func parseValidate(form any, c *fiber.Ctx) error {
 	if err := c.BodyParser(form); err != nil {
+		return err
+	}
+	return validate.Struct(form)
+}
+
+func paramParseValidate(form any, c *fiber.Ctx) error {
+	if err := c.ParamsParser(form); err != nil {
 		return err
 	}
 	return validate.Struct(form)
@@ -159,6 +182,7 @@ func waitingFileNameExists(name string) (ok bool, err error) {
 }
 
 // TODO: 重新生成缩略图
+// TODO: 处理加密文档
 func overwriteFile(c *fiber.Ctx) error {
 	form := new(model.OneTextForm)
 	if err := parseValidate(form, c); err != nil {
@@ -177,11 +201,14 @@ func overwriteFile(c *fiber.Ctx) error {
 		return err
 	}
 
-	// 这个 fileInDB 主要是为了获取 File.ID 和 BucketName.
-	fileInDB, err := db.GetFileByName(file.Name)
+	fileInDB, err := db.GetFilePlusByName(file.Name)
 	if err != nil {
 		return err
 	}
+	if err := encryptedRequireAdmin(fileInDB.Encrypted); err != nil {
+		return err
+	}
+
 	file.ID = fileInDB.ID
 	file.BucketName = fileInDB.BucketName
 
@@ -224,13 +251,16 @@ func downloadFile(c *fiber.Ctx) error {
 	if err := util.WrapErrors(err1, err2); err != nil {
 		return err
 	}
+	if err := encryptedRequireAdmin(file.Encrypted); err != nil {
+		return err
+	}
 	srcPath := filepath.Join(BucketsFolder, file.BucketName, file.Name)
 	dstPath := filepath.Join(WaitingFolder, file.Name)
 	if util.PathIsExist(dstPath) {
 		return fmt.Errorf("file exists: %s", dstPath)
 	}
 	if file.Encrypted {
-		return db.DecryptFile(srcPath, dstPath)
+		return db.DecryptSaveFile(srcPath, dstPath)
 	}
 	return util.CopyAndUnlockFile(dstPath, srcPath)
 }
@@ -242,6 +272,9 @@ func uploadNewFiles(c *fiber.Ctx) error {
 	err1 := parseValidate(form, c)
 	bucket, err2 := db.GetBucketByName(form.Text) // bucketName = form.Text
 	if err := util.WrapErrors(err1, err2); err != nil {
+		return err
+	}
+	if err := encryptedRequireAdmin(bucket.Encrypted); err != nil {
 		return err
 	}
 	files, err := checkAndGetWaitingFiles()
@@ -263,20 +296,15 @@ func uploadNewFiles(c *fiber.Ctx) error {
 				return err
 			}
 		}
-		dbFile, err := db.GetFileByName(file.Name)
-		if err != nil {
-			return err
-		}
-		if err := createThumb(dbFile); err != nil {
-			return err
-		}
 	}
 	return nil
 }
 
-func createThumb(file File) error {
-	imgPath := filepath.Join(BucketsFolder, file.BucketName, file.Name)
-	return thumb.NailWrite64(imgPath, thumbFilePath(file.ID))
+func createThumb(imgPath string, file File) {
+	if !strings.HasPrefix(file.Type, "image") {
+		return
+	}
+	_ = thumb.NailWrite64(imgPath, thumbFilePath(file.ID))
 }
 
 func encryptMoveWaitingFile(file *File) error {
@@ -300,6 +328,12 @@ func encryptMoveWaitingFile(file *File) error {
 		err2 := os.Remove(dstPath)
 		return util.WrapErrors(err, err2)
 	}
+	// 获取文档 ID, 生成缩略图.
+	dbFile, err := db.GetFileByName(file.Name)
+	if err != nil {
+		return err
+	}
+	createThumb(srcPath, dbFile)
 	// 一切正常, 可以删除原始文档
 	return os.Remove(srcPath)
 }
@@ -316,6 +350,11 @@ func moveWaitingFileToBucket(file *File) error {
 		err2 := movedFile.Rollback()
 		return util.WrapErrors(err, err2)
 	}
+	dbFile, err := db.GetFileByName(file.Name)
+	if err != nil {
+		return err
+	}
+	createThumb(movedFile.Dst, dbFile)
 	return nil
 }
 
@@ -382,15 +421,43 @@ func getFileByID(c *fiber.Ctx) error {
 	if err := parseValidate(form, c); err != nil {
 		return err
 	}
-	file, err := db.GetFileByID(form.ID)
+	file, err := db.GetFilePlus(form.ID)
 	if err != nil {
+		return err
+	}
+	if err := encryptedRequireAdmin(file.Encrypted); err != nil {
 		return err
 	}
 	file.Checksum = ""
 	return c.JSON(file)
 }
 
+func previewFile(c *fiber.Ctx) error {
+	form := new(model.FileIdForm)
+	if err := paramParseValidate(form, c); err != nil {
+		return err
+	}
+	file, err := db.GetFilePlus(form.ID)
+	if err != nil {
+		return err
+	}
+	if err := encryptedRequireAdmin(file.Encrypted); err != nil {
+		return err
+	}
+	filePath := filepath.Join(BucketsFolder, file.BucketName, file.Name)
+	if !file.Encrypted {
+		return c.SendFile(filePath)
+	}
+	decrypted, err := db.DecryptFile(filePath)
+	if err != nil {
+		return err
+	}
+	c.Type(filepath.Ext(file.Name))
+	return c.Send(decrypted)
+}
+
 // TODO: move thumbs
+// TODO: 如果是加密文档，要求管理员权限
 func moveFileToBucket(c *fiber.Ctx) (err error) {
 	form := new(model.MoveFileToBucketForm)
 	if err := parseValidate(form, c); err != nil {
@@ -444,7 +511,7 @@ func moveFileBetweenPubAndPri(file FilePlus, newBucketName, direction string) (e
 	if direction == "Pub->Pri" {
 		err = db.EncryptFile(srcPath, dstPath)
 	} else {
-		err = db.DecryptFile(srcPath, dstPath)
+		err = db.DecryptSaveFile(srcPath, dstPath)
 	}
 	if err != nil {
 		return err
@@ -463,6 +530,7 @@ func moveFileBetweenPubAndPri(file FilePlus, newBucketName, direction string) (e
 }
 
 // TODO: update thumbs filename
+// TODO: 如果是加密文档，要求管理员权限
 func updateFileInfo(c *fiber.Ctx) error {
 	form := new(model.UpdateFileInfoForm)
 	if err := parseValidate(form, c); err != nil {
@@ -911,10 +979,13 @@ func checkBackupDiskUsage(bkProjRoot string, bkStat, projStat *ProjectStatus) er
 func deleteFile(c *fiber.Ctx) error {
 	form := new(model.FileIdForm)
 	err1 := parseValidate(form, c)
-	file, err2 := db.GetFileByID(form.ID)
+	file, err2 := db.GetFilePlus(form.ID)
 	if err := util.WrapErrors(err1, err2); err != nil {
 		return err
 	}
+	if err := encryptedRequireAdmin(file.Encrypted); err != nil {
+		return err
+	}
 	return db.DeleteFile(
-		BucketsFolder, TempFolder, thumbFilePath(file.ID), &file)
+		BucketsFolder, TempFolder, thumbFilePath(file.ID), &file.File)
 }
