@@ -53,9 +53,9 @@ const MoveToBucketGroup = cc("div", {
   ],
 });
 
-const Thumbnail = cc("img", {
+const PicPreview = cc("img", {
   classes: "img-thumbnail",
-  attr: { alt: "thumbnail" },
+  attr: { alt: "pic" },
 });
 const SubmitBtn = MJBS.createButton("Submit");
 const SubmitBtnAlert = MJBS.createAlert();
@@ -65,7 +65,7 @@ const EditFileForm = cc("form", {
   children: [
     MJBS.hiddenButtonElem(),
 
-    m("div").addClass("text-center").append(m(Thumbnail).hide()),
+    m("div").addClass("text-center mt-0 mb-2").append(m(PicPreview).hide()),
 
     MJBS.createFormControl(IdInput, "ID"),
     MJBS.createFormControl(
@@ -143,7 +143,13 @@ function initEditFileForm(fileID, selfButton) {
     onSuccess: (resp) => {
       const file = resp.data;
 
-      getThumbnail(file.id);
+      if (file.type.startsWith("image")) {
+        PicPreview.show();
+        PicPreview.elem().attr({src:`/file/${file.id}`})
+      } else {
+        PicPreview.hide();
+        MJBS.focus(NotesInput);  
+      }
 
       IdInput.setVal(file.id);
       BucketInput.setVal(file.bucket_name);

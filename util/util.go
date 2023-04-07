@@ -249,3 +249,75 @@ func CheckTime(layout, value string) error {
 	_, err := time.Parse(layout, value)
 	return err
 }
+
+// OneWaySyncDir 单向同步资料夹, 只同步第一层文档, 不同步子资料夹.
+func OneWaySyncDir(srcDir, dstDir string) error {
+	err := filepath.WalkDir(srcDir, func(srcFile string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			err2 := fmt.Errorf("error in WalkDir")
+			return WrapErrors(err2, err)
+		}
+
+		// 跳过资料夹
+		if entry.IsDir() {
+			return nil
+		}
+
+		dstFile := filepath.Join(dstDir, entry.Name())
+		_, err = os.Lstat(dstFile)
+		dstNotExist := os.IsNotExist(err)
+		if dstNotExist {
+			err = nil
+		}
+		if err != nil {
+			return err
+		}
+
+		// 新增文档
+		if dstNotExist {
+			return CopyFile(dstFile, srcFile)
+		}
+
+		// 对比文档, 覆盖文档
+		srcSum, e1 := FileSum512(srcFile)
+		dstSum, e2 := FileSum512(dstFile)
+		if err := WrapErrors(e1, e2); err != nil {
+			return err
+		}
+		if srcSum != dstSum {
+			return CopyFile(dstFile, srcFile)
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	// 删除文件
+	err = filepath.WalkDir(dstDir, func(dstFile string, dstEntry fs.DirEntry, err error) error {
+		if err != nil {
+			err2 := fmt.Errorf("error in WalkDir")
+			return WrapErrors(err2, err)
+		}
+
+		if dstEntry.IsDir() {
+			return nil
+		}
+
+		srcFile := filepath.Join(srcDir, dstEntry.Name())
+		_, err = os.Lstat(srcFile)
+		srcNotExist := os.IsNotExist(err)
+		if srcNotExist {
+			err = nil
+		}
+		if err != nil {
+			return err
+		}
+
+		if srcNotExist {
+			return os.Remove(dstFile)
+		}
+		return nil
+	})
+	return err
+}

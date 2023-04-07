@@ -645,11 +645,13 @@ func createBackupProject(bkProjRoot string) error {
 	}
 	bkProjBucketsDir := filepath.Join(bkProjRoot, BucketsFolderName)
 	bkProjTempDir := filepath.Join(bkProjRoot, TempFolderName)
-	bkProjThumbsDir := filepath.Join(bkProjRoot, ThumbsFolderName)
+	bkProjPublicDir := filepath.Join(bkProjRoot, PublicFolderName)
+	bkProjThumbsDir := filepath.Join(bkProjPublicDir, ThumbsFolderName)
 	e1 := util.MkdirIfNotExists(bkProjBucketsDir)
 	e2 := util.MkdirIfNotExists(bkProjTempDir)
-	e3 := util.MkdirIfNotExists(bkProjThumbsDir)
-	return util.WrapErrors(e1, e2, e3)
+	e3 := util.MkdirIfNotExists(bkProjPublicDir)
+	e4 := util.MkdirIfNotExists(bkProjThumbsDir)
+	return util.WrapErrors(e1, e2, e3, e4)
 }
 
 func getBKProjStat(c *fiber.Ctx) error {
@@ -699,7 +701,18 @@ func syncBackup(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	return projCfgBackupNow(bkProjStat)
+	e1 := projCfgBackupNow(bkProjStat)
+	e2 := syncPublicFolder(form.Text)
+	return util.WrapErrors(e1, e2)
+}
+
+func syncPublicFolder(bkProjRoot string) error {
+	bkPublicFolder := filepath.Join(bkProjRoot, PublicFolderName)
+	if err := util.OneWaySyncDir(PublicFolder, bkPublicFolder); err != nil {
+		return err
+	}
+	bkThumbsFolder := filepath.Join(bkPublicFolder, ThumbsFolderName)
+	return util.OneWaySyncDir(ThumbsFolder, bkThumbsFolder)
 }
 
 // TODO: copy thumbs

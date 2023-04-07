@@ -92,5 +92,10 @@ function init() {
     "提醒: 請記住新密碼, 一旦忘記將無法解密. (初始密碼: abc123)",
     "no-time"
   );
+  PageAlert.insert(
+    "info",
+    "在更改密碼前, 建議先備份密鑰 (在 project.toml 內)",
+    "no-time"
+  );
   MJBS.focus(OldPasswordInput);
 }
