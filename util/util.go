@@ -256,7 +256,8 @@ func CheckTime(layout, value string) error {
 	return err
 }
 
-// OneWaySyncDir 单向同步资料夹, 只同步第一层文档, 不同步子资料夹.
+// OneWaySyncDir 单向同步资料夹.
+// Bug: 如果子目录名称不相同, 有可能出错.
 func OneWaySyncDir(srcDir, dstDir string) error {
 	err := filepath.WalkDir(srcDir, func(srcFile string, entry fs.DirEntry, err error) error {
 		if err != nil {

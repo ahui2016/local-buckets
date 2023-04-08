@@ -708,11 +708,7 @@ func syncBackup(c *fiber.Ctx) error {
 
 func syncPublicFolder(bkProjRoot string) error {
 	bkPublicFolder := filepath.Join(bkProjRoot, PublicFolderName)
-	if err := util.OneWaySyncDir(PublicFolder, bkPublicFolder); err != nil {
-		return err
-	}
-	bkThumbsFolder := filepath.Join(bkPublicFolder, ThumbsFolderName)
-	return util.OneWaySyncDir(ThumbsFolder, bkThumbsFolder)
+	return util.OneWaySyncDir(PublicFolder, bkPublicFolder)
 }
 
 // TODO: copy thumbs
