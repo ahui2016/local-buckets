@@ -102,14 +102,20 @@ func WriteReadonlyFile(name string, data []byte) error {
 }
 
 func WriteTOML(data interface{}, filename string) error {
-	dataTOML := lo.Must(toml.Marshal(data))
+	dataTOML, err := toml.Marshal(data)
+	if err != nil {
+		return err
+	}
 	return WriteFile(filename, dataTOML, 0)
 }
 
 // WriteJSON 把 data 转换为漂亮格式的 JSON 并写入檔案 filename 中。
-func WriteJSON(data interface{}, filename string) {
-	dataJSON := lo.Must(json.MarshalIndent(data, "", "    "))
-	lo.Must0(WriteFile(filename, dataJSON, 0))
+func WriteJSON(data interface{}, filename string) error {
+	dataJSON, err := json.MarshalIndent(data, "", "    ")
+	if err != nil {
+		return err
+	}
+	return WriteFile(filename, dataJSON, 0)
 }
 
 func PathIsNotExist(name string) (ok bool) {
