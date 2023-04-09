@@ -179,7 +179,6 @@ func getWaitingFiles(c *fiber.Ctx) error {
 	return c.JSON(files)
 }
 
-// TODO: 如果有同名 toml, 要同时改名.
 func renameWaitingFile(c *fiber.Ctx) error {
 	form := new(model.RenameWaitingFileForm)
 	if err := parseValidate(form, c); err != nil {
@@ -197,7 +196,20 @@ func renameWaitingFile(c *fiber.Ctx) error {
 	}
 	oldPath := filepath.Join(WaitingFolder, form.OldName)
 	newPath := filepath.Join(WaitingFolder, form.NewName)
-	return os.Rename(oldPath, newPath)
+	if err := os.Rename(oldPath, newPath); err != nil {
+		return err
+	}
+	return renameWaitingTOML(oldPath, newPath)
+}
+
+// oldFilePath 和 newFilePath 是指文档本身的路径, 不是 toml 的路径.
+func renameWaitingTOML(oldFilePath, newFilePath string) error {
+	oldTOML := oldFilePath + DotTOML
+	newTOML := newFilePath + DotTOML
+	if util.PathIsNotExist(oldTOML) {
+		return nil
+	}
+	return os.Rename(oldTOML, newTOML)
 }
 
 func waitingFileNameExists(name string) (ok bool, err error) {
@@ -212,8 +224,7 @@ func waitingFileNameExists(name string) (ok bool, err error) {
 	return
 }
 
-// TODO: 重新生成缩略图
-// TODO: 处理加密文档
+// TODO: 处理 import
 func overwriteFile(c *fiber.Ctx) error {
 	form := new(model.OneTextForm)
 	if err := parseValidate(form, c); err != nil {
@@ -232,16 +243,16 @@ func overwriteFile(c *fiber.Ctx) error {
 		return err
 	}
 
-	fileInDB, err := db.GetFilePlusByName(file.Name)
+	dbFile, err := db.GetFilePlusByName(file.Name)
 	if err != nil {
 		return err
 	}
-	if err := encryptedRequireAdmin(fileInDB.Encrypted); err != nil {
+	if err := encryptedRequireAdmin(dbFile.Encrypted); err != nil {
 		return err
 	}
 
-	file.ID = fileInDB.ID
-	file.BucketName = fileInDB.BucketName
+	file.ID = dbFile.ID
+	file.BucketName = dbFile.BucketName
 
 	waitingFile.Dst = filepath.Join(BucketsFolder, file.BucketName, file.Name)
 
@@ -249,29 +260,65 @@ func overwriteFile(c *fiber.Ctx) error {
 	// 以下开始操作文档和数据库
 
 	// tempFile 把旧文档临时移动到安全的地方
-	// 在文档名区分大小写的系统里, 要注意 file.Name 与 fileInDB.Name 可能不同.
+	// 在文档名区分大小写的系统里, 要注意 file.Name 与 dbFile.Name 可能不同.
 	tempFile := MovedFile{
-		Src: filepath.Join(BucketsFolder, file.BucketName, fileInDB.Name),
-		Dst: filepath.Join(TempFolder, fileInDB.Name),
+		Src: filepath.Join(BucketsFolder, file.BucketName, dbFile.Name),
+		Dst: filepath.Join(TempFolder, dbFile.Name),
 	}
-	if err = tempFile.Move(); err != nil {
+	if err := tempFile.Move(); err != nil {
 		return err
 	}
 
-	// 移动新文档进仓库, 如果出错, 必须把旧文档移回原位.
-	if err = waitingFile.Move(); err != nil {
+	if dbFile.Encrypted {
+		err = overwritePrivate(waitingFile, &tempFile, file)
+	} else {
+		err = overwritePublic(waitingFile, &tempFile, file)
+	}
+	return err
+}
+
+func overwritePrivate(waitingFile, tempFile *MovedFile, file *File) error {
+	// 加密文档, 如果出错, 必须把旧文档移回原位.
+	if err := db.EncryptFile(waitingFile.Src, waitingFile.Dst); err != nil {
 		err2 := tempFile.Rollback()
 		return util.WrapErrors(err, err2)
 	}
 
+	// 获取加密后的 checksum
+	checksum, err := util.FileSum512(waitingFile.Dst)
+	if err != nil {
+		return err
+	}
+	file.Checksum = checksum
+
+	// 更新数据库信息, 如果出错, 要删除刚才的加密文档, 并把 tempFile 都移回原位.
+	if err := db.UpdateFileContent(file); err != nil {
+		err2 := os.Remove(waitingFile.Dst)
+		err3 := tempFile.Rollback()
+		return util.WrapErrors(err, err2, err3)
+	}
+
+	// 重新生成缩略图, 然后删除 waitingFile 和 tempFile
+	createThumb(waitingFile.Src, file)
+	e1 := os.Remove(waitingFile.Src)
+	e2 := os.Remove(tempFile.Dst)
+	return util.WrapErrors(e1, e2)
+}
+
+func overwritePublic(waitingFile, tempFile *MovedFile, file *File) error {
+	// 移动新文档进仓库, 如果出错, 必须把旧文档移回原位.
+	if err := waitingFile.Move(); err != nil {
+		err2 := tempFile.Rollback()
+		return util.WrapErrors(err, err2)
+	}
 	// 更新数据库信息, 如果出错, 要把 waitingFile 和 tempFile 都移回原位.
 	if err := db.UpdateFileContent(file); err != nil {
 		err2 := waitingFile.Rollback()
 		err3 := tempFile.Rollback()
 		return util.WrapErrors(err, err2, err3)
 	}
-
-	// 最后删除 tempFile.
+	// 重新生成缩略图, 然后删除 tempFile
+	createThumb(waitingFile.Dst, file)
 	return os.Remove(tempFile.Dst)
 }
 
@@ -312,8 +359,7 @@ func importFiles(c *fiber.Ctx) error {
 	}
 	for _, file := range files {
 		// 获取一些有用变量
-		filePath := filepath.Join(WaitingFolder, file.Name+DotTOML)
-		tomlPath := filePath + DotTOML
+		tomlPath := filepath.Join(WaitingFolder, file.Name+DotTOML)
 		tomlFile, err := model.ImportFileFrom(tomlPath)
 		if err != nil {
 			return err
@@ -336,14 +382,8 @@ func importFiles(c *fiber.Ctx) error {
 			return err
 		}
 		// 正式上传文档
-		if bucket.Encrypted {
-			if err := encryptMoveWaitingFile(file); err != nil {
-				return err
-			}
-		} else {
-			if err := moveWaitingFileToBucket(file); err != nil {
-				return err
-			}
+		if err := encryptOrMoveWaitingFile(file, bucket.Encrypted); err != nil {
+			return err
 		}
 		// 删除同名 toml
 		if err := os.Remove(tomlPath); err != nil {
@@ -375,27 +415,28 @@ func uploadNewFiles(c *fiber.Ctx) error {
 
 	files = setBucketName(bucket.Name, files)
 	for _, file := range files {
-		if bucket.Encrypted {
-			if err := encryptMoveWaitingFile(file); err != nil {
-				return err
-			}
-		} else {
-			if err := moveWaitingFileToBucket(file); err != nil {
-				return err
-			}
+		if err := encryptOrMoveWaitingFile(file, bucket.Encrypted); err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
-func createThumb(imgPath string, file File) {
+func encryptOrMoveWaitingFile(file *File, encrypted bool) error {
+	if encrypted {
+		return encryptWaitingFileToBucket(file)
+	}
+	return moveWaitingFileToBucket(file)
+}
+
+func createThumb(imgPath string, file *File) {
 	if !strings.HasPrefix(file.Type, "image") {
 		return
 	}
 	_ = thumb.NailWrite64(imgPath, thumbFilePath(file.ID))
 }
 
-func encryptMoveWaitingFile(file *File) error {
+func encryptWaitingFileToBucket(file *File) error {
 	// srcPath 是待上传的原始文档
 	srcPath := filepath.Join(WaitingFolder, file.Name)
 	// dstPath 是加密后保存到加密仓库中的文档
@@ -421,7 +462,7 @@ func encryptMoveWaitingFile(file *File) error {
 	if err != nil {
 		return err
 	}
-	createThumb(srcPath, dbFile)
+	createThumb(srcPath, &dbFile)
 	// 一切正常, 可以删除原始文档
 	return os.Remove(srcPath)
 }
@@ -442,7 +483,7 @@ func moveWaitingFileToBucket(file *File) error {
 	if err != nil {
 		return err
 	}
-	createThumb(movedFile.Dst, dbFile)
+	createThumb(movedFile.Dst, &dbFile)
 	return nil
 }
 
