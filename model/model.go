@@ -93,6 +93,15 @@ func NewBucket(form *CreateBucketForm) (*Bucket, error) {
 	return b, nil
 }
 
+type FileExportImport struct {
+	BucketName string
+	Notes      string
+	Keywords   string
+	Like       int64
+	CTime      string
+	UTime      string
+}
+
 // File 檔案.
 // Notes 與 Keywords 本質上是一樣的, 只是一行字符串, 用來輔助搜尋.
 type File struct {
@@ -120,13 +129,12 @@ func (f *File) Rename(name string) {
 	f.Type = typeByFilename(name)
 }
 
-type FileExportImport struct {
-	BucketName string
-	Notes      string
-	Keywords   string
-	Like       int64
-	CTime      string
-	UTime      string
+func (f *File) ImportFrom(f2 FileExportImport) {
+	f.Notes = f2.Notes
+	f.Keywords = f2.Keywords
+	f.Like = f2.Like
+	f.CTime = f2.CTime
+	f.UTime = f2.UTime
 }
 
 func ExportFileFrom(f File) FileExportImport {

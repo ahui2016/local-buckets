@@ -205,7 +205,7 @@ function getImportedFiles() {
       BucketSelectGroup.show();
       ImportButtonArea.show();
       MJBS.appendToList(WaitingFileList, files.map(FileItem));
-      PageAlert.insert(
+      ImportAlert.insert(
         "info",
         "發現可導入(import)的檔案, 如果想當作新檔案上傳, 請進入 waiting 資料夾刪除同名 toml 檔案.",
         "no-time"

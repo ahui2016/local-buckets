@@ -138,23 +138,30 @@ func getWaitingFolder(c *fiber.Ctx) error {
 	return c.JSON(TextMsg{WaitingFolder})
 }
 
-func getImportFiles(c *fiber.Ctx) error {
-	files, err := util.GetRegularFiles(WaitingFolder)
+func getImportFilesHandler(c *fiber.Ctx) error {
+	importedFiles, err := getImportFiles()
 	if err != nil {
 		return err
 	}
-	var importedFiles []*File
+	return c.JSON(importedFiles)
+}
+
+func getImportFiles() (importedFiles []*File, err error) {
+	files, err := util.GetRegularFiles(WaitingFolder)
+	if err != nil {
+		return
+	}
 	for _, filePath := range files {
 		tomlFile := filePath + DotTOML
 		if lo.Contains(files, tomlFile) {
 			file, err := model.NewWaitingFile(filePath)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			importedFiles = append(importedFiles, file)
 		}
 	}
-	return c.JSON(importedFiles)
+	return
 }
 
 func getWaitingFiles(c *fiber.Ctx) error {
@@ -287,6 +294,13 @@ func downloadFile(c *fiber.Ctx) error {
 	exported := model.ExportFileFrom(file.File)
 	exportedPath := filepath.Join(WaitingFolder, file.Name+DotTOML)
 	return util.WriteTOML(exported, exportedPath)
+}
+
+func importFiles(c *fiber.Ctx) error {
+	files, err := getImportFiles()
+	if err != nil {
+		return err
+	}
 }
 
 // uploadNewFiles 只上传新檔案,
