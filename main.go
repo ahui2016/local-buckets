@@ -19,6 +19,7 @@ func main() {
 	api.Get("/auto-get-buckets", autoGetBuckets) // resp.data: null | Bucket[]
 	api.Post("/create-bucket", createBucket)     // resp.data: Bucket
 	api.Get("/waiting-folder", getWaitingFolder) // resp.data: TextMsg
+	api.Get("/imported-files", getImportFiles)   // resp.data: File[]
 	api.Get("/waiting-files", getWaitingFiles)   // resp.data: File[] | ErrSameNameFiles
 	api.Post("/upload-new-files", uploadNewFiles)
 	api.Post("/download-file", downloadFile)

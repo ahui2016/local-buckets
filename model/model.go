@@ -112,6 +112,34 @@ type File struct {
 	Deleted    bool   `json:"deleted"`     // 把檔案标记为 "已删除"
 }
 
+func (f *File) Rename(name string) {
+	if f.Name == name {
+		return
+	}
+	f.Name = name
+	f.Type = typeByFilename(name)
+}
+
+type FileExportImport struct {
+	BucketName string
+	Notes      string
+	Keywords   string
+	Like       int64
+	CTime      string
+	UTime      string
+}
+
+func ExportFileFrom(f File) FileExportImport {
+	return FileExportImport{
+		f.BucketName,
+		f.Notes,
+		f.Keywords,
+		f.Like,
+		f.CTime,
+		f.UTime,
+	}
+}
+
 // FilePlus 檔案以及更多資訊.
 type FilePlus struct {
 	File
@@ -140,14 +168,6 @@ func NewWaitingFile(filePath string) (*File, error) {
 	f.UTime = now
 	f.Checked = now
 	return f, nil
-}
-
-func (f *File) Rename(name string) {
-	if f.Name == name {
-		return
-	}
-	f.Name = name
-	f.Type = typeByFilename(name)
 }
 
 // Now return time.Now().Format(RFC3339)

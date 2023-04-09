@@ -32,6 +32,7 @@ const (
 	PublicFolderName  = "public"
 	ThumbsFolderName  = "thumbs"
 	DotJPEG           = ".jpeg"
+	DotTOML           = ".toml"
 )
 
 var (

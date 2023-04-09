@@ -138,6 +138,25 @@ func getWaitingFolder(c *fiber.Ctx) error {
 	return c.JSON(TextMsg{WaitingFolder})
 }
 
+func getImportFiles(c *fiber.Ctx) error {
+	files, err := util.GetRegularFiles(WaitingFolder)
+	if err != nil {
+		return err
+	}
+	var importedFiles []*File
+	for _, filePath := range files {
+		tomlFile := filePath + DotTOML
+		if lo.Contains(files, tomlFile) {
+			file, err := model.NewWaitingFile(filePath)
+			if err != nil {
+				return err
+			}
+			importedFiles = append(importedFiles, file)
+		}
+	}
+	return c.JSON(importedFiles)
+}
+
 func getWaitingFiles(c *fiber.Ctx) error {
 	files, err := checkAndGetWaitingFiles()
 	if e, ok := err.(model.ErrSameNameFiles); ok {
@@ -262,7 +281,12 @@ func downloadFile(c *fiber.Ctx) error {
 	if file.Encrypted {
 		return db.DecryptSaveFile(srcPath, dstPath)
 	}
-	return util.CopyAndUnlockFile(dstPath, srcPath)
+	if err := util.CopyAndUnlockFile(dstPath, srcPath); err != nil {
+		return err
+	}
+	exported := model.ExportFileFrom(file.File)
+	exportedPath := filepath.Join(WaitingFolder, file.Name+DotTOML)
+	return util.WriteTOML(exported, exportedPath)
 }
 
 // uploadNewFiles 只上传新檔案,

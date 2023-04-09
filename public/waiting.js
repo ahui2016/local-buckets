@@ -60,6 +60,35 @@ function FileItem(file) {
     ],
   });
 }
+const ImportButton = MJBS.createButton("Import");
+const ImportAlert = MJBS.createAlert();
+const ImportButtonArea = cc("div", {
+  classes: "text-center",
+  children: [
+    m(ImportAlert),
+    m(ImportButton).on("click", (event) => {
+      event.preventDefault();
+      const bucket_name = BucketSelect.elem().val();
+      if (!bucket_name) {
+        ImportAlert.insert("warning", "請選擇一個倉庫");
+        return;
+      }
+      MJBS.disable(ImportButton); // --------------------- disable
+      axiosPost({
+        url: "/api/import-files",
+        body: { text: bucket_name },
+        alert: ImportAlert,
+        onSuccess: () => {
+          ImportAlert.clear().insert("success", "上傳成功");
+          ImportButton.hide();
+        },
+        onAlways: () => {
+          MJBS.enable(ImportButton); // ------------------- enable
+        },
+      });
+    }),
+  ],
+});
 
 const UploadButton = MJBS.createButton("Upload");
 const UploadAlert = MJBS.createAlert();
@@ -99,6 +128,7 @@ $("#root")
     m(SameNameRadioCard).addClass("my-5").hide(),
     m(BucketSelectGroup).addClass("my-5").hide(),
     m(WaitingFileList).addClass("my-5"),
+    m(ImportButtonArea).addClass("my-5").hide(),
     m(UploadButtonArea).addClass("my-5").hide(),
     m(PageLoading).addClass("my-5")
   );
@@ -110,7 +140,7 @@ async function init() {
     return;
   }
   getWaitingFolder();
-  getWaitingFiles();
+  getImportedFiles();
 }
 
 function initBuckets() {
@@ -164,6 +194,37 @@ function getWaitingFiles() {
     .then(() => {
       PageLoading.hide();
     });
+}
+
+function getImportedFiles() {
+  axios
+  .get("/api/imported-files")
+  .then((resp) => {
+    const files = resp.data;
+    if (files && files.length > 0) {
+      BucketSelectGroup.show();
+      ImportButtonArea.show();
+      MJBS.appendToList(WaitingFileList, files.map(FileItem));
+      PageAlert.insert(
+        "info",
+        "發現可導入(import)的檔案, 如果想當作新檔案上傳, 請進入 waiting 資料夾刪除同名 toml 檔案.",
+        "no-time"
+      );
+      PageAlert.insert(
+        "light",
+        "這裡列出的檔案清單僅供參考, 實際上傳檔案以 waiting 資料夾為準.",
+        "no-time"
+      );
+    } else {
+      getWaitingFiles();
+    }
+  })
+  .catch((err) => {
+    getWaitingFilesErrorHandler(err, PageAlert);
+  })
+  .then(() => {
+    PageLoading.hide();
+  });
 }
 
 function getWaitingFolder() {
