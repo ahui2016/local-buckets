@@ -79,8 +79,15 @@ const ImportButtonArea = cc("div", {
         body: { text: bucket_name },
         alert: ImportAlert,
         onSuccess: () => {
-          ImportAlert.clear().insert("success", "上傳成功");
           ImportButton.hide();
+          ImportAlert.clear().insert("success", "上傳成功");
+          ImportAlert.clear().insert(
+            "info",
+            "可能仍有待上傳檔案, 3 秒後本頁將自動刷新."
+          );
+          setTimeout(() => {
+            window.location.reload();
+          }, 5000);
         },
         onAlways: () => {
           MJBS.enable(ImportButton); // ------------------- enable
@@ -198,33 +205,33 @@ function getWaitingFiles() {
 
 function getImportedFiles() {
   axios
-  .get("/api/imported-files")
-  .then((resp) => {
-    const files = resp.data;
-    if (files && files.length > 0) {
-      BucketSelectGroup.show();
-      ImportButtonArea.show();
-      MJBS.appendToList(WaitingFileList, files.map(FileItem));
-      ImportAlert.insert(
-        "info",
-        "發現可導入(import)的檔案, 如果想當作新檔案上傳, 請進入 waiting 資料夾刪除同名 toml 檔案.",
-        "no-time"
-      );
-      PageAlert.insert(
-        "light",
-        "這裡列出的檔案清單僅供參考, 實際上傳檔案以 waiting 資料夾為準.",
-        "no-time"
-      );
-    } else {
-      getWaitingFiles();
-    }
-  })
-  .catch((err) => {
-    getWaitingFilesErrorHandler(err, PageAlert);
-  })
-  .then(() => {
-    PageLoading.hide();
-  });
+    .get("/api/imported-files")
+    .then((resp) => {
+      const files = resp.data;
+      if (files && files.length > 0) {
+        BucketSelectGroup.show();
+        ImportButtonArea.show();
+        MJBS.appendToList(WaitingFileList, files.map(FileItem));
+        ImportAlert.insert(
+          "info",
+          "發現可導入(import)的檔案, 如果想當作新檔案上傳, 請進入 waiting 資料夾刪除同名 toml 檔案.",
+          "no-time"
+        );
+        PageAlert.insert(
+          "light",
+          "這裡列出的檔案清單僅供參考, 實際上傳檔案以 waiting 資料夾為準.",
+          "no-time"
+        );
+      } else {
+        getWaitingFiles();
+      }
+    })
+    .catch((err) => {
+      getWaitingFilesErrorHandler(err, PageAlert);
+    })
+    .then(() => {
+      PageLoading.hide();
+    });
 }
 
 function getWaitingFolder() {

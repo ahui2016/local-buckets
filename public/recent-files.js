@@ -193,8 +193,9 @@ $("#root")
     navBar.addClass("my-3"),
     m(PageAlert).addClass("my-5"),
     m(PageLoading).addClass("my-5"),
+    m(FileEditCanvas),
     m(FileList).addClass("my-5"),
-    m(FileEditCanvas)
+    m('div').text('.').addClass("my-5 text-light"),
   );
 
 init();

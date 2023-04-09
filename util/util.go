@@ -118,6 +118,7 @@ func WriteJSON(data interface{}, filename string) error {
 	return WriteFile(filename, dataJSON, 0)
 }
 
+// TODO: 改名 PathNotExists
 func PathIsNotExist(name string) (ok bool) {
 	_, err := os.Lstat(name)
 	if os.IsNotExist(err) {

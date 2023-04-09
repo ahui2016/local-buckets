@@ -136,6 +136,14 @@ func (db *DB) GetBucketByName(name string) (Bucket, error) {
 	return scanBucket(row)
 }
 
+func (db *DB) BucketExists(name string) (bool, error) {
+	_, err := db.GetBucketByName(name)
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+	return true, err // 如果出错, 第一个值不可用, 如果无错, 第一个值必然为真.
+}
+
 func (db *DB) InsertBucket(form *model.CreateBucketForm) (*Bucket, error) {
 	bucket, err := model.NewBucket(form)
 	if err != nil {
@@ -203,7 +211,7 @@ func (db *DB) UpdateChecksumAndBucket(fileID int64, checksum, bucketName string)
 }
 
 // CheckSameFiles 检查有无同名/相同内容的檔案,
-// 发现相同内容的檔案时, 记录全部重复檔案,
+// 发现相同内容的檔案时, 记录全部重复檔案后再汇总返回错误,
 // 但发现同名檔案时, 则立即返回错误 (因为前端需要对同名檔案进行逐个处理).
 func (db *DB) CheckSameFiles(files []*File) (allErr error) {
 	for _, file := range files {

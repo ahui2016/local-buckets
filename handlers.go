@@ -138,15 +138,18 @@ func getWaitingFolder(c *fiber.Ctx) error {
 	return c.JSON(TextMsg{WaitingFolder})
 }
 
-func getImportFilesHandler(c *fiber.Ctx) error {
-	importedFiles, err := getImportFiles()
+func getImportedFilesHandler(c *fiber.Ctx) error {
+	importedFiles, err := checkGetImportedFiles()
+	if e, ok := err.(model.ErrSameNameFiles); ok {
+		return c.Status(400).JSON(e)
+	}
 	if err != nil {
 		return err
 	}
 	return c.JSON(importedFiles)
 }
 
-func getImportFiles() (importedFiles []*File, err error) {
+func checkGetImportedFiles() (importedFiles []*File, err error) {
 	files, err := util.GetRegularFiles(WaitingFolder)
 	if err != nil {
 		return
@@ -161,6 +164,7 @@ func getImportFiles() (importedFiles []*File, err error) {
 			importedFiles = append(importedFiles, file)
 		}
 	}
+	err = db.CheckSameFiles(importedFiles)
 	return
 }
 
@@ -175,6 +179,7 @@ func getWaitingFiles(c *fiber.Ctx) error {
 	return c.JSON(files)
 }
 
+// TODO: 如果有同名 toml, 要同时改名.
 func renameWaitingFile(c *fiber.Ctx) error {
 	form := new(model.RenameWaitingFileForm)
 	if err := parseValidate(form, c); err != nil {
@@ -297,10 +302,55 @@ func downloadFile(c *fiber.Ctx) error {
 }
 
 func importFiles(c *fiber.Ctx) error {
-	files, err := getImportFiles()
+	form := new(model.OneTextForm)
+	if err := parseValidate(form, c); err != nil {
+		return err
+	}
+	files, err := checkGetImportedFiles()
 	if err != nil {
 		return err
 	}
+	for _, file := range files {
+		// 获取一些有用变量
+		filePath := filepath.Join(WaitingFolder, file.Name+DotTOML)
+		tomlPath := filePath + DotTOML
+		tomlFile, err := model.ImportFileFrom(tomlPath)
+		if err != nil {
+			return err
+		}
+		// 更新文档属性, 确定 bucket
+		file.ImportFrom(tomlFile)
+		bucketExists, err := db.BucketExists(file.BucketName)
+		if err != nil {
+			return err
+		}
+		if !bucketExists {
+			file.BucketName = form.Text
+		}
+		// 获取 bucket, 检查权限
+		bucket, err := db.GetBucketByName(file.BucketName)
+		if err != nil {
+			return err
+		}
+		if err := encryptedRequireAdmin(bucket.Encrypted); err != nil {
+			return err
+		}
+		// 正式上传文档
+		if bucket.Encrypted {
+			if err := encryptMoveWaitingFile(file); err != nil {
+				return err
+			}
+		} else {
+			if err := moveWaitingFileToBucket(file); err != nil {
+				return err
+			}
+		}
+		// 删除同名 toml
+		if err := os.Remove(tomlPath); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // uploadNewFiles 只上传新檔案,

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/ahui2016/local-buckets/util"
+	"github.com/pelletier/go-toml/v2"
 	"github.com/samber/lo"
 )
 
@@ -130,6 +131,7 @@ func (f *File) Rename(name string) {
 }
 
 func (f *File) ImportFrom(f2 FileExportImport) {
+	f.BucketName = f2.BucketName
 	f.Notes = f2.Notes
 	f.Keywords = f2.Keywords
 	f.Like = f2.Like
@@ -146,6 +148,15 @@ func ExportFileFrom(f File) FileExportImport {
 		f.CTime,
 		f.UTime,
 	}
+}
+
+func ImportFileFrom(tomlPath string) (imported FileExportImport, err error) {
+	data, err := os.ReadFile(tomlPath)
+	if err != nil {
+		return
+	}
+	err = toml.Unmarshal(data, &imported)
+	return
 }
 
 // FilePlus 檔案以及更多資訊.
