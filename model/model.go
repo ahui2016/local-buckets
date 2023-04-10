@@ -28,6 +28,7 @@ type Project struct {
 	Title            string   `json:"title"`
 	Subtitle         string   `json:"subtitle"`
 	CipherKey        string   `json:"cipherkey"` // 被加密的真正密鑰
+	ApiDelay         int64    `json:"api_delay"` // 後端 API 延遲, 單位: 毫秒
 	RecentFilesLimit int64    `json:"recent_files_limit"`
 	CheckInterval    int64    `jso:"check_interval"` // 檢查周期, 單位: day
 	IsBackup         bool     `json:"is_backup"`
@@ -41,6 +42,7 @@ func NewProject(title string, cipherkey string) *Project {
 		Host:             "127.0.0.1:3000",
 		Title:            title,
 		CipherKey:        cipherkey,
+		ApiDelay:         500,
 		RecentFilesLimit: 100,
 		CheckInterval:    30,
 	}

@@ -32,7 +32,7 @@ type TextMsg struct {
 
 // sleep is a middleware.
 func sleep(c *fiber.Ctx) error {
-	time.Sleep(time.Millisecond * 500)
+	time.Sleep(time.Millisecond * time.Duration(ProjectConfig.ApiDelay))
 	return c.Next()
 }
 
@@ -781,12 +781,6 @@ func createBackupProject(bkProjRoot string) error {
 	if err := util.WriteTOML(bkProjCfg, bkProjCfgPath); err != nil {
 		return err
 	}
-	exePath := util.GetExePath()
-	exeName := filepath.Base(exePath)
-	bkProjExePath := filepath.Join(bkProjRoot, exeName)
-	if err := util.CopyAndLockFile(bkProjExePath, exePath); err != nil {
-		return err
-	}
 	bkProjBucketsDir := filepath.Join(bkProjRoot, BucketsFolderName)
 	bkProjTempDir := filepath.Join(bkProjRoot, TempFolderName)
 	bkProjPublicDir := filepath.Join(bkProjRoot, PublicFolderName)
@@ -847,12 +841,32 @@ func syncBackup(c *fiber.Ctx) error {
 	}
 	e1 := projCfgBackupNow(bkProjStat)
 	e2 := syncPublicFolder(form.Text)
-	return util.WrapErrors(e1, e2)
+	e3 := syncExec(bkProjStat.Root)
+	return util.WrapErrors(e1, e2, e3)
 }
 
 func syncPublicFolder(bkProjRoot string) error {
 	bkPublicFolder := filepath.Join(bkProjRoot, PublicFolderName)
 	return util.OneWaySyncDir(PublicFolder, bkPublicFolder)
+}
+
+func syncExec(bkProjRoot string) error {
+	exePath := util.GetExePath()
+	exeName := filepath.Base(exePath)
+	bkExePath := filepath.Join(bkProjRoot, exeName)
+	if util.PathNotExists(bkExePath) {
+		return util.CopyAndLockFile(bkExePath, exePath)
+	}
+
+	exeSum, e1 := util.FileSum512(exePath)
+	bkExeSum, e2 := util.FileSum512(bkExePath)
+	if err := util.WrapErrors(e1, e2); err != nil {
+		return err
+	}
+	if exeSum == bkExeSum {
+		return nil
+	}
+	return util.CopyAndLockFile(bkExePath, exePath)
 }
 
 // TODO: copy thumbs

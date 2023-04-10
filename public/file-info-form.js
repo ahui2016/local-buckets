@@ -174,6 +174,7 @@ function initEditFileForm(fileID, selfButton) {
       EditFileForm.show();
       SubmitBtnAlert.clear();
       initBucketSelect(file.bucket_name);
+
     },
     onAlways: () => {
       FileInfoPageLoading.hide();
@@ -196,6 +197,7 @@ function getThumbnail(file_id) {
     .then((resp) => {
       Thumbnail.show();
       Thumbnail.elem().attr({ src: "data:image/jpeg;base64," + resp.data });
+      location = "#";
     })
     .catch((err) => {
       Thumbnail.hide();
