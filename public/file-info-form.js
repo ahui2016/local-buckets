@@ -145,10 +145,10 @@ function initEditFileForm(fileID, selfButton) {
 
       if (file.type.startsWith("image")) {
         PicPreview.show();
-        PicPreview.elem().attr({src:`/file/${file.id}`})
+        PicPreview.elem().attr({ src: `/file/${file.id}` });
       } else {
         PicPreview.hide();
-        MJBS.focus(NotesInput);  
+        MJBS.focus(NotesInput);
       }
 
       IdInput.setVal(file.id);
@@ -174,7 +174,6 @@ function initEditFileForm(fileID, selfButton) {
       EditFileForm.show();
       SubmitBtnAlert.clear();
       initBucketSelect(file.bucket_name);
-
     },
     onAlways: () => {
       FileInfoPageLoading.hide();
@@ -241,4 +240,45 @@ function updateFileItem(file) {
   const item = FileItem(file);
   item.elem().replaceWith(m(item));
   item.init();
+}
+
+const rootMarginLeft = "550px";
+
+const FileEditCanvas = cc("div", {
+  classes: "offcanvas offcanvas-start",
+  css: { width: rootMarginLeft },
+  attr: {
+    "data-bs-scroll": true,
+    "data-bs-backdrop": false,
+    tabindex: -1,
+  },
+  children: [
+    m("div")
+      .addClass("offcanvas-header")
+      .append(
+        m("h5").addClass("offcanvas-title").text("File Info (檔案屬性)"),
+        m("button").addClass("btn-close").attr({
+          type: "button",
+          "data-bs-dismiss": "offcanvas",
+          "aria-label": "Close",
+        })
+      ),
+    m("div")
+      .addClass("offcanvas-body")
+      .append(
+        m(FileInfoPageAlert),
+        m(FileInfoPageLoading).addClass("my-5"),
+        m(EditFileForm).hide()
+      ),
+  ],
+});
+
+function getWaitingFolder() {
+  axiosGet({
+    url: "/api/waiting-folder",
+    alert: PageAlert,
+    onSuccess: (resp) => {
+      PageConfig.waitingFolder = resp.data.text;
+    },
+  });
 }

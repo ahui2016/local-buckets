@@ -53,6 +53,7 @@ ProjectInfo.fill = (project) => {
 const LinkList = cc("div", {
   children: [
     createIndexItem("Recent Files", "recent-files.html", "最近檔案"),
+    createIndexItem("Recent Pics", "recent-pics.html", "最近圖片"),
     createIndexItem("Upload", "waiting.html", "上傳檔案"),
     createIndexItem("All Buckets", "buckets.html", "倉庫清單"),
     createIndexItem("Create Bucket", "create-bucket.html", "新建倉庫"),
@@ -68,7 +69,7 @@ $("#root")
     pageTitleArea.addClass("my-5"),
     m(AppAlert).addClass("my-3"),
     m(ProjectInfo).addClass("my-3"),
-    m(LinkList).addClass("my-5")
+    m(LinkList).addClass("my-5").hide(),
   );
 
 init();
@@ -84,6 +85,7 @@ function initProjectInfo() {
     onSuccess: (resp) => {
       const project = resp.data;
       ProjectInfo.fill(project);
+      LinkList.show();
     },
     onAlways: () => {
       ProjectInfoLoading.hide();

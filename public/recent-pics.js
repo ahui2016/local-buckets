@@ -1,4 +1,4 @@
-$("title").text("Recent files (最近檔案) - Local Buckets");
+$("title").text("Recent pics (最近圖片) - Local Buckets");
 
 const navBar = m("div")
   .addClass("row")
@@ -7,7 +7,7 @@ const navBar = m("div")
       .addClass("col text-start")
       .append(
         MJBS.createLinkElem("index.html", { text: "Local-Buckets" }),
-        span(" .. Recent files (最近檔案)")
+        span(" .. Recent pics (最近圖片)")
       ),
     m("div")
       .addClass("col text-end")
@@ -176,12 +176,12 @@ function init() {
   });
   getBuckets();
   getWaitingFolder();
-  getRecentFiles();
+  getRecentPics();
 }
 
-function getRecentFiles() {
+function getRecentPics() {
   axiosGet({
-    url: "/api/recent-files",
+    url: "/api/recent-pics",
     alert: PageAlert,
     onSuccess: (resp) => {
       const files = resp.data;

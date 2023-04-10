@@ -560,6 +560,14 @@ func getRecentFiles(c *fiber.Ctx) error {
 	return c.JSON(files)
 }
 
+func getRecentPics(c *fiber.Ctx) error {
+	files, err := db.GetRecentPics()
+	if err != nil {
+		return err
+	}
+	return c.JSON(files)
+}
+
 func getFileByID(c *fiber.Ctx) error {
 	form := new(model.FileIdForm)
 	if err := parseValidate(form, c); err != nil {
@@ -900,6 +908,7 @@ func syncToBackupProject(bkProjRoot string) (*ProjectStatus, error) {
 		return nil, err
 	}
 
+	// TODO: 改善(不要一次性讀取)
 	dbFiles, e1 := db.GetAllFiles()
 	bkFiles, e2 := bk.GetAllFiles()
 	if err := util.WrapErrors(e1, e2); err != nil {

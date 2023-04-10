@@ -293,6 +293,7 @@ func (db *DB) GetFilePlusByName(name string) (file FilePlus, err error) {
 	return
 }
 
+// TODO: 要刪除, 使用該函數的地方改為 iterator
 func (db *DB) GetAllFiles() (files []*File, err error) {
 	return getFiles(db.DB, stmt.GetAllFiles)
 }
@@ -301,6 +302,18 @@ func (db *DB) GetRecentFiles() (files []*FilePlus, err error) {
 	query := stmt.GetPublicRecentFiles
 	if db.IsLoggedIn() {
 		query = stmt.GetAllRecentFiles
+	}
+	if files, err = getFilesPlus(db.DB, query, db.RecentFilesLimit); err != nil {
+		return
+	}
+	files = RemoveChecksum(files)
+	return
+}
+
+func (db *DB) GetRecentPics() (files []*FilePlus, err error) {
+	query := stmt.GetPublicRecentPics
+	if db.IsLoggedIn() {
+		query = stmt.GetAllRecentPics
 	}
 	if files, err = getFilesPlus(db.DB, query, db.RecentFilesLimit); err != nil {
 		return

@@ -42,7 +42,6 @@ func NewProject(title string, cipherkey string) *Project {
 		Host:             "127.0.0.1:3000",
 		Title:            title,
 		CipherKey:        cipherkey,
-		ApiDelay:         500,
 		RecentFilesLimit: 100,
 		CheckInterval:    30,
 	}

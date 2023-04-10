@@ -110,6 +110,15 @@ FROM file
 	INNER JOIN bucket ON file.bucket_name = bucket.name
 	ORDER BY utime DESC LIMIT ?;`
 
+const GetAllRecentPics = `SELECT file.id, file.checksum, file.bucket_name,
+	file.name,    file.notes,   file.keywords, file.size,
+	file.type,    file.like,    file.ctime,    file.utime,
+	file.checked, file.damaged, file.deleted,  bucket.encrypted
+FROM file
+	INNER JOIN bucket ON file.bucket_name = bucket.name
+	WHERE file.type LIKE "image/%"
+	ORDER BY utime DESC LIMIT ?;`
+
 const GetPublicRecentFiles = `SELECT file.id, file.checksum, file.bucket_name,
 	file.name,    file.notes,   file.keywords, file.size,
 	file.type,    file.like,    file.ctime,    file.utime,
@@ -117,6 +126,15 @@ const GetPublicRecentFiles = `SELECT file.id, file.checksum, file.bucket_name,
 FROM file
 	INNER JOIN bucket ON file.bucket_name = bucket.name
 	WHERE bucket.encrypted=FALSE
+	ORDER BY file.utime DESC LIMIT ?;`
+
+const GetPublicRecentPics = `SELECT file.id, file.checksum, file.bucket_name,
+	file.name,    file.notes,   file.keywords, file.size,
+	file.type,    file.like,    file.ctime,    file.utime,
+	file.checked, file.damaged, file.deleted,  bucket.encrypted
+FROM file
+	INNER JOIN bucket ON file.bucket_name = bucket.name
+	WHERE bucket.encrypted=FALSE AND file.type LIKE "image/%"
 	ORDER BY file.utime DESC LIMIT ?;`
 
 const CountAllFiles = `SELECT count(*) FROM file;`
