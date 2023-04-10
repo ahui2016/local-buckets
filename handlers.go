@@ -206,7 +206,7 @@ func renameWaitingFile(c *fiber.Ctx) error {
 func renameWaitingTOML(oldFilePath, newFilePath string) error {
 	oldTOML := oldFilePath + DotTOML
 	newTOML := newFilePath + DotTOML
-	if util.PathIsNotExist(oldTOML) {
+	if util.PathNotExists(oldTOML) {
 		return nil
 	}
 	return os.Rename(oldTOML, newTOML)
@@ -224,7 +224,6 @@ func waitingFileNameExists(name string) (ok bool, err error) {
 	return
 }
 
-// TODO: 处理 import
 func overwriteFile(c *fiber.Ctx) error {
 	form := new(model.OneTextForm)
 	if err := parseValidate(form, c); err != nil {
@@ -251,9 +250,20 @@ func overwriteFile(c *fiber.Ctx) error {
 		return err
 	}
 
+	// 如果有同名 toml, 則以 toml 的信息為準.
+	// 但是, 注意, BucketName 以 dbFile 為準.
+	tomlPath := waitingFile.Src + DotTOML
+	if util.PathExists(tomlPath) {
+		tomlFile, err := model.ImportFileFrom(tomlPath)
+		if err != nil {
+			return err
+		}
+		file.ImportFrom(tomlFile)
+	}
+
 	file.ID = dbFile.ID
 	file.BucketName = dbFile.BucketName
-
+	file.UTime = model.Now()
 	waitingFile.Dst = filepath.Join(BucketsFolder, file.BucketName, file.Name)
 
 	// 以上是收集信息及检查错误
@@ -334,7 +344,7 @@ func downloadFile(c *fiber.Ctx) error {
 	}
 	srcPath := filepath.Join(BucketsFolder, file.BucketName, file.Name)
 	dstPath := filepath.Join(WaitingFolder, file.Name)
-	if util.PathIsExist(dstPath) {
+	if util.PathExists(dstPath) {
 		return fmt.Errorf("file exists: %s", dstPath)
 	}
 	if file.Encrypted {
@@ -742,7 +752,7 @@ func createBKProjHandler(c *fiber.Ctx) error {
 		return err
 	}
 	bkProjRoot := form.Text
-	if util.PathIsNotExist(bkProjRoot) {
+	if util.PathNotExists(bkProjRoot) {
 		return c.Status(404).SendString("not found: " + bkProjRoot)
 	}
 	if err := createBackupProject(bkProjRoot); err != nil {
@@ -789,7 +799,7 @@ func getBKProjStat(c *fiber.Ctx) error {
 		return err
 	}
 	bkProjRoot := form.Text
-	if util.PathIsNotExist(bkProjRoot) {
+	if util.PathNotExists(bkProjRoot) {
 		return c.Status(404).SendString("not found: " + bkProjRoot)
 	}
 	bk, bkProjStat, err := openBackupDB(bkProjRoot)

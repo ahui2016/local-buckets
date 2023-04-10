@@ -371,7 +371,7 @@ func (db *DB) UpdateBucketTitle(bucket *Bucket) error {
 
 // EncryptFile 读取 srcPath 的文件, 加密后保存到 dstPath.
 func (db *DB) EncryptFile(srcPath, dstPath string) error {
-	if util.PathIsExist(dstPath) {
+	if util.PathExists(dstPath) {
 		return fmt.Errorf("file exists: %s", dstPath)
 	}
 	data, err := os.ReadFile(srcPath)

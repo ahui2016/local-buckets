@@ -84,8 +84,13 @@
 - 所谓导入 (import), 就是在上传时把 toml 文档中的 Notes, Keywords 等信息写入数据库
 - 如果希望当作一个新文档来上传, 请删除同名的 toml 文档
 
-注意: 导入时, 会根据同名 toml 文档中的 BucketName 上传到指定的仓库中,
-但如果找不到 BucketName 的仓库, 则上传到网页表单指定的仓库中.
+### 特殊情況
+
+- 导入时, 会根据同名 toml 文档中的 BucketName 上传到指定的仓库中,  
+  但如果找不到 BucketName 的仓库, 则上传到网页表单指定的仓库中.
+- 如果導入的檔案與數據庫中的檔案同名, 並且用戶選擇了 overwrite,  
+  那麼就忽略 toml 中的 BucketName, 以數據庫中的 bucket 為準.  
+  (因爲 overwrite 不能移動檔案)
 
 ## 只读保护
 

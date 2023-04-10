@@ -62,7 +62,7 @@ func Mkdir(name string) error {
 // MkdirIfNotExists 创建資料夹, 忽略 ErrExist.
 // 在 Windows 里, 文件夹的只读属性不起作用, 为了统一行为, 不把文件夹设为只读.
 func MkdirIfNotExists(name string) error {
-	if PathIsExist(name) {
+	if PathExists(name) {
 		return nil
 	}
 	return Mkdir(name)
@@ -119,7 +119,7 @@ func WriteJSON(data interface{}, filename string) error {
 }
 
 // TODO: 改名 PathNotExists
-func PathIsNotExist(name string) (ok bool) {
+func PathNotExists(name string) (ok bool) {
 	_, err := os.Lstat(name)
 	if os.IsNotExist(err) {
 		ok = true
@@ -129,8 +129,8 @@ func PathIsNotExist(name string) (ok bool) {
 	return
 }
 
-func PathIsExist(name string) bool {
-	return !PathIsNotExist(name)
+func PathExists(name string) bool {
+	return !PathNotExists(name)
 }
 
 func DirIsEmpty(dirpath string) (ok bool, err error) {

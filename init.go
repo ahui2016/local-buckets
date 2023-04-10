@@ -86,7 +86,7 @@ func writeProjectConfig() error {
 }
 
 func initProjectConfig() {
-	if util.PathIsNotExist(ProjectConfigPath) {
+	if util.PathNotExists(ProjectConfigPath) {
 		title := filepath.Base(ProjectRoot)
 		cipherkey := database.DefaultCipherKey()
 		ProjectConfig = model.NewProject(title, cipherkey)
