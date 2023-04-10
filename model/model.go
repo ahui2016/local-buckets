@@ -32,7 +32,8 @@ type Project struct {
 	CheckInterval    int64    `jso:"check_interval"` // 檢查周期, 單位: day
 	IsBackup         bool     `json:"is_backup"`
 	BackupProjects   []string `json:"backup_projects"`
-	LastBackupAt     string   `json:"last_backup_at"` // RFC3339
+	LastBackupAt     string   `json:"last_backup_at"`  // RFC3339
+	DownloadExport   bool     `json:"download_export"` // 下載時導出
 }
 
 func NewProject(title string, cipherkey string) *Project {

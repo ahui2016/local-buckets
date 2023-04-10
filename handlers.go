@@ -334,9 +334,9 @@ func overwritePublic(waitingFile, tempFile *MovedFile, file *File) error {
 
 func downloadFile(c *fiber.Ctx) error {
 	form := new(model.FileIdForm)
-	err1 := parseValidate(form, c)
+	err := parseValidate(form, c)
 	file, err2 := db.GetFilePlus(form.ID)
-	if err := util.WrapErrors(err1, err2); err != nil {
+	if err := util.WrapErrors(err, err2); err != nil {
 		return err
 	}
 	if err := encryptedRequireAdmin(file.Encrypted); err != nil {
@@ -348,14 +348,19 @@ func downloadFile(c *fiber.Ctx) error {
 		return fmt.Errorf("file exists: %s", dstPath)
 	}
 	if file.Encrypted {
-		return db.DecryptSaveFile(srcPath, dstPath)
+		err = db.DecryptSaveFile(srcPath, dstPath)
+	} else {
+		err = util.CopyAndUnlockFile(dstPath, srcPath)
 	}
-	if err := util.CopyAndUnlockFile(dstPath, srcPath); err != nil {
+	if err != nil {
 		return err
 	}
-	exported := model.ExportFileFrom(file.File)
-	exportedPath := filepath.Join(WaitingFolder, file.Name+DotTOML)
-	return util.WriteTOML(exported, exportedPath)
+	if ProjectConfig.DownloadExport {
+		exported := model.ExportFileFrom(file.File)
+		exportedPath := filepath.Join(WaitingFolder, file.Name+DotTOML)
+		return util.WriteTOML(exported, exportedPath)
+	}
+	return nil
 }
 
 func importFiles(c *fiber.Ctx) error {

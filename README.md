@@ -76,11 +76,12 @@
 
 ## 导出/导入
 
-- 下载文档, 事实上是导出 (export) 文档
-  - 也就是说, 在下载文档的同时, 也会下载一个同名的 toml 文档
-  - 例如, 如果下载 "abc.txt", 就会同时下载 "abc.txt.toml"
-- 如果上传时在 waiting 资料夹内的文档有同名的 toml 文档, 则会执行导入 (import)
-  - 例如, 同时有 "abc.txt" 和 "abc.txt.toml"
+- project.toml 中的 DownloadExport 默認為 false, 正常下載檔案,
+  - 如果設定為 true 則下載時會導出與所下載檔案同名的 toml.
+  - 例如, 如果下载 "abc.txt", 就会同时得到 "abc.txt.toml"
+- 另外, 不管 DownloadExport 是真是假, 只要上传时在 waiting 资料夹内的文档  
+  有同名的 toml, 则会执行导入 (import)
+  - 例如, 同时有 "abc.txt" 和 "abc.txt.toml", 就會執行導入.
 - 所谓导入 (import), 就是在上传时把 toml 文档中的 Notes, Keywords 等信息写入数据库
 - 如果希望当作一个新文档来上传, 请删除同名的 toml 文档
 
