@@ -57,6 +57,32 @@ const PicPreview = cc("img", {
   classes: "img-thumbnail",
   attr: { alt: "pic" },
 });
+
+const FileFormButtonsAlert = MJBS.createAlert();
+
+const FileFormBadgesLeft = cc("div", {
+  classes: "col-9 text-start",
+  children: [span("❤").hide()],
+});
+const FileFormBadgesRight = cc("div", { classes: "col-9 text-end" });
+const FileFormBadgesArea = cc("div", {
+  classes: "mb-1",
+  children: [m(FileFormBadgesLeft), m(FileFormBadgesRight)],
+});
+
+const FileFormButtonsArea = cc("div", {
+  classes: "text-end",
+  children: [
+    MJBS.createLinkElem("#", { text: "download" }).addClass(
+      "ImageDownloadBtn me-2"
+    ),
+    MJBS.createLinkElem("#", { text: "del" }).addClass("ImageDelBtn me-2"),
+    MJBS.createLinkElem("#", { text: "DELETE" })
+      .addClass("text-danger ImageDangerDelBtn")
+      .hide(),
+  ],
+});
+
 const SubmitBtn = MJBS.createButton("Submit");
 const SubmitBtnAlert = MJBS.createAlert();
 
@@ -66,6 +92,10 @@ const EditFileForm = cc("form", {
     MJBS.hiddenButtonElem(),
 
     m("div").addClass("text-center mt-0 mb-2").append(m(PicPreview).hide()),
+
+    m(FileFormBadgesArea).hide(),
+    m(FileFormButtonsAlert).hide(),
+    m(FileFormButtonsArea).hide(),
 
     MJBS.createFormControl(IdInput, "ID"),
     MJBS.createFormControl(
@@ -134,7 +164,77 @@ const EditFileForm = cc("form", {
   ],
 });
 
-function initEditFileForm(fileID, selfButton) {
+function initFileFormButtons(fileID) {
+  const downladBtnID = ".ImageDownloadBtn";
+  const delBtnID = ".ImageDelBtn";
+  const dangerDelBtnID = `.ImageDangerDelBtn`;
+
+  FileFormButtonsAlert.clear();
+  $(delBtnID).show();
+  $(dangerDelBtnID).hide();
+
+  $(downladBtnID).off().on("click", (event) => {
+    event.preventDefault();
+    MJBS.disable(downladBtnID);
+    event.currentTarget.style.pointerEvents = "none";
+    axiosPost({
+      url: "/api/download-file",
+      alert: FileFormButtonsAlert,
+      body: { id: fileID },
+      onSuccess: () => {
+        FileFormButtonsAlert.insert(
+          "success",
+          `成功下載到 waiting 資料夾 ${PageConfig.waitingFolder}`
+        );
+      },
+      onAlways: () => {
+        MJBS.enable(downladBtnID);
+      },
+    });
+  });
+
+  // MJBS.createLinkElem("edit-file.html?id=" + file.id, { text: "info" })
+
+  $(delBtnID).off().on("click", (event) => {
+    event.preventDefault();
+    MJBS.disable(delBtnID);
+    FileFormButtonsAlert.clear().insert(
+      "warning",
+      "等待 3 秒, 點擊紅色的 DELETE 按鈕刪除檔案 (注意, 一旦刪除, 不可恢復!)."
+    );
+    setTimeout(() => {
+      MJBS.enable(delBtnID);
+      $(delBtnID).hide();
+      $(dangerDelBtnID).show();
+    }, 2000);
+  });
+
+  $(dangerDelBtnID).off().on("click", (event) => {
+    event.preventDefault();
+    MJBS.disable(FileFormButtonsArea);
+    axiosPost({
+      url: "/api/delete-file",
+      alert: FileFormButtonsAlert,
+      body: { id: fileID },
+      onSuccess: () => {
+        $("#F-"+fileID).hide();
+        EditFileForm.hide();
+        FileInfoPageAlert.clear().insert("success", "該檔案已被刪除");
+      },
+      onAlways: () => {
+        MJBS.enable(FileFormButtonsArea);
+      },
+    });
+  });
+}
+
+function initEditFileForm(fileID, selfButton, onlyImages) {
+  if (onlyImages) {
+    FileFormBadgesArea.show();
+    FileFormButtonsAlert.show();
+    FileFormButtonsArea.show();   
+    initFileFormButtons(fileID);
+  }
   if (selfButton) MJBS.disable(selfButton);
   axiosPost({
     url: "/api/file-info",
@@ -178,6 +278,7 @@ function initEditFileForm(fileID, selfButton) {
     onAlways: () => {
       FileInfoPageLoading.hide();
       if (selfButton) MJBS.enable(selfButton);
+      window.location = PicPreview.id;
     },
   });
 }
@@ -188,21 +289,6 @@ function BucketItem(bucket) {
     attr: { value: bucket.name, title: bucket.name },
     text: bucket.title,
   });
-}
-
-function getThumbnail(file_id) {
-  axios
-    .get(`/thumbs/${file_id}`)
-    .then((resp) => {
-      Thumbnail.show();
-      Thumbnail.elem().attr({ src: "data:image/jpeg;base64," + resp.data });
-      location = "#";
-    })
-    .catch((err) => {
-      Thumbnail.hide();
-      MJBS.focus(NotesInput);
-      console.log(axiosErrToStr(err, errorData_toString));
-    });
 }
 
 function getBuckets() {

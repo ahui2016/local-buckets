@@ -81,7 +81,7 @@ const ImportButtonArea = cc("div", {
         onSuccess: () => {
           ImportButton.hide();
           ImportAlert.clear().insert("success", "上傳成功");
-          ImportAlert.clear().insert(
+          ImportAlert.insert(
             "info",
             "可能仍有待上傳檔案, 3 秒後本頁將自動刷新."
           );

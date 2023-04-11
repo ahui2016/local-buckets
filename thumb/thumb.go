@@ -53,6 +53,7 @@ func BytesToThumb(img []byte, thumbPath string) error {
 	return util.CreateFile(thumbPath, buf)
 }
 
+// NailWrite64 convert the image to base64 and add prefix "data:image/jpeg;base64,"
 func NailWrite64(imgPath, thumbPath string) error {
 	img, err := os.ReadFile(imgPath)
 	if err != nil {
@@ -63,7 +64,8 @@ func NailWrite64(imgPath, thumbPath string) error {
 		return err
 	}
 	img64 := util.Base64Encode(buf.Bytes())
-	return util.WriteFile(thumbPath, []byte(img64), util.NormalFilePerm)
+	prefix := "data:image/jpeg;base64,"
+	return util.WriteFile(thumbPath, []byte(prefix+img64), util.NormalFilePerm)
 }
 
 // ResizeLimit resizes the image if it's long side bigger than limit.

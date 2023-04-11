@@ -18,9 +18,7 @@ const navBar = m("div")
       )
   );
 
-const PageConfig = {
-  bsFileEditCanvas: null,
-};
+const PageConfig = {};
 
 const PageAlert = MJBS.createAlert();
 const PageLoading = MJBS.createLoading(null, "large");
@@ -78,7 +76,7 @@ function FileItem(file) {
           PageConfig.bsFileEditCanvas.show();
           EditFileForm.hide();
           FileInfoPageLoading.show();
-          initEditFileForm(file.id, "#" + fileItemID + " .FileInfoEditBtn");
+          initEditFileForm(file.id, "#" + fileItemID + " .FileInfoEditBtn", false);
         }),
       MJBS.createLinkElem("#", { text: "del" })
         .addClass("FileInfoBtn FileInfoDelBtn me-2")
@@ -88,7 +86,7 @@ function FileItem(file) {
           MJBS.disable(delBtnID);
           ItemAlert.insert(
             "warning",
-            "等待 3 秒, 點擊紅色的 DELETE 按鈕刪除檔案 (注意, 不可恢復!)."
+            "等待 3 秒, 點擊紅色的 DELETE 按鈕刪除檔案 (注意, 一旦刪除, 不可恢復!)."
           );
           setTimeout(() => {
             $(delBtnID).hide();
