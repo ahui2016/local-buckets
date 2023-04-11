@@ -448,7 +448,10 @@ func createThumb(imgPath string, file *File) {
 	if !strings.HasPrefix(file.Type, "image") {
 		return
 	}
-	_ = thumb.NailWrite64(imgPath, thumbFilePath(file.ID))
+	err := thumb.NailWrite64(imgPath, thumbFilePath(file.ID))
+	fmt.Println(imgPath)
+	fmt.Println(file.ID)
+	fmt.Println(err)
 }
 
 func encryptWaitingFileToBucket(file *File) error {

@@ -65,7 +65,7 @@ func NailWrite64(imgPath, thumbPath string) error {
 	}
 	img64 := util.Base64Encode(buf.Bytes())
 	prefix := "data:image/jpeg;base64,"
-	return util.WriteFile(thumbPath, []byte(prefix+img64), util.NormalFilePerm)
+	return util.WriteFile(thumbPath, []byte(prefix+img64), 0)
 }
 
 // ResizeLimit resizes the image if it's long side bigger than limit.
