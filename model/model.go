@@ -141,6 +141,10 @@ func (f *File) ImportFrom(f2 FileExportImport) {
 	f.UTime = f2.UTime
 }
 
+func (f *File) IsImage() bool {
+	return strings.HasPrefix(f.Type, "image")
+}
+
 func ExportFileFrom(f File) FileExportImport {
 	return FileExportImport{
 		f.BucketName,
@@ -234,6 +238,11 @@ type OneTextForm struct {
 
 type FileIdForm struct {
 	ID int64 `json:"id" params:"id" validate:"required,gt=0"`
+}
+
+type FileIdRangeForm struct {
+	Start int64 `json:"start" params:"start" validate:"required,gt=0"`
+	End   int64 `json:"end" params:"end" validate:"required,gt=0"`
 }
 
 type ChangePwdForm struct {

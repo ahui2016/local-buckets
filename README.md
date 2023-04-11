@@ -258,8 +258,8 @@
 
 ## TODO
 
-- export/import
-- 缩略图
+- 重新生成全部缩略图
+- preview button
 - 搜索
 - 自动检查文档
 - 删除 File.BucketID

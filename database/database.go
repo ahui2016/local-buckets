@@ -407,8 +407,8 @@ func (db *DB) DecryptSaveFile(srcPath, dstPath string) error {
 	return os.WriteFile(dstPath, content, 0666)
 }
 
-func (db *DB) DecryptFile(srcPath string) ([]byte, error) {
-	data, err := os.ReadFile(srcPath)
+func (db *DB) DecryptFile(filePath string) ([]byte, error) {
+	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}

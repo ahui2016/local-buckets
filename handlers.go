@@ -41,7 +41,7 @@ func requireAdmin(c *fiber.Ctx) error {
 	if !db.IsLoggedIn() {
 		return fmt.Errorf("該操作需要管理員權限")
 	}
-	return nil
+	return c.Next()
 }
 
 // 如果处理加密文档或加密仓库, 则需要管理员权限.
@@ -445,10 +445,45 @@ func encryptOrMoveWaitingFile(file *File, encrypted bool) error {
 }
 
 func createThumb(imgPath string, file *File) {
-	if !strings.HasPrefix(file.Type, "image") {
-		return
+	if file.IsImage() {
+		_ = thumb.NailWrite64(imgPath, thumbFilePath(file.ID))
 	}
-	_ = thumb.NailWrite64(imgPath, thumbFilePath(file.ID))
+}
+
+func rebuildThumbsHandler(c *fiber.Ctx) error {
+	form := new(model.FileIdRangeForm)
+	if err := parseValidate(form, c); err != nil {
+		return err
+	}
+	return rebuildThumbs(form.Start, form.End)
+}
+
+// 对指定范围的文档重新生成缩略图, 例如 rebuildThumbs(1, 100),
+// 对从 id=1 到 id=100 之间的文档尝试生成缩略图, 包括 1 和 100.
+// 自动跳过不存在的文档 或 非图片文档.
+func rebuildThumbs(start, end int64) error {
+	for i := start; i <= end; i++ {
+		file, err := db.GetFilePlus(i)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return err
+		}
+		if !file.IsImage() {
+			continue
+		}
+		filePath := filepath.Join(BucketsFolder, file.BucketName, file.Name)
+		var img []byte
+		if file.Encrypted {
+			img, err = db.DecryptFile(filePath)
+		} else {
+			img, err = os.ReadFile(filePath)
+		}
+		if err != nil {
+			return err
+		}
+		thumbPath := filepath.Join(ThumbsFolder, thumbFilePath(file.ID))
+		_ = thumb.NailBytesToBase64(img, thumbPath)
+	}
+	return nil
 }
 
 func encryptWaitingFileToBucket(file *File) error {

@@ -104,3 +104,17 @@ function getRecentPics() {
     },
   });
 }
+
+function rebuildThumbs(start, end) {
+  axiosPost({
+    url: "/api/rebuild-thumbs",
+    alert: PageAlert,
+    body: { start: start, end: end },
+    onSuccess: () => {
+      console.log("Success!");
+    },
+    onAlways: () => {
+      PageLoading.hide();
+    },
+  });
+}

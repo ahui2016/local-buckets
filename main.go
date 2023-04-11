@@ -29,6 +29,7 @@ func main() {
 	api.Post("/rename-waiting-file", renameWaitingFile)
 	api.Post("/overwrite-file", overwriteFile)
 	api.Post("/delete-file", deleteFile)
+	api.Post("/rebuild-thumbs", rebuildThumbsHandler, requireAdmin)
 
 	api.Get("/recent-files", getRecentFiles)           // resp.data: FilePlus[]
 	api.Get("/recent-pics", getRecentPics)             // resp.data: FilePlus[]

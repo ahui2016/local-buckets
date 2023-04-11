@@ -59,6 +59,11 @@ func NailWrite64(imgPath, thumbPath string) error {
 	if err != nil {
 		return err
 	}
+	return NailBytesToBase64(img, thumbPath)
+}
+
+// NailWrite64 convert the image to base64 and add prefix "data:image/jpeg;base64,"
+func NailBytesToBase64(img []byte, thumbPath string) error {
 	buf, err := Nail(img, 0, 0)
 	if err != nil {
 		return err
