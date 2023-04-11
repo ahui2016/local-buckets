@@ -173,66 +173,72 @@ function initFileFormButtons(fileID) {
   $(delBtnID).show();
   $(dangerDelBtnID).hide();
 
-  $(downladBtnID).off().on("click", (event) => {
-    event.preventDefault();
-    MJBS.disable(downladBtnID);
-    event.currentTarget.style.pointerEvents = "none";
-    axiosPost({
-      url: "/api/download-file",
-      alert: FileFormButtonsAlert,
-      body: { id: fileID },
-      onSuccess: () => {
-        FileFormButtonsAlert.insert(
-          "success",
-          `成功下載到 waiting 資料夾 ${PageConfig.waitingFolder}`
-        );
-      },
-      onAlways: () => {
-        MJBS.enable(downladBtnID);
-      },
+  $(downladBtnID)
+    .off()
+    .on("click", (event) => {
+      event.preventDefault();
+      MJBS.disable(downladBtnID);
+      event.currentTarget.style.pointerEvents = "none";
+      axiosPost({
+        url: "/api/download-file",
+        alert: FileFormButtonsAlert,
+        body: { id: fileID },
+        onSuccess: () => {
+          FileFormButtonsAlert.insert(
+            "success",
+            `成功下載到 waiting 資料夾 ${PageConfig.waitingFolder}`
+          );
+        },
+        onAlways: () => {
+          MJBS.enable(downladBtnID);
+        },
+      });
     });
-  });
 
   // MJBS.createLinkElem("edit-file.html?id=" + file.id, { text: "info" })
 
-  $(delBtnID).off().on("click", (event) => {
-    event.preventDefault();
-    MJBS.disable(delBtnID);
-    FileFormButtonsAlert.clear().insert(
-      "warning",
-      "等待 3 秒, 點擊紅色的 DELETE 按鈕刪除檔案 (注意, 一旦刪除, 不可恢復!)."
-    );
-    setTimeout(() => {
-      MJBS.enable(delBtnID);
-      $(delBtnID).hide();
-      $(dangerDelBtnID).show();
-    }, 2000);
-  });
-
-  $(dangerDelBtnID).off().on("click", (event) => {
-    event.preventDefault();
-    MJBS.disable(FileFormButtonsArea);
-    axiosPost({
-      url: "/api/delete-file",
-      alert: FileFormButtonsAlert,
-      body: { id: fileID },
-      onSuccess: () => {
-        $("#F-"+fileID).hide();
-        EditFileForm.hide();
-        FileInfoPageAlert.clear().insert("success", "該檔案已被刪除");
-      },
-      onAlways: () => {
-        MJBS.enable(FileFormButtonsArea);
-      },
+  $(delBtnID)
+    .off()
+    .on("click", (event) => {
+      event.preventDefault();
+      MJBS.disable(delBtnID);
+      FileFormButtonsAlert.clear().insert(
+        "warning",
+        "等待 3 秒, 點擊紅色的 DELETE 按鈕刪除檔案 (注意, 一旦刪除, 不可恢復!)."
+      );
+      setTimeout(() => {
+        MJBS.enable(delBtnID);
+        $(delBtnID).hide();
+        $(dangerDelBtnID).show();
+      }, 2000);
     });
-  });
+
+  $(dangerDelBtnID)
+    .off()
+    .on("click", (event) => {
+      event.preventDefault();
+      MJBS.disable(FileFormButtonsArea);
+      axiosPost({
+        url: "/api/delete-file",
+        alert: FileFormButtonsAlert,
+        body: { id: fileID },
+        onSuccess: () => {
+          $("#F-" + fileID).hide();
+          EditFileForm.hide();
+          FileInfoPageAlert.clear().insert("success", "該檔案已被刪除");
+        },
+        onAlways: () => {
+          MJBS.enable(FileFormButtonsArea);
+        },
+      });
+    });
 }
 
 function initEditFileForm(fileID, selfButton, onlyImages) {
   if (onlyImages) {
     FileFormBadgesArea.show();
     FileFormButtonsAlert.show();
-    FileFormButtonsArea.show();   
+    FileFormButtonsArea.show();
     initFileFormButtons(fileID);
   }
   if (selfButton) MJBS.disable(selfButton);
@@ -252,7 +258,7 @@ function initEditFileForm(fileID, selfButton, onlyImages) {
       }
 
       IdInput.setVal(file.id);
-      BucketInput.setVal(file.bucket_name);
+      // BucketInput.setVal(bucket_name); // 在 initBucketSelect 中賦值
       NameInput.setVal(file.name);
       NotesInput.setVal(file.notes);
       KeywordsInput.setVal(file.keywords);
@@ -284,10 +290,12 @@ function initEditFileForm(fileID, selfButton, onlyImages) {
 }
 
 function BucketItem(bucket) {
+  let text = bucket.title;
+  if (bucket.encrypted) text = "🔒" + text;
   return cc("option", {
     id: "B-" + bucket.id,
     attr: { value: bucket.name, title: bucket.name },
-    text: bucket.title,
+    text: text,
   });
 }
 
@@ -312,9 +320,11 @@ function initBucketSelect(currentbucketName) {
 
   for (const bucket of FileInfoPageCfg.buckets) {
     if (bucket.name == currentbucketName) {
-      let val = bucket.name;
-      if (bucket.name != bucket.title) val = `${bucket.name} (${bucket.title})`;
-      BucketInput.setVal(val);
+      let bucketVal = bucket.name;
+      if (bucket.encrypted) bucketVal = "🔒" + bucketVal;
+      if (bucket.name != bucket.title)
+        bucketVal = `${bucketVal} (${bucket.title})`;
+      BucketInput.setVal(bucketVal);
     } else {
       const item = BucketItem(bucket);
       BucketSelect.elem().append(m(item));

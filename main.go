@@ -8,7 +8,9 @@ import (
 
 func main() {
 	defer db.DB.Close()
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		Immutable: true, // 以后试试删除该设定
+	})
 
 	app.Static("/", PublicFolder)
 

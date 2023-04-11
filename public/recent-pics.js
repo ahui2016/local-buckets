@@ -46,6 +46,7 @@ function FileItem(file) {
           PageConfig.bsFileEditCanvas.show();
           EditFileForm.hide();
           FileInfoPageLoading.show();
+          FileInfoPageAlert.clear();
           initEditFileForm(file.id, thumbID, true);
         }),
     ],
@@ -94,7 +95,7 @@ function getRecentPics() {
       } else {
         PageAlert.insert(
           "warning",
-          "未找到任何檔案, 請返回首頁, 點擊 Upload 上傳檔案."
+          "未找到任何圖片, 請返回首頁, 點擊 Upload 上傳檔案."
         );
       }
     },

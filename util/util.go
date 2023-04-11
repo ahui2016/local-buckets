@@ -145,7 +145,7 @@ func DirIsNotEmpty(dirpath string) (ok bool, err error) {
 }
 
 func IsRegularFile(name string) (ok bool, err error) {
-	info, err := os.Stat(name)
+	info, err := os.Lstat(name)
 	if err != nil {
 		return
 	}
