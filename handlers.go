@@ -488,8 +488,7 @@ func rebuildThumbs(start, end int64) error {
 		if err != nil {
 			return err
 		}
-		thumbPath := filepath.Join(ThumbsFolder, thumbFilePath(file.ID))
-		_ = thumb.NailBytesToBase64(img, thumbPath)
+		_ = thumb.NailBytesToBase64(img, thumbFilePath(file.ID))
 	}
 	return nil
 }
@@ -1228,4 +1227,20 @@ func deleteFile(c *fiber.Ctx) error {
 	}
 	return db.DeleteFile(
 		BucketsFolder, TempFolder, thumbFilePath(file.ID), &file.File)
+}
+
+func createNewNote(c *fiber.Ctx) error {
+	f, err := os.CreateTemp(WaitingFolder, "note-*.md")
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	content := `This document is encoded in UTF-8
+このファイルは　UTF-8　でエンコードされています
+本文檔採用 UTF-8 編碼
+`
+	if _, err = f.WriteString(content); err != nil {
+		return err
+	}
+	return c.JSON(TextMsg{f.Name()})
 }

@@ -12,7 +12,7 @@ const navBar = m("div")
     m("div")
       .addClass("col text-end")
       .append(
-        MJBS.createLinkElem("#", { text: "Link1" }).addClass("Link1"),
+        MJBS.createLinkElem("#", { text: "help" }).addClass("HelpBtn"),
         " | ",
         MJBS.createLinkElem("#", { text: "Link2" }).addClass("Link2")
       )

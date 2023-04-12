@@ -12,7 +12,7 @@ const navBar = m("div")
     m("div")
       .addClass("col text-end")
       .append(
-        MJBS.createLinkElem("#", { text: "Link1" }).addClass("Link1"),
+        MJBS.createLinkElem("#", { text: "NewNote" }).addClass("NewNoteBtn"),
         " | ",
         MJBS.createLinkElem("#", { text: "Link2" }).addClass("Link2")
       )
@@ -148,6 +148,7 @@ async function init() {
   }
   getWaitingFolder();
   getImportedFiles();
+  initNewNoteBtn();
 }
 
 function initBuckets() {
@@ -276,4 +277,20 @@ function getWaitingFilesErrorHandler(err, alert) {
   }
 
   alert.insert("danger", err.message);
+}
+
+function initNewNoteBtn() {
+  $(".NewNoteBtn").on("click", (event) => {
+    event.preventDefault();
+    axiosGet({
+      url: "/api/create-new-note",
+      alert: PageAlert,
+      onSuccess: (resp) => {
+        PageAlert.insert(
+          "success",
+          `已生成文字檔案 ${resp.data.text}`
+        );
+      },
+    });
+  });
 }
