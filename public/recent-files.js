@@ -47,8 +47,9 @@ function FileItem(file) {
       span(file.utime.substr(0, 10))
         .attr({ title: file.utime })
         .addClass("me-2"),
-      MJBS.createLinkElem("#", { text: "download" })
+      MJBS.createLinkElem("#", { text: "down" })
         .addClass("FileInfoBtn me-2")
+        .attr({title: "download"})
         .on("click", (event) => {
           event.preventDefault();
           event.currentTarget.style.pointerEvents = "none";
@@ -67,6 +68,10 @@ function FileItem(file) {
             },
           });
         }),
+      MJBS.createLinkElem("#", { text: "view", blank: true })
+        .addClass("FilePreviewBtn me-2")
+        .attr({title: "preview"})
+        .hide(),
       // MJBS.createLinkElem("edit-file.html?id=" + file.id, { text: "info" })
       MJBS.createLinkElem("#", { text: "info" })
         .addClass("FileInfoBtn FileInfoEditBtn me-2")
@@ -74,10 +79,15 @@ function FileItem(file) {
           event.preventDefault();
           $("#root").css({ marginLeft: rootMarginLeft });
           PageConfig.bsFileEditCanvas.show();
-          initEditFileForm(file.id, "#" + fileItemID + " .FileInfoEditBtn", false);
+          initEditFileForm(
+            file.id,
+            "#" + fileItemID + " .FileInfoEditBtn",
+            false
+          );
         }),
       MJBS.createLinkElem("#", { text: "del" })
         .addClass("FileInfoBtn FileInfoDelBtn me-2")
+        .attr({ title: "delete" })
         .on("click", (event) => {
           event.preventDefault();
           PageConfig.bsFileEditCanvas.hide();
@@ -147,6 +157,16 @@ function FileItem(file) {
         m("div").append(span(`[${file.keywords}]`).addClass("text-muted"))
       );
     }
+
+    if (canBePreviewed(file.type)) {
+      const previewBtn = self.find(".FilePreviewBtn");
+      previewBtn.show();
+      if (file.type == "text/md") {
+        previewBtn.attr({ href: "/md.html?id=" + file.id });
+      } else {
+        previewBtn.attr({ href: "/file/" + file.id });
+      }
+    }
   };
 
   return self;
@@ -194,4 +214,15 @@ function getRecentFiles() {
       PageLoading.hide();
     },
   });
+}
+
+function canBePreviewed(fileType) {
+  if (
+    fileType.startsWith("image") ||
+    fileType.startsWith("text") ||
+    fileType.endsWith("pdf")
+  ) {
+    return true;
+  }
+  return false;
 }

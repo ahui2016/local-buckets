@@ -641,6 +641,7 @@ func previewFile(c *fiber.Ctx) error {
 	if err := encryptedRequireAdmin(file.Encrypted); err != nil {
 		return err
 	}
+	setFileType(c, file)
 	filePath := filepath.Join(BucketsFolder, file.BucketName, file.Name)
 	if !file.Encrypted {
 		// 因为删除文档时遇到了文档被占用的错误, 试试使用临时文档看能否解决问题.
@@ -654,16 +655,16 @@ func previewFile(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	setFileType(c, file)
 	return c.Send(decrypted)
 }
 
 func setFileType(c *fiber.Ctx, file FilePlus) {
-	if file.IsText() {
+	if file.Type == "text/md" {
 		c.Type("txt", "utf-8")
 		return
 	}
-	c.Type(filepath.Ext(file.Name))
+	ext := filepath.Ext(file.Name)
+	c.Type(strings.ToLower(ext))
 }
 
 func copyToTemp(srcPath, srcChecksum string, fileID int64) (dstPath string, err error) {

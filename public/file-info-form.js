@@ -73,10 +73,15 @@ const FileFormBadgesArea = cc("div", {
 const FileFormButtonsArea = cc("div", {
   classes: "text-end",
   children: [
-    MJBS.createLinkElem("#", { text: "download" }).addClass(
-      "ImageDownloadBtn me-2"
-    ),
-    MJBS.createLinkElem("#", { text: "del" }).addClass("ImageDelBtn me-2"),
+    MJBS.createLinkElem("#", { text: "down" })
+      .attr({ title: "download" })
+      .addClass("ImageDownloadBtn me-2"),
+    MJBS.createLinkElem("#", { text: "view", blank: true })
+      .attr({ title: "preview" })
+      .addClass("ImagePreviewBtn me-2"),
+    MJBS.createLinkElem("#", { text: "del" })
+      .attr({ title: "delete" })
+      .addClass("ImageDelBtn me-2"),
     MJBS.createLinkElem("#", { text: "DELETE" })
       .addClass("text-danger ImageDangerDelBtn")
       .hide(),
@@ -166,6 +171,7 @@ const EditFileForm = cc("form", {
 
 function initFileFormButtons(fileID) {
   const downladBtnID = ".ImageDownloadBtn";
+  const previewBtnID = ".ImagePreviewBtn";
   const delBtnID = ".ImageDelBtn";
   const dangerDelBtnID = `.ImageDangerDelBtn`;
 
@@ -195,7 +201,7 @@ function initFileFormButtons(fileID) {
       });
     });
 
-  // MJBS.createLinkElem("edit-file.html?id=" + file.id, { text: "info" })
+  $(previewBtnID).attr({ href: "/file/" + fileID });
 
   $(delBtnID)
     .off()
