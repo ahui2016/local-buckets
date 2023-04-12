@@ -16,7 +16,8 @@ import (
 )
 
 const (
-	RFC3339 = "2006-01-02 15:04:05Z07:00"
+	RFC3339         = "2006-01-02 15:04:05Z07:00"
+	MIMEOctetStream = "application/octet-stream"
 )
 
 // ID 只能使用 0-9, a-z, A-Z, _(下劃線), -(連字號), .(點)
@@ -145,6 +146,21 @@ func (f *File) IsImage() bool {
 	return strings.HasPrefix(f.Type, "image")
 }
 
+func (f *File) IsText() bool {
+	return strings.HasPrefix(f.Type, "text")
+}
+
+func (f *File) IsPDF() bool {
+	return f.Type == "application/pdf"
+}
+
+func (f *File) CanBePreviewed() bool {
+	if f.IsImage() || f.IsText() || f.IsPDF() {
+		return true
+	}
+	return false
+}
+
 func ExportFileFrom(f File) FileExportImport {
 	return FileExportImport{
 		f.BucketName,
@@ -200,9 +216,21 @@ func Now() string {
 	return time.Now().Format(RFC3339)
 }
 
+// https://github.com/gofiber/fiber/blob/master/utils/http.go (edited).
 func typeByFilename(filename string) (filetype string) {
 	ext := filepath.Ext(filename)
-	filetype = GetMIME(ext)
+	ext = strings.ToLower(ext)
+	if len(ext) == 0 {
+		return MIMEOctetStream
+	}
+	if ext[0] == '.' {
+		ext = ext[1:]
+	}
+	filetype = mimeExtensions[ext]
+	if len(filetype) == 0 {
+		filetype = MIMEOctetStream
+	}
+
 	switch ext {
 	case "zip", "rar", "7z", "gz", "tar", "bz", "bz2", "xz":
 		filetype = "compressed/" + ext
@@ -210,7 +238,7 @@ func typeByFilename(filename string) (filetype string) {
 		filetype = "text/" + ext
 	case "doc", "docx", "ppt", "pptx", "rtf", "xls", "xlsx":
 		filetype = "office/" + ext
-	case "epub", "pdf", "mobi", "azw", "azw3", "djvu":
+	case "epub", "mobi", "azw", "azw3", "djvu":
 		filetype = "ebook/" + ext
 	}
 	return filetype
@@ -304,25 +332,6 @@ func NewErrSameNameFiles(file File) ErrSameNameFiles {
 func (e ErrSameNameFiles) Error() string {
 	return fmt.Sprintf(
 		"倉庫中已有同名檔案(檔案名稱不分大小寫): %s/%s", e.File.BucketName, e.File.Name)
-}
-
-// GetMIME returns the content-type of a file extension.
-// https://github.com/gofiber/fiber/blob/master/utils/http.go (edited).
-func GetMIME(extension string) (mime string) {
-	const MIMEOctetStream = "application/octet-stream"
-	extension = strings.ToLower(extension)
-
-	if len(extension) == 0 {
-		return
-	}
-	if extension[0] == '.' {
-		extension = extension[1:]
-	}
-	mime = mimeExtensions[extension]
-	if len(mime) == 0 {
-		return MIMEOctetStream
-	}
-	return mime
 }
 
 // MIME types were copied from

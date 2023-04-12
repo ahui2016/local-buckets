@@ -635,6 +635,9 @@ func previewFile(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
+	if !file.CanBePreviewed() {
+		return fmt.Errorf("can not preview file type [%s]", file.Type)
+	}
 	if err := encryptedRequireAdmin(file.Encrypted); err != nil {
 		return err
 	}
@@ -651,8 +654,16 @@ func previewFile(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	c.Type(filepath.Ext(file.Name))
+	setFileType(c, file)
 	return c.Send(decrypted)
+}
+
+func setFileType(c *fiber.Ctx, file FilePlus) {
+	if file.IsText() {
+		c.Type("txt", "utf-8")
+		return
+	}
+	c.Type(filepath.Ext(file.Name))
 }
 
 func copyToTemp(srcPath, srcChecksum string, fileID int64) (dstPath string, err error) {

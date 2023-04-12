@@ -235,6 +235,10 @@ function initFileFormButtons(fileID) {
 }
 
 function initEditFileForm(fileID, selfButton, onlyImages) {
+  EditFileForm.hide();
+  FileInfoPageLoading.show();
+  FileInfoPageAlert.clear();
+
   if (onlyImages) {
     FileFormBadgesArea.show();
     FileFormButtonsAlert.show();

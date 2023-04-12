@@ -28,7 +28,12 @@ const FileList = cc("div", { classes: "d-inline-flex p-2" });
 function FileItem(file) {
   const fileItemID = "F-" + file.id;
   const thumbID = "#" + fileItemID + " img";
-  let headerText = `${file.bucket_name}/${file.name}`;
+
+  let notes = file.notes;
+  if (file.keywords) notes = `${notes} [${file.keywords}]`;
+  if (notes == "") notes = file.name;
+
+  let headerText = `${file.bucket_name}/${notes}`;
   if (file.encrypted) headerText = "🔒" + headerText;
 
   const self = cc("div", {
@@ -44,9 +49,6 @@ function FileItem(file) {
           event.preventDefault();
           $("#root").css({ marginLeft: rootMarginLeft });
           PageConfig.bsFileEditCanvas.show();
-          EditFileForm.hide();
-          FileInfoPageLoading.show();
-          FileInfoPageAlert.clear();
           initEditFileForm(file.id, thumbID, true);
         }),
     ],

@@ -74,8 +74,6 @@ function FileItem(file) {
           event.preventDefault();
           $("#root").css({ marginLeft: rootMarginLeft });
           PageConfig.bsFileEditCanvas.show();
-          EditFileForm.hide();
-          FileInfoPageLoading.show();
           initEditFileForm(file.id, "#" + fileItemID + " .FileInfoEditBtn", false);
         }),
       MJBS.createLinkElem("#", { text: "del" })
@@ -155,7 +153,7 @@ function FileItem(file) {
 }
 
 $("#root")
-  .css(RootCssWide)
+  .css(RootCss)
   .append(
     navBar.addClass("my-3"),
     m(PageAlert).addClass("my-5"),
