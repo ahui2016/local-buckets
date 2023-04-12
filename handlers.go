@@ -44,6 +44,14 @@ func requireAdmin(c *fiber.Ctx) error {
 	return c.Next()
 }
 
+// noCache is a middleware.
+// Cache-Control: no-store will refrain from caching.
+// You will always get the up-to-date response.
+func noCache(c *fiber.Ctx) error {
+	c.Set("Cache-Control", "no-store")
+	return c.Next()
+}
+
 // 如果处理加密文档或加密仓库, 则需要管理员权限.
 func encryptedRequireAdmin(encrypted bool) error {
 	if encrypted && !db.IsLoggedIn() {
@@ -624,7 +632,7 @@ func previewFile(c *fiber.Ctx) error {
 	if err := paramParseValidate(form, c); err != nil {
 		return err
 	}
-	file, err := db.GetFilePlus(form.ID)
+	file, err := db.GetFilePlusWithChecksum(form.ID)
 	if err != nil {
 		return err
 	}
@@ -633,7 +641,12 @@ func previewFile(c *fiber.Ctx) error {
 	}
 	filePath := filepath.Join(BucketsFolder, file.BucketName, file.Name)
 	if !file.Encrypted {
-		return c.SendFile(filePath)
+		// 因为删除文档时遇到了文档被占用的错误, 试试使用临时文档看能否解决问题.
+		tempFile, err := copyToTemp(filePath, file.Checksum, file.ID)
+		if err != nil {
+			return err
+		}
+		return c.SendFile(tempFile)
 	}
 	decrypted, err := db.DecryptFile(filePath)
 	if err != nil {
@@ -641,6 +654,22 @@ func previewFile(c *fiber.Ctx) error {
 	}
 	c.Type(filepath.Ext(file.Name))
 	return c.Send(decrypted)
+}
+
+func copyToTemp(srcPath, srcChecksum string, fileID int64) (dstPath string, err error) {
+	dstPath = tempFilePath(fileID)
+	if util.PathExists(dstPath) {
+		dstChecksum, err := util.FileSum512(dstPath)
+		if err != nil {
+			return "", err
+		}
+		if dstChecksum == srcChecksum {
+			return dstPath, nil
+		}
+	}
+	err = util.CopyFile(dstPath, srcPath)
+	fmt.Printf("copyToTemp write %s\n", dstPath)
+	return
 }
 
 // TODO: move thumbs

@@ -123,3 +123,8 @@ func thumbFilePath(fileID int64) string {
 	filename := strconv.FormatInt(fileID, 10)
 	return filepath.Join(ThumbsFolder, filename)
 }
+
+func tempFilePath(fileID int64) string {
+	filename := strconv.FormatInt(fileID, 10)
+	return filepath.Join(TempFolder, filename)
+}

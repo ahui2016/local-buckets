@@ -275,11 +275,16 @@ func (db *DB) GetFileByID(id int64) (File, error) {
 	return scanFile(row)
 }
 
-func (db *DB) GetFilePlus(id int64) (file FilePlus, err error) {
+func (db *DB) GetFilePlusWithChecksum(id int64) (file FilePlus, err error) {
 	row := db.QueryRow(stmt.GetFilePlus, id)
 	if file, err = scanFilePlus(row); err != nil {
 		return
 	}
+	return
+}
+
+func (db *DB) GetFilePlus(id int64) (file FilePlus, err error) {
+	file, err = db.GetFilePlusWithChecksum(id)
 	file.Checksum = ""
 	return
 }

@@ -12,6 +12,8 @@ func main() {
 		Immutable: true, // 以后试试删除该设定
 	})
 
+	app.Use(noCache)
+
 	app.Static("/", PublicFolder)
 
 	app.Get("/file/:id", previewFile)

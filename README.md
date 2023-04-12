@@ -258,6 +258,8 @@
 
 ## TODO
 
+- 自动删除临时文件 (根据体积?)
+- https://github.com/muesli/smartcrop/blob/master/cmd/smartcrop/main.go
 - 重新生成全部缩略图
 - preview button
 - 搜索
