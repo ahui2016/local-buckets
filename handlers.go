@@ -454,7 +454,7 @@ func encryptOrMoveWaitingFile(file *File, encrypted bool) error {
 
 func createThumb(imgPath string, file *File) {
 	if file.IsImage() {
-		_ = thumb.NailWrite64(imgPath, thumbFilePath(file.ID))
+		_ = thumb.SmartCrop64(imgPath, thumbFilePath(file.ID))
 	}
 }
 

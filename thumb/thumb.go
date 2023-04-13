@@ -18,11 +18,11 @@ import (
 )
 
 const (
-	ffmpeg                 = "ffmpeg"
-	ffprobe                = "ffprobe"
-	defaultSize            = 128
-	defaultQuality         = 85
-	defaultLimit   float64 = 900
+	ffmpeg                   = "ffmpeg"
+	ffprobe                  = "ffprobe"
+	defaultThumbSize         = 128
+	defaultQuality           = 85
+	defaultLimit     float64 = 900
 )
 
 // CheckImage 检查图片能否正常使用。
@@ -91,7 +91,7 @@ func ResizeLimit(img []byte, limit float64, quality int) (*bytes.Buffer, error) 
 // Use default quality(85) if quality is set to zero.
 func Nail(img []byte, size, quality int) (*bytes.Buffer, error) {
 	if size == 0 {
-		size = defaultSize
+		size = defaultThumbSize
 	}
 	src, err := ReadImage(img)
 	if err != nil {
