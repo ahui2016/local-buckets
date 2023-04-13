@@ -30,19 +30,24 @@ function BucketItem(bucket) {
 
   if (bucket.encrypted) {
     cardStyle += " text-bg-dark";
-    cardBodyStyle += "";
+    cardBodyStyle += " text-bg-secondary";
     cardHeaderStyle += "";
+    btnColor = "btn-secondary";
   } else {
     cardStyle += " border-success";
     cardBodyStyle += " text-success";
     cardHeaderStyle += " text-success";
+    btnColor = "btn-light";
   }
+
+  let bucketName = bucket.name;
+  if (bucket.encrypted) bucketName = "🔒" + bucketName;
 
   return cc("div", {
     id: "B-" + bucket.name,
     classes: cardStyle,
     children: [
-      m("div").addClass(cardHeaderStyle).text(bucket.name),
+      m("div").addClass(cardHeaderStyle).text(bucketName),
       m("div")
         .addClass(cardBodyStyle)
         .append(
@@ -55,9 +60,12 @@ function BucketItem(bucket) {
           m("div")
             .addClass("text-end")
             .append(
+              MJBS.createLinkElem("waiting.html?bucket=" + bucket.name, {
+                text: "upload",
+              }).addClass(`btn btn-sm ${btnColor} me-2`),
               MJBS.createLinkElem("edit-bucket.html?id=" + bucket.id, {
                 text: "info",
-              })
+              }).addClass(`btn btn-sm ${btnColor}`)
             )
         ),
     ],

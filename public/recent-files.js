@@ -43,12 +43,12 @@ function FileItem(file) {
   const bodyRowTwoRight = m("div")
     .addClass("col-10 text-end")
     .append(
-      span(`(${fileSizeToString(file.size)})`).addClass("me-2"),
+      span(`(${fileSizeToString(file.size)})`).addClass("me-1"),
       span(file.utime.substr(0, 10))
         .attr({ title: file.utime })
-        .addClass("me-2"),
+        .addClass("me-1"),
       MJBS.createLinkElem("#", { text: "down" })
-        .addClass("FileInfoBtn me-2")
+        .addClass("FileInfoBtn FileInfoDownloadBtn me-1")
         .attr({ title: "download" })
         .on("click", (event) => {
           event.preventDefault();
@@ -69,12 +69,12 @@ function FileItem(file) {
           });
         }),
       MJBS.createLinkElem("#", { text: "view", blank: true })
-        .addClass("FilePreviewBtn me-2")
+        .addClass("FileInfoBtn FilePreviewBtn me-1")
         .attr({ title: "preview" })
         .hide(),
       // MJBS.createLinkElem("edit-file.html?id=" + file.id, { text: "info" })
       MJBS.createLinkElem("#", { text: "info" })
-        .addClass("FileInfoBtn FileInfoEditBtn me-2")
+        .addClass("FileInfoBtn FileInfoEditBtn me-1")
         .on("click", (event) => {
           event.preventDefault();
           $("#root").css({ marginLeft: rootMarginLeft });
@@ -86,7 +86,7 @@ function FileItem(file) {
           );
         }),
       MJBS.createLinkElem("#", { text: "del" })
-        .addClass("FileInfoBtn FileInfoDelBtn me-2")
+        .addClass("FileInfoBtn FileInfoDelBtn me-1")
         .attr({ title: "delete" })
         .on("click", (event) => {
           event.preventDefault();
@@ -102,7 +102,7 @@ function FileItem(file) {
           }, 2000);
         }),
       MJBS.createLinkElem("#", { text: "DELETE" })
-        .addClass("text-danger FileInfoBtn FileInfoDangerDelBtn")
+        .addClass("FileInfoBtn FileInfoDangerDelBtn")
         .hide()
         .on("click", (event) => {
           event.preventDefault();
@@ -188,9 +188,11 @@ init();
 
 async function init() {
   PageConfig.bsFileEditCanvas = new bootstrap.Offcanvas(FileEditCanvas.id);
+
   FileEditCanvas.elem().on("hidden.bs.offcanvas", () => {
     $("#root").css({ marginLeft: "" });
   });
+
   getBuckets();
   getWaitingFolder();
   PageConfig.projectInfo = await getProjectInfo();
@@ -205,6 +207,10 @@ function getRecentFiles() {
       const files = resp.data;
       if (files && files.length > 0) {
         MJBS.appendToList(FileList, files.map(FileItem));
+        $(".FileInfoBtn").addClass("btn btn-sm btn-light text-muted");
+        $(".FileInfoDangerDelBtn")
+          .removeClass("btn-light text-muted")
+          .addClass("btn-danger");
       } else {
         PageAlert.insert(
           "warning",

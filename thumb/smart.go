@@ -16,7 +16,7 @@ type SubImager interface {
 }
 
 // SmartCrop64 convert the image to base64 and add prefix "data:image/jpeg;base64,"
-func SmartCrop64(dstPath, imgPath string) error {
+func SmartCrop64(imgPath, dstPath string) error {
 	img, err := OpenImage(imgPath)
 	if err != nil {
 		return err

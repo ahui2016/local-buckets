@@ -18,6 +18,8 @@ const navBar = m("div")
       )
   );
 
+const PageConfig = {};
+
 const PageAlert = MJBS.createAlert();
 const PageLoading = MJBS.createLoading(null, "large");
 
@@ -146,6 +148,7 @@ async function init() {
   if ((await initBuckets()) == "fail") {
     return;
   }
+  initDefaultBucket();
   getWaitingFolder();
   getImportedFiles();
   initNewNoteBtn();
@@ -159,6 +162,7 @@ function initBuckets() {
       onSuccess: (resp) => {
         const buckets = resp.data;
         if (buckets && buckets.length > 0) {
+          PageConfig.buckets = buckets;
           MJBS.appendToList(BucketSelect, buckets.map(BucketItem));
           resolve("success");
         } else {
@@ -172,6 +176,12 @@ function initBuckets() {
       },
     });
   });
+}
+
+function initDefaultBucket() {
+  const bucket = getUrlParam("bucket");
+  if (!bucket) return
+  $('#B-'+bucket).prop({selected: true});
 }
 
 function getWaitingFiles() {

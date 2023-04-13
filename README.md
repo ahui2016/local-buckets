@@ -269,14 +269,14 @@
 ## TODO
 
 - 自动删除临时文件 (根据体积?)
-- <https://github.com/muesli/smartcrop/blob/master/cmd/smartcrop/main.go>
 - 搜索
+  - search in bucket
+  - upload to bucket
 - 自动检查文档
 - 删除 File.BucketID
 - 提醒仓库文档数量太多
   - "该仓库内已有 n 个档案, 档案数量太多可能影响性能, 建议创建新仓库,使用新仓库."
-- 可设定是否模拟网络延迟
-- 加密时需要把整个文件读进内存, 因此上传到加密仓库的文件不能太大.
+- 加密时需要把整个文件读进内存, 因此上传到加密仓库的文件不能太大, 建議不要超過 500MB.
 
 A FAT32 directory can have 65,536 directory entries. Each file and subdirectory takes from 2 to 13 entries, depending on the length of its name.
 

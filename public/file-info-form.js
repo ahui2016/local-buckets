@@ -75,15 +75,15 @@ const FileFormButtonsArea = cc("div", {
   children: [
     MJBS.createLinkElem("#", { text: "down" })
       .attr({ title: "download" })
-      .addClass("ImageDownloadBtn me-2"),
+      .addClass("ImageDownloadBtn btn btn-sm btn-light text-muted me-2"),
     MJBS.createLinkElem("#", { text: "view", blank: true })
       .attr({ title: "preview" })
-      .addClass("ImagePreviewBtn me-2"),
+      .addClass("ImagePreviewBtn btn btn-sm btn-light text-muted me-2"),
     MJBS.createLinkElem("#", { text: "del" })
       .attr({ title: "delete" })
-      .addClass("ImageDelBtn me-2"),
+      .addClass("ImageDelBtn btn btn-sm btn-light text-muted me-2"),
     MJBS.createLinkElem("#", { text: "DELETE" })
-      .addClass("text-danger ImageDangerDelBtn")
+      .addClass("ImageDangerDelBtn btn btn-sm btn-danger")
       .hide(),
   ],
 });
