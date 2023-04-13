@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -453,8 +454,12 @@ func encryptOrMoveWaitingFile(file *File, encrypted bool) error {
 }
 
 func createThumb(imgPath string, file *File) {
+	thumbPath := thumbFilePath(file.ID)
+	fmt.Println("create thumb " + thumbPath)
 	if file.IsImage() {
-		_ = thumb.SmartCrop64(imgPath, thumbFilePath(file.ID))
+		if err := thumb.SmartCrop64(imgPath, thumbPath); err != nil {
+			log.Println(err)
+		}
 	}
 }
 
@@ -488,7 +493,11 @@ func rebuildThumbs(start, end int64) error {
 		if err != nil {
 			return err
 		}
-		_ = thumb.SmartCropBytes64(img, thumbFilePath(file.ID))
+		thumbPath := thumbFilePath(file.ID)
+		fmt.Println("rebuild thumb " + thumbPath)
+		if err = thumb.SmartCropBytes64(img, thumbPath); err != nil {
+			log.Println(err)
+		}
 	}
 	return nil
 }
@@ -938,7 +947,7 @@ func syncExec(bkProjRoot string) error {
 	exeName := filepath.Base(exePath)
 	bkExePath := filepath.Join(bkProjRoot, exeName)
 	if util.PathNotExists(bkExePath) {
-		return util.CopyAndLockFile(bkExePath, exePath)
+		return util.CopyFile(bkExePath, exePath)
 	}
 
 	exeSum, e1 := util.FileSum512(exePath)
@@ -949,7 +958,7 @@ func syncExec(bkProjRoot string) error {
 	if exeSum == bkExeSum {
 		return nil
 	}
-	return util.CopyAndLockFile(bkExePath, exePath)
+	return util.CopyFile(bkExePath, exePath)
 }
 
 // TODO: copy thumbs

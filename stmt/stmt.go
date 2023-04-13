@@ -77,8 +77,8 @@ const UpdateFileInfo = `UPDATE file SET name=?, notes=?,
 	keywords=?, type=?, like=?, ctime=?, utime=? WHERE id=?;`
 
 const UpdateBackupFileInfo = `UPDATE file SET
-	checksum=?, bucket_name, name=?,  notes=?, keywords=?, size=?,
-	type=?,     like=?,      ctime=?, utime=?, deleted=? WHERE id=?;`
+	checksum=?, bucket_name=?, name=?,  notes=?, keywords=?, size=?,
+	type=?,     like=?,        ctime=?, utime=?, deleted=? WHERE id=?;`
 
 const GetFileByID = `SELECT * FROM file WHERE id=?;`
 const GetFileByName = `SELECT * FROM file WHERE name=?;`
