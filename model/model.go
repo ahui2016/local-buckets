@@ -36,6 +36,7 @@ type Project struct {
 	BackupProjects   []string `json:"backup_projects"`
 	LastBackupAt     string   `json:"last_backup_at"`  // RFC3339
 	DownloadExport   bool     `json:"download_export"` // 下載時導出
+	MarkdownStyle    string   `json:"markdown_style"`
 }
 
 func NewProject(title string, cipherkey string) *Project {
@@ -154,11 +155,9 @@ func (f *File) IsPDF() bool {
 	return f.Type == "application/pdf"
 }
 
+// 添加 音频/视频 支持
 func (f *File) CanBePreviewed() bool {
-	if f.IsImage() || f.IsText() || f.IsPDF() {
-		return true
-	}
-	return false
+	return f.IsImage() || f.IsText() || f.IsPDF()
 }
 
 func ExportFileFrom(f File) FileExportImport {

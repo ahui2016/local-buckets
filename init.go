@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -50,6 +51,7 @@ var (
 
 func init() {
 	initProjectConfig()
+	fmt.Println(ProjectConfig)
 	initDB()
 	createFolders()
 }

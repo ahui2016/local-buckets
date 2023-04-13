@@ -136,6 +136,16 @@
 - 在同一專案内, 可跨仓库移动檔案.
 - 通过网页表单移动檔案  (请勿通过其他途径移动檔案)
 
+## 预览文档
+
+- 预览文档, 意思是直接在浏览器查看文档内容
+- 目前支持预览的格式是: markdown, pdf, txt, html, json, jpeg, png, gif, webp, mp3, mpeg, 以及各种纯文本文件
+- 其中 markdown 会转换为 html, 其他格式则是利用浏览器本身的预览功能
+- 在 project.toml 中可以选择 markdown 预览的 CSS 样式, 目前提供的样式是:
+  - `MarkdownStyle = 'simple'`
+  - `MarkdownStyle = 'mvp'`
+  - 修改 project.toml 后需要重启 local-buckets.exe 才能生效
+
 ## 备份专案
 
 - 因为双向同步备份很容易出错, 程序复杂, 使用时也要非常小心.  
@@ -259,8 +269,7 @@
 ## TODO
 
 - 自动删除临时文件 (根据体积?)
-- https://github.com/muesli/smartcrop/blob/master/cmd/smartcrop/main.go
-- preview button
+- <https://github.com/muesli/smartcrop/blob/master/cmd/smartcrop/main.go>
 - 搜索
 - 自动检查文档
 - 删除 File.BucketID

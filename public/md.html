@@ -1,108 +1,115 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Markdown Preview - Local Buckets</title>
-    <link href="simple.min.css" rel="stylesheet">
+    <link id="page-css" href="simple.min.css" rel="stylesheet" />
 
-	<style>
-		code {
-    		background-color: linen;
-    	}
-		#alert {
-			color: red;
-			margin-top: 100px;
-		}
-		#loading {
-			margin-top: 100px;
-		}
-	</style>
-</head>
-<body>
-<script src="purify.min.js"></script>
-<script src="marked.min.js"></script>
-<script src="axios.min.js"></script>
-<script src="jquery.min.js"></script>
+    <style>
+      code {
+        background-color: linen;
+      }
+      #alert {
+        color: red;
+        margin-top: 100px;
+      }
+      #loading {
+        margin-top: 100px;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="purify.min.js"></script>
+    <script src="marked.min.js"></script>
+    <script src="axios.min.js"></script>
+    <script src="jquery.min.js"></script>
 
-<h4 id="alert"></h4>
-<h3 id="loading">Loading...</h3>
-<div id="root"></div>
+    <h4 id="alert"></h4>
+    <h3 id="loading">Loading...</h3>
+    <main></main>
 
-<script>
+    <script>
+      init();
 
-init();
+      function init() {
+        $("#alert").hide();
+        const id = getUrlParam("id");
+        getFileInfo(id);
+				resetStyle();
+      }
 
-function init() {
-	$('#alert').hide();
-	const id = getUrlParam("id");
-	getFileInfo(id);
-}
-
-function getMarkdown(id) {
-	axios
-		.get("/file/"+id)
-		.then((resp) => {
-			const dirty = marked.parse(resp.data);
-			const clean = DOMPurify.sanitize(dirty);
-			$('#root').html(clean);
-		})
-		.catch(errorHandler)
-		.then(() => {
-			$("#loading").hide();
-		});
-}
-
-function getFileInfo(id) {
-	axios
-		.post("/api/file-info", {id: parseInt(id)})
-		.then(resp => {
-			const file = resp.data;
-			if (file.type != "text/md") {
-				$("#loading").hide();
-				const errText = "不能處理檔案類型: "+file.type;
-				$('#alert').show().text(errText);
-				console.log(errText);
-				return;
+			function resetStyle() {
+				const style = getUrlParam("css");
+				if (style == "mvp") {
+					$('#page-css').attr({href: "mvp.min.css"})
+				}
 			}
-			getMarkdown(id);
-		})
-		.catch(errorHandler);
-}
 
-function getUrlParam(name) {
-  const queryString = new URLSearchParams(document.location.search);
-  return queryString.get(name);
-}
+      function getMarkdown(id) {
+        axios
+          .get("/file/" + id)
+          .then((resp) => {
+            const dirty = marked.parse(resp.data);
+            const clean = DOMPurify.sanitize(dirty);
+            $("main").html(clean);
+          })
+          .catch(errorHandler)
+          .then(() => {
+            $("#loading").hide();
+          });
+      }
 
-function errorHandler(err) {
-	$("#loading").hide();
-	const errText = axiosErrToStr(err, errorData_toString);
-	$('#alert').show().text(errText);
-	console.log(errText);
-}
+      function getFileInfo(id) {
+        axios
+          .post("/api/file-info", { id: parseInt(id) })
+          .then((resp) => {
+            const file = resp.data;
+            if (file.type != "text/md") {
+              $("#loading").hide();
+              const errText = "不能處理檔案類型: " + file.type;
+              $("#alert").show().text(errText);
+              console.log(errText);
+              return;
+            }
+            getMarkdown(id);
+          })
+          .catch(errorHandler);
+      }
 
-// https://axios-http.com/docs/handling_errors
-function axiosErrToStr(err, data2str) {
-  if (err.response) {
-    const dataText = data2str(err.response.data);
-    return `[${err.response.status}] ${dataText}`;
-  }
-  if (err.request) {
-    return (
-      err.request.status + " The request was made but no response was received."
-    );
-  }
-  return err.message;
-}
+      function getUrlParam(name) {
+        const queryString = new URLSearchParams(document.location.search);
+        return queryString.get(name);
+      }
 
-function errorData_toString(data) {
-  if (typeof data === "string") {
-    return data;
-  }
-  return JSON.stringify(data);
-}
+      function errorHandler(err) {
+        $("#loading").hide();
+        const errText = axiosErrToStr(err, errorData_toString);
+        $("#alert").show().text(errText);
+        console.log(errText);
+      }
 
-</script>
-</body>
+      // https://axios-http.com/docs/handling_errors
+      function axiosErrToStr(err, data2str) {
+        if (err.response) {
+          const dataText = data2str(err.response.data);
+          return `[${err.response.status}] ${dataText}`;
+        }
+        if (err.request) {
+          return (
+            err.request.status +
+            " The request was made but no response was received."
+          );
+        }
+        return err.message;
+      }
+
+      function errorData_toString(data) {
+        if (typeof data === "string") {
+          return data;
+        }
+        return JSON.stringify(data);
+      }
+    </script>
+  </body>
 </html>

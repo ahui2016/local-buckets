@@ -49,7 +49,7 @@ function FileItem(file) {
         .addClass("me-2"),
       MJBS.createLinkElem("#", { text: "down" })
         .addClass("FileInfoBtn me-2")
-        .attr({title: "download"})
+        .attr({ title: "download" })
         .on("click", (event) => {
           event.preventDefault();
           event.currentTarget.style.pointerEvents = "none";
@@ -70,7 +70,7 @@ function FileItem(file) {
         }),
       MJBS.createLinkElem("#", { text: "view", blank: true })
         .addClass("FilePreviewBtn me-2")
-        .attr({title: "preview"})
+        .attr({ title: "preview" })
         .hide(),
       // MJBS.createLinkElem("edit-file.html?id=" + file.id, { text: "info" })
       MJBS.createLinkElem("#", { text: "info" })
@@ -162,7 +162,8 @@ function FileItem(file) {
       const previewBtn = self.find(".FilePreviewBtn");
       previewBtn.show();
       if (file.type == "text/md") {
-        previewBtn.attr({ href: "/md.html?id=" + file.id });
+        const css = PageConfig.projectInfo.markdown_style;
+        previewBtn.attr({ href: `/md.html?id=${file.id}&css=${css}` });
       } else {
         previewBtn.attr({ href: "/file/" + file.id });
       }
@@ -185,13 +186,14 @@ $("#root")
 
 init();
 
-function init() {
+async function init() {
   PageConfig.bsFileEditCanvas = new bootstrap.Offcanvas(FileEditCanvas.id);
   FileEditCanvas.elem().on("hidden.bs.offcanvas", () => {
     $("#root").css({ marginLeft: "" });
   });
   getBuckets();
   getWaitingFolder();
+  PageConfig.projectInfo = await getProjectInfo();
   getRecentFiles();
 }
 
@@ -216,13 +218,22 @@ function getRecentFiles() {
   });
 }
 
+function getProjectInfo() {
+  return new Promise((resolve) => {
+    axiosGet({
+      url: "/api/project-info",
+      alert: PageAlert,
+      onSuccess: (resp) => {
+        resolve(resp.data);
+      },
+    });
+  });
+}
+
 function canBePreviewed(fileType) {
-  if (
+  return (
     fileType.startsWith("image") ||
     fileType.startsWith("text") ||
     fileType.endsWith("pdf")
-  ) {
-    return true;
-  }
-  return false;
+  );
 }
