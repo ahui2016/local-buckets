@@ -939,7 +939,10 @@ func syncBackup(c *fiber.Ctx) error {
 
 func syncPublicFolder(bkProjRoot string) error {
 	bkPublicFolder := filepath.Join(bkProjRoot, PublicFolderName)
-	return util.OneWaySyncDir(PublicFolder, bkPublicFolder)
+	bkThumbsFolder := filepath.Join(bkPublicFolder, ThumbsFolderName)
+	e1 := util.OneWaySyncDir(PublicFolder, bkPublicFolder)
+	e2 := util.OneWaySyncDir(ThumbsFolder, bkThumbsFolder)
+	return util.WrapErrors(e1, e2)
 }
 
 func syncExec(bkProjRoot string) error {
@@ -961,7 +964,6 @@ func syncExec(bkProjRoot string) error {
 	return util.CopyFile(bkExePath, exePath)
 }
 
-// TODO: copy thumbs
 // syncToBackupProject 以源仓库为准单向同步，
 // 最终效果相当于清空备份仓库后把主仓库的全部文档复制到备份仓库。
 // 注意这里不能使用事务 TX, 因为一旦回滚, 批量恢复文档名称太麻烦了.

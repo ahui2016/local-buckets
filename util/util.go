@@ -22,6 +22,8 @@ const (
 	NormalFolerPerm  = 0750
 )
 
+var Separator = string(filepath.Separator)
+
 type (
 	Base64String = string
 	HexString    = string
@@ -257,75 +259,100 @@ func CheckTime(layout, value string) error {
 	return err
 }
 
-// OneWaySyncDir 单向同步资料夹.
-// Bug: 如果子目录名称不相同, 有可能出错.
 func OneWaySyncDir(srcDir, dstDir string) error {
-	err := filepath.WalkDir(srcDir, func(srcFile string, entry fs.DirEntry, err error) error {
+	if _, err := syncAddOrUpdateFiles(srcDir, dstDir); err != nil {
+		return err
+	}
+	_, err := syncDeleteFiles(srcDir, dstDir)
+	return err
+}
+
+func syncAddOrUpdateFiles(srcDir, dstDir string) (count int, err error) {
+	files, err := filepath.Glob(srcDir + Separator + "*")
+	if err != nil {
+		return
+	}
+	for _, srcFile := range files {
+		info, err := os.Lstat(srcFile)
 		if err != nil {
-			err2 := fmt.Errorf("error in WalkDir")
-			return WrapErrors(err2, err)
+			return count, err
 		}
 
 		// 跳过资料夹
-		if entry.IsDir() {
-			return nil
+		if info.IsDir() {
+			continue
 		}
 
-		dstFile := filepath.Join(dstDir, entry.Name())
+		dstFile := filepath.Join(dstDir, info.Name())
 		_, err = os.Lstat(dstFile)
 		dstNotExist := os.IsNotExist(err)
 		if dstNotExist {
 			err = nil
 		}
 		if err != nil {
-			return err
+			return count, err
 		}
 
 		// 新增文档
 		if dstNotExist {
-			return CopyFile(dstFile, srcFile)
+			fmt.Printf("ADD => %s\n", dstFile)
+			if err := CopyFile(dstFile, srcFile); err != nil {
+				return count, err
+			}
+			count++
+			continue
 		}
 
 		// 对比文档, 覆盖文档
 		srcSum, e1 := FileSum512(srcFile)
 		dstSum, e2 := FileSum512(dstFile)
 		if err := WrapErrors(e1, e2); err != nil {
-			return err
+			return count, err
 		}
 		if srcSum != dstSum {
-			return CopyFile(dstFile, srcFile)
+			fmt.Printf("UPDATE => %s\n", dstFile)
+			if err := CopyFile(dstFile, srcFile); err != nil {
+				return count, err
+			}
+			count++
 		}
-		return nil
-	})
-	if err != nil {
-		return err
 	}
+	return
+}
 
-	// 删除文件
-	err = filepath.WalkDir(dstDir, func(dstFile string, dstEntry fs.DirEntry, err error) error {
+func syncDeleteFiles(srcDir, dstDir string) (count int, err error) {
+	files, err := filepath.Glob(dstDir + Separator + "*")
+	if err != nil {
+		return
+	}
+	for _, dstFile := range files {
+		info, err := os.Lstat(dstFile)
 		if err != nil {
-			err2 := fmt.Errorf("error in WalkDir")
-			return WrapErrors(err2, err)
+			return count, err
 		}
 
-		if dstEntry.IsDir() {
-			return nil
+		// 跳过资料夹
+		if info.IsDir() {
+			continue
 		}
 
-		srcFile := filepath.Join(srcDir, dstEntry.Name())
+		srcFile := filepath.Join(srcDir, info.Name())
 		_, err = os.Lstat(srcFile)
 		srcNotExist := os.IsNotExist(err)
 		if srcNotExist {
 			err = nil
 		}
 		if err != nil {
-			return err
+			return count, err
 		}
 
 		if srcNotExist {
-			return os.Remove(dstFile)
+			fmt.Printf("DELETE => %s\n", dstFile)
+			if err := os.Remove(dstFile); err != nil {
+				return count, err
+			}
+			count++
 		}
-		return nil
-	})
-	return err
+	}
+	return
 }
