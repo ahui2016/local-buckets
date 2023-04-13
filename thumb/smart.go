@@ -17,46 +17,25 @@ type SubImager interface {
 
 // SmartCrop64 convert the image to base64 and add prefix "data:image/jpeg;base64,"
 func SmartCrop64(dstPath, imgPath string) error {
-	img, err := openImageCrop(dstPath, imgPath)
+	img, err := OpenImage(imgPath)
 	if err != nil {
+		return err
+	}
+	if img, err = smartCropResize(img); err != nil {
 		return err
 	}
 	return jpegEncodeBase64ToFile(dstPath, img, 0)
 }
 
-func EncodeBytesToBase64(dstPath string, img []byte) error {
-	img, err := openImageCrop(dstPath, imgPath)
+func SmartCropBytes64(imgBytes []byte, dstPath string) error {
+	img, err := ReadImage(imgBytes)
 	if err != nil {
 		return err
 	}
-	buf, err := jpegEncode(img, 0)
-	if err != nil {
+	if img, err = smartCropResize(img); err != nil {
 		return err
 	}
-
-	file, err := os.Create(dstPath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	encoder64 := base64.NewEncoder(base64.StdEncoding, file)
-	defer encoder64.Close()
-
-	prefix := []byte("data:image/jpeg;base64,")
-	if _, err = encoder64.Write(prefix); err != nil {
-		return err
-	}
-	_, err = encoder64.Write(buf.Bytes())
-	return err
-}
-
-func openImageCrop(dstPath, imgPath string) (image.Image, error) {
-	img, err := OpenImage(imgPath)
-	if err != nil {
-		return nil, err
-	}
-	return smartCropResize(img)
+	return jpegEncodeBase64ToFile(dstPath, img, 0)
 }
 
 func OpenImage(imgPath string) (image.Image, error) {
@@ -64,6 +43,7 @@ func OpenImage(imgPath string) (image.Image, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer f.Close()
 	return imaging.Decode(f, imaging.AutoOrientation(true))
 }
 
@@ -110,12 +90,12 @@ func jpegEncodeBase64ToFile(dst string, src image.Image, quality int) error {
 	}
 	defer file.Close()
 
-	encoder64 := base64.NewEncoder(base64.StdEncoding, file)
-	defer encoder64.Close()
-
 	prefix := []byte("data:image/jpeg;base64,")
-	if _, err = encoder64.Write(prefix); err != nil {
+	if _, err = file.Write(prefix); err != nil {
 		return err
 	}
+
+	encoder64 := base64.NewEncoder(base64.StdEncoding, file)
+	defer encoder64.Close()
 	return jpeg.Encode(encoder64, src, &jpeg.Options{Quality: quality})
 }

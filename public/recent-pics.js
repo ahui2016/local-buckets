@@ -23,7 +23,7 @@ const PageConfig = {};
 const PageAlert = MJBS.createAlert();
 const PageLoading = MJBS.createLoading(null, "large");
 
-const FileList = cc("div", { classes: "d-inline-flex p-2" });
+const FileList = cc("div", { classes: "d-flex flex-wrap p-2" });
 
 function FileItem(file) {
   const fileItemID = "F-" + file.id;

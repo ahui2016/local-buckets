@@ -488,7 +488,7 @@ func rebuildThumbs(start, end int64) error {
 		if err != nil {
 			return err
 		}
-		_ = thumb.NailBytesToBase64(img, thumbFilePath(file.ID))
+		_ = thumb.SmartCropBytes64(img, thumbFilePath(file.ID))
 	}
 	return nil
 }
