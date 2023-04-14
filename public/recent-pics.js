@@ -76,12 +76,12 @@ $("#root")
 
 init();
 
-function init() {
+async function init() {
   PageConfig.bsFileEditCanvas = new bootstrap.Offcanvas(FileEditCanvas.id);
   FileEditCanvas.elem().on("hidden.bs.offcanvas", () => {
     $("#root").css({ marginLeft: "" });
   });
-  getBuckets();
+  FileInfoPageCfg.buckets = await getBuckets(PageAlert);
   getWaitingFolder();
   getRecentPics();
 }
@@ -97,10 +97,12 @@ function getRecentPics() {
       if (files && files.length > 0) {
         MJBS.appendToList(FileList, files.map(FileItem));
       } else {
-        PageAlert.insert(
-          "warning",
-          "未找到任何圖片, 請返回首頁, 點擊 Upload 上傳檔案."
-        );
+        if (bucketID == 0) {
+          PageAlert.insert(
+            "warning",
+            "未找到任何圖片, 請返回首頁, 點擊 Upload 上傳檔案."
+          );
+        }
       }
     },
     onAlways: () => {

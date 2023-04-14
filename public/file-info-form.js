@@ -309,13 +309,37 @@ function BucketItem(bucket) {
   });
 }
 
-function getBuckets() {
-  axiosGet({
-    url: "/api/auto-get-buckets",
-    alert: MoveToBucketAlert,
-    onSuccess: (resp) => {
-      FileInfoPageCfg.buckets = resp.data;
-    },
+function getBuckets(alert) {
+  return new Promise((resolve) => {
+    axiosGet({
+      url: "/api/auto-get-buckets",
+      alert: alert,
+      onSuccess: (resp) => {
+        const buckets = resp.data;
+        const currentID = getUrlParam("bucket");
+        if (!currentID) {
+          resolve(buckets);
+          return;
+        }
+
+        let hasID = false;
+        for (const bucket of buckets) {
+          console.log(currentID, bucket.id, bucket.name);
+          if (currentID == bucket.id) {
+            hasID = true;
+            const name =
+              bucket.name != bucket.title
+                ? `bucket.name(${bucket.title})`
+                : bucket.name;
+            alert.insert("info", `正在瀏覽倉庫: ${name}`);
+          }
+        }
+        if (!hasID) {
+          alert.insert("danger", `找不到倉庫ID: ${currentID}`);
+        }
+        resolve(buckets);
+      },
+    });
   });
 }
 

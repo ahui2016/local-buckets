@@ -192,9 +192,8 @@ async function init() {
   FileEditCanvas.elem().on("hidden.bs.offcanvas", () => {
     $("#root").css({ marginLeft: "" });
   });
-
-  getBuckets();
   getWaitingFolder();
+  FileInfoPageCfg.buckets = await getBuckets(PageAlert);
   PageConfig.projectInfo = await getProjectInfo();
   getRecentFiles();
 }
@@ -214,10 +213,12 @@ function getRecentFiles() {
           .removeClass("btn-light text-muted")
           .addClass("btn-danger");
       } else {
-        PageAlert.insert(
-          "warning",
-          "未找到任何檔案, 請返回首頁, 點擊 Upload 上傳檔案."
-        );
+        if (bucketID == 0) {
+          PageAlert.insert(
+            "warning",
+            "未找到任何檔案, 請返回首頁, 點擊 Upload 上傳檔案."
+          );
+        }
       }
     },
     onAlways: () => {
