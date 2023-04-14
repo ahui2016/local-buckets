@@ -87,8 +87,10 @@ function init() {
 }
 
 function getRecentPics() {
-  axiosGet({
+  const bucketID = getUrlParam("bucket");
+  axiosPost({
     url: "/api/recent-pics",
+    body: { id: parseInt(bucketID) },
     alert: PageAlert,
     onSuccess: (resp) => {
       const files = resp.data;

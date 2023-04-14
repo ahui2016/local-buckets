@@ -310,9 +310,27 @@ func (db *DB) GetRecentFiles() (files []*FilePlus, err error) {
 	return
 }
 
+func (db *DB) RecentFilesInBucket(id int64) (files []*FilePlus, err error) {
+	query := lo.Ternary(db.IsLoggedIn(), stmt.AllRecentFilesInBucket, stmt.PublicRecentFilesInBucket)
+	if files, err = getFilesPlus(db.DB, query, id, db.RecentFilesLimit); err != nil {
+		return
+	}
+	files = RemoveChecksum(files)
+	return
+}
+
 func (db *DB) GetRecentPics() (files []*FilePlus, err error) {
 	query := lo.Ternary(db.IsLoggedIn(), stmt.GetAllRecentPics, stmt.GetPublicRecentPics)
 	if files, err = getFilesPlus(db.DB, query, db.RecentFilesLimit); err != nil {
+		return
+	}
+	files = RemoveChecksum(files)
+	return
+}
+
+func (db *DB) RecentPicsInBucket(id int64) (files []*FilePlus, err error) {
+	query := lo.Ternary(db.IsLoggedIn(), stmt.AllRecentPicsInBucket, stmt.PublicRecentPicsInBucket)
+	if files, err = getFilesPlus(db.DB, query, id, db.RecentFilesLimit); err != nil {
 		return
 	}
 	files = RemoveChecksum(files)

@@ -200,8 +200,10 @@ async function init() {
 }
 
 function getRecentFiles() {
-  axiosGet({
+  const bucketID = getUrlParam("bucket");
+  axiosPost({
     url: "/api/recent-files",
+    body: { id: parseInt(bucketID) },
     alert: PageAlert,
     onSuccess: (resp) => {
       const files = resp.data;

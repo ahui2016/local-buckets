@@ -35,8 +35,8 @@ func main() {
 	api.Use("/rebuild-thumbs", requireAdmin)
 	api.Post("/rebuild-thumbs", rebuildThumbsHandler)
 
-	api.Get("/recent-files", getRecentFiles)           // resp.data: FilePlus[]
-	api.Get("/recent-pics", getRecentPics)             // resp.data: FilePlus[]
+	api.Post("/recent-files", getRecentFiles)          // resp.data: FilePlus[]
+	api.Post("/recent-pics", getRecentPics)            // resp.data: FilePlus[]
 	api.Post("/file-info", getFileByID)                // resp.data: FilePlus
 	api.Post("/update-file-info", updateFileInfo)      // resp.data: FilePlus
 	api.Post("/move-file-to-bucket", moveFileToBucket) // resp.data: FilePlus

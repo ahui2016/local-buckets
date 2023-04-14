@@ -76,6 +76,12 @@ function BucketItem(bucket) {
           m("div")
             .addClass("text-end")
             .append(
+              MJBS.createLinkElem("recent-files.html?bucket=" + bucket.id, {
+                text: "files",
+              }).addClass(`btn btn-sm ${btnColor} me-2`),
+              MJBS.createLinkElem("recent-pics.html?bucket=" + bucket.id, {
+                text: "pics",
+              }).addClass(`btn btn-sm ${btnColor} me-2`),
               MJBS.createLinkElem("waiting.html?bucket=" + bucket.name, {
                 text: "upload",
               }).addClass(`btn btn-sm ${btnColor} me-2`),

@@ -54,11 +54,20 @@ func noCache(c *fiber.Ctx) error {
 }
 
 // 如果处理加密文档或加密仓库, 则需要管理员权限.
-func encryptedRequireAdmin(encrypted bool) error {
+func checkRequireAdmin(encrypted bool) error {
 	if encrypted && !db.IsLoggedIn() {
 		return fmt.Errorf("處理加密檔案需要管理員權限")
 	}
 	return nil
+}
+
+// 如果是加密仓库, 则需要管理员权限.
+func checkBucketRequireAdmin(id int64) error {
+	bucket, err := db.GetBucket(id)
+	if err != nil {
+		return err
+	}
+	return checkRequireAdmin(bucket.Encrypted)
 }
 
 func parseValidate(form any, c *fiber.Ctx) error {
@@ -251,7 +260,7 @@ func overwriteFile(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	if err := encryptedRequireAdmin(dbFile.Encrypted); err != nil {
+	if err := checkRequireAdmin(dbFile.Encrypted); err != nil {
 		return err
 	}
 
@@ -344,7 +353,7 @@ func downloadFile(c *fiber.Ctx) error {
 	if err := util.WrapErrors(err, err2); err != nil {
 		return err
 	}
-	if err := encryptedRequireAdmin(file.Encrypted); err != nil {
+	if err := checkRequireAdmin(file.Encrypted); err != nil {
 		return err
 	}
 	srcPath := filepath.Join(BucketsFolder, file.BucketName, file.Name)
@@ -398,7 +407,7 @@ func importFiles(c *fiber.Ctx) error {
 		if err != nil {
 			return err
 		}
-		if err := encryptedRequireAdmin(bucket.Encrypted); err != nil {
+		if err := checkRequireAdmin(bucket.Encrypted); err != nil {
 			return err
 		}
 		// 正式上传文档
@@ -422,7 +431,7 @@ func uploadNewFiles(c *fiber.Ctx) error {
 	if err := util.WrapErrors(err1, err2); err != nil {
 		return err
 	}
-	if err := encryptedRequireAdmin(bucket.Encrypted); err != nil {
+	if err := checkRequireAdmin(bucket.Encrypted); err != nil {
 		return err
 	}
 	files, err := checkAndGetWaitingFiles()
@@ -600,7 +609,15 @@ func toWaitingFiles(files []string) (map[string]*File, error) {
 }
 
 func getRecentFiles(c *fiber.Ctx) error {
-	files, err := db.GetRecentFiles()
+	form, files, err := parseBucketIdForm(c)
+	if err != nil {
+		return err
+	}
+	if form.ID > 0 {
+		files, err = db.RecentFilesInBucket(form.ID)
+	} else {
+		files, err = db.GetRecentFiles()
+	}
 	if err != nil {
 		return err
 	}
@@ -608,11 +625,32 @@ func getRecentFiles(c *fiber.Ctx) error {
 }
 
 func getRecentPics(c *fiber.Ctx) error {
-	files, err := db.GetRecentPics()
+	form, files, err := parseBucketIdForm(c)
+	if err != nil {
+		return err
+	}
+	if form.ID > 0 {
+		files, err = db.RecentPicsInBucket(form.ID)
+	} else {
+		files, err = db.GetRecentPics()
+	}
 	if err != nil {
 		return err
 	}
 	return c.JSON(files)
+}
+
+func parseBucketIdForm(c *fiber.Ctx) (
+	form *model.BucketIdForm, files []*FilePlus, err error,
+) {
+	form = new(model.BucketIdForm)
+	e1 := parseValidate(form, c)
+	if form.ID == 0 {
+		return form, files, nil
+	}
+	e2 := checkBucketRequireAdmin(form.ID)
+	err = util.WrapErrors(e1, e2)
+	return
 }
 
 func getFileByID(c *fiber.Ctx) error {
@@ -624,7 +662,7 @@ func getFileByID(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	if err := encryptedRequireAdmin(file.Encrypted); err != nil {
+	if err := checkRequireAdmin(file.Encrypted); err != nil {
 		return err
 	}
 	file.Checksum = ""
@@ -643,7 +681,7 @@ func previewFile(c *fiber.Ctx) error {
 	if !file.CanBePreviewed() {
 		return fmt.Errorf("can not preview file type [%s]", file.Type)
 	}
-	if err := encryptedRequireAdmin(file.Encrypted); err != nil {
+	if err := checkRequireAdmin(file.Encrypted); err != nil {
 		return err
 	}
 	setFileType(c, file)
@@ -1241,7 +1279,7 @@ func deleteFile(c *fiber.Ctx) error {
 	if err := util.WrapErrors(err1, err2); err != nil {
 		return err
 	}
-	if err := encryptedRequireAdmin(file.Encrypted); err != nil {
+	if err := checkRequireAdmin(file.Encrypted); err != nil {
 		return err
 	}
 	return db.DeleteFile(

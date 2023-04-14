@@ -261,6 +261,10 @@ func checkFilename(name string) error {
 	return nil
 }
 
+type BucketIdForm struct {
+	ID int64 `json:"id" params:"id"`
+}
+
 type OneTextForm struct {
 	Text string `json:"text" validate:"required"`
 }
