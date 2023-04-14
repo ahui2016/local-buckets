@@ -19,8 +19,8 @@ type (
 	File          = model.File
 	FilePlus      = model.FilePlus
 	MovedFile     = model.MovedFile
-	ProjectInfo   = model.ProjectInfo
 	ProjectStatus = model.ProjectStatus
+	BucketStatus  = model.BucketStatus
 	TX            = database.TX
 )
 

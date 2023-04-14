@@ -75,10 +75,6 @@ func paramParseValidate(form any, c *fiber.Ctx) error {
 	return validate.Struct(form)
 }
 
-func getProjectInfo(c *fiber.Ctx) error {
-	return c.JSON(ProjectInfo{Project: ProjectConfig, Path: ProjectRoot})
-}
-
 func getProjectStatus(c *fiber.Ctx) error {
 	projStat, err := db.GetProjStat(ProjectConfig)
 	if err != nil {
@@ -123,7 +119,7 @@ func getLoginStatus(c *fiber.Ctx) error {
 }
 
 func autoGetBuckets(c *fiber.Ctx) error {
-	buckets, err := db.AutoGetBuckets()
+	buckets, err := db.AllBucketsStatus()
 	if err != nil {
 		return err
 	}

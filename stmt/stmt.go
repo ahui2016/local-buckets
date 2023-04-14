@@ -50,7 +50,6 @@ const UpdateBucketTitle = `UPDATE bucket SET title=?, subtitle=? WHERE id=?;`
 
 const GetAllBuckets = `SELECT * FROM bucket;`
 const GetPublicBuckets = `SELECT * FROM bucket WHERE encrypted=FALSE;`
-const GetPrivateBuckets = `SELECT * FROM bucket WHERE encrypted=TRUE;`
 const GetBucket = `SELECT * FROM bucket WHERE id=?;`
 const GetBucketByName = `SELECT * FROM bucket WHERE name=?;`
 const CountFilesInBucket = `SELECT count(*) FROM file WHERE bucket_name=?;`
@@ -141,3 +140,11 @@ const CountAllFiles = `SELECT count(*) FROM file;`
 const CountFilesNeedCheck = `SELECT count(*) FROM file WHERE checked<?;`
 const CountDamagedFiles = `SELECT count(*) FROM file WHERE damaged=TRUE;`
 const TotalSize = `SELECT COALESCE(sum(size),0) as totalsize FROM file;`
+
+const BucketTotalSize = `SELECT COALESCE(sum(size),0) as totalsize FROM file
+	INNER JOIN bucket ON file.bucket_name = bucket.name
+	WHERE bucket.id=?;`
+
+const BucketCountFiles = `SELECT count(*) FROM file
+	INNER JOIN bucket ON file.bucket_name = bucket.name
+	WHERE bucket.id=?;`

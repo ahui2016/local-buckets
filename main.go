@@ -19,8 +19,7 @@ func main() {
 	app.Get("/file/:id", previewFile)
 
 	api := app.Group("/api", sleep)
-	api.Get("/project-info", getProjectInfo)            // resp.data: ProjectInfo
-	api.Get("/auto-get-buckets", autoGetBuckets)        // resp.data: null | Bucket[]
+	api.Get("/auto-get-buckets", autoGetBuckets)        // resp.data: null | BucketStatus[]
 	api.Post("/create-bucket", createBucket)            // resp.data: Bucket
 	api.Get("/waiting-folder", getWaitingFolder)        // resp.data: TextMsg
 	api.Get("/imported-files", getImportedFilesHandler) // resp.data: File[]

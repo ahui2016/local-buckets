@@ -36,18 +36,38 @@ const ProjectInfo = cc("div", {
       .addClass("card-body")
       .append(
         m(ProjectInfoLoading).addClass("my-3"),
-        m("div").addClass("Project-Title card-title fw-bold mb-0"),
-        m("div").addClass("Project-Subtitle text-muted mt-0"),
-        m("div").addClass("Project-Path text-muted mt-1")
+        m("div")
+          .addClass("row")
+          .append(
+            m("div")
+              .addClass("col-9")
+              .append(
+                m("div").addClass("ProjectTitle card-title fw-bold mb-0"),
+                m("div").addClass("ProjectSubtitle text-muted mt-0"),
+                m("div").addClass("ProjectPath text-muted mt-1")
+              ),
+            m("div")
+              .addClass("col-3 text-end text-muted small")
+              .append(
+                m("div").addClass("ProjectFilesCount"),
+                m("div").addClass("ProjectTotalSize")
+              )
+          )
       ),
   ],
 });
 
 ProjectInfo.fill = (project) => {
   const elem = ProjectInfo.elem();
-  elem.find(".Project-Title").text(project.title);
-  elem.find(".Project-Subtitle").text(project.subtitle);
-  elem.find(".Project-Path").text(project.path);
+  elem.find(".ProjectTitle").text(project.title);
+  elem.find(".ProjectSubtitle").text(project.subtitle);
+  elem.find(".ProjectPath").text(project.Root);
+  if (project.FilesCount > 1) {
+    elem.find(".ProjectFilesCount").text(`${project.FilesCount} files`);
+  }
+  elem
+    .find(".ProjectTotalSize")
+    .text(`(${fileSizeToString(project.TotalSize)})`);
 };
 
 const LinkList = cc("div", {
@@ -69,7 +89,7 @@ $("#root")
     pageTitleArea.addClass("my-5"),
     m(AppAlert).addClass("my-3"),
     m(ProjectInfo).addClass("my-3"),
-    m(LinkList).addClass("my-5").hide(),
+    m(LinkList).addClass("my-5").hide()
   );
 
 init();
@@ -80,7 +100,7 @@ function init() {
 
 function initProjectInfo() {
   axiosGet({
-    url: "/api/project-info",
+    url: "/api/project-status",
     alert: AppAlert,
     onSuccess: (resp) => {
       const project = resp.data;

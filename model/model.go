@@ -49,11 +49,6 @@ func NewProject(title string, cipherkey string) *Project {
 	}
 }
 
-type ProjectInfo struct {
-	*Project
-	Path string `json:"path"` // sqlite 数据库文件路径
-}
-
 type ProjectStatus struct {
 	*Project
 	Root              string // 专案根目录
@@ -79,6 +74,12 @@ type Bucket struct {
 
 	// 是否加密 (在創建時決定, 不可更改) (密碼在 ProjectConfig 中統一設定)
 	Encrypted bool `json:"encrypted"`
+}
+
+type BucketStatus struct {
+	*Bucket
+	TotalSize  int64
+	FilesCount int64
 }
 
 // CreateBucketForm 用於新建倉庫, 由前端傳給后端.

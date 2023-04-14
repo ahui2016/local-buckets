@@ -227,7 +227,7 @@ function getRecentFiles() {
 function getProjectInfo() {
   return new Promise((resolve) => {
     axiosGet({
-      url: "/api/project-info",
+      url: "/api/project-status",
       alert: PageAlert,
       onSuccess: (resp) => {
         resolve(resp.data);

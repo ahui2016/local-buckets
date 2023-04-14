@@ -27,6 +27,7 @@ function BucketItem(bucket) {
   let cardStyle = "card mb-4";
   let cardHeaderStyle = "card-header";
   let cardBodyStyle = "card-body";
+  let btnColor;
 
   if (bucket.encrypted) {
     cardStyle += " text-bg-dark";
@@ -43,6 +44,11 @@ function BucketItem(bucket) {
   let bucketName = bucket.name;
   if (bucket.encrypted) bucketName = "🔒" + bucketName;
 
+  let filesCount = `${bucket.FilesCount} files`;
+  if (bucket.FilesCount <= 1) {
+    filesCount = "";
+  }
+
   return cc("div", {
     id: "B-" + bucket.name,
     classes: cardStyle,
@@ -52,10 +58,20 @@ function BucketItem(bucket) {
         .addClass(cardBodyStyle)
         .append(
           m("div")
-            .addClass("BucketItemBodyRowOne")
+            .addClass("BucketItemBodyRowOne row")
             .append(
-              m("div").addClass("fw-bold").text(bucket.title),
-              m("div").addClass("text-muted").text(bucket.subtitle)
+              m("div")
+                .addClass("col-9")
+                .append(
+                  m("div").addClass("fw-bold").text(bucket.title),
+                  m("div").addClass("text-muted").text(bucket.subtitle)
+                ),
+              m("div")
+                .addClass("col-3 text-end")
+                .append(
+                  m("div").text(filesCount),
+                  m("div").text(`(${fileSizeToString(bucket.TotalSize)})`)
+                )
             ),
           m("div")
             .addClass("text-end")
@@ -64,7 +80,7 @@ function BucketItem(bucket) {
                 text: "upload",
               }).addClass(`btn btn-sm ${btnColor} me-2`),
               MJBS.createLinkElem("edit-bucket.html?id=" + bucket.id, {
-                text: "info",
+                text: "edit",
               }).addClass(`btn btn-sm ${btnColor}`)
             )
         ),

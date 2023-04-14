@@ -24,6 +24,7 @@ type (
 	FileExportImport = model.FileExportImport
 	Project          = model.Project
 	ProjectStatus    = model.ProjectStatus
+	BucketStatus     = model.BucketStatus
 	MovedFile        = model.MovedFile
 	ErrSameNameFiles = model.ErrSameNameFiles
 )
@@ -105,12 +106,9 @@ func (db *DB) ChangePassword(oldPwd, newPwd string) (HexString, error) {
 	return db.cipherKey, nil
 }
 
-// AutoGetBuckets 根据数据库的状态自动获取公开仓库或全部仓库
-func (db *DB) AutoGetBuckets() ([]*Bucket, error) {
-	query := stmt.GetPublicBuckets
-	if db.IsLoggedIn() {
-		query = stmt.GetAllBuckets
-	}
+// autoGetBuckets 根据 db.IsLoggedIn 自动获取公开仓库或全部仓库
+func (db *DB) autoGetBuckets() ([]*Bucket, error) {
+	query := lo.Ternary(db.IsLoggedIn(), stmt.GetAllBuckets, stmt.GetPublicBuckets)
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
@@ -304,10 +302,7 @@ func (db *DB) GetAllFiles() (files []*File, err error) {
 }
 
 func (db *DB) GetRecentFiles() (files []*FilePlus, err error) {
-	query := stmt.GetPublicRecentFiles
-	if db.IsLoggedIn() {
-		query = stmt.GetAllRecentFiles
-	}
+	query := lo.Ternary(db.IsLoggedIn(), stmt.GetAllRecentFiles, stmt.GetPublicRecentFiles)
 	if files, err = getFilesPlus(db.DB, query, db.RecentFilesLimit); err != nil {
 		return
 	}
@@ -316,10 +311,7 @@ func (db *DB) GetRecentFiles() (files []*FilePlus, err error) {
 }
 
 func (db *DB) GetRecentPics() (files []*FilePlus, err error) {
-	query := stmt.GetPublicRecentPics
-	if db.IsLoggedIn() {
-		query = stmt.GetAllRecentPics
-	}
+	query := lo.Ternary(db.IsLoggedIn(), stmt.GetAllRecentPics, stmt.GetPublicRecentPics)
 	if files, err = getFilesPlus(db.DB, query, db.RecentFilesLimit); err != nil {
 		return
 	}
@@ -349,6 +341,28 @@ func (db *DB) GetProjStat(projCfg *Project) (ProjectStatus, error) {
 		DamagedCount:      damagedCount,
 	}
 	return projStat, err
+}
+
+// AllBucketsStatus 根据 db.IsLoggedIn 選擇获取公开仓库或全部仓库的狀態
+func (db *DB) AllBucketsStatus() (statusList []BucketStatus, err error) {
+	buckets, err := db.autoGetBuckets()
+	if err != nil {
+		return nil, err
+	}
+	for _, bucket := range buckets {
+		totalSize, e1 := getInt1(db.DB, stmt.BucketTotalSize, bucket.ID)
+		filesCount, e2 := getInt1(db.DB, stmt.BucketCountFiles, bucket.ID)
+		if err := util.WrapErrors(e1, e2); err != nil {
+			return nil, err
+		}
+		bucketStat := BucketStatus{
+			Bucket:     bucket,
+			TotalSize:  totalSize,
+			FilesCount: filesCount,
+		}
+		statusList = append(statusList, bucketStat)
+	}
+	return
 }
 
 // UpdateBackupFileInfo 更新一个文档的大多数信息, 但不更新 Checked 和 Damaged.
