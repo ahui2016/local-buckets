@@ -16,6 +16,8 @@ import (
 )
 
 const (
+	GB              = 1 << 30
+	Day             = 24 * 60 * 60
 	RFC3339         = "2006-01-02 15:04:05Z07:00"
 	MIMEOctetStream = "application/octet-stream"
 )
@@ -31,7 +33,8 @@ type Project struct {
 	CipherKey        string   `json:"cipherkey"` // 被加密的真正密鑰
 	ApiDelay         int64    `json:"api_delay"` // 後端 API 延遲, 單位: 毫秒
 	RecentFilesLimit int64    `json:"recent_files_limit"`
-	CheckInterval    int64    `jso:"check_interval"` // 檢查周期, 單位: day
+	CheckInterval    int64    `json:"check_interval"`   // 檢查周期, 單位: day
+	CheckSizeLimit   int64    `json:"check_size_limit"` // 每次檢查檔案體積上限, 單位: GB
 	IsBackup         bool     `json:"is_backup"`
 	BackupProjects   []string `json:"backup_projects"`
 	LastBackupAt     string   `json:"last_backup_at"`  // RFC3339
@@ -46,6 +49,7 @@ func NewProject(title string, cipherkey string) *Project {
 		CipherKey:        cipherkey,
 		RecentFilesLimit: 100,
 		CheckInterval:    30,
+		CheckSizeLimit:   1,
 	}
 }
 

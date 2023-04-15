@@ -24,6 +24,8 @@ type (
 	TX            = database.TX
 )
 
+const Day = model.Day
+
 const (
 	ProjectTOML       = "project.toml"
 	DatabaseFileName  = "project.db"
@@ -37,9 +39,9 @@ const (
 )
 
 var (
-	db                = new(database.DB)
-	ProjectRoot       = filepath.Dir(util.GetExePath())
+	db                *database.DB
 	ProjectConfig     *Project
+	ProjectRoot       = filepath.Dir(util.GetExePath())
 	ProjectConfigPath = filepath.Join(ProjectRoot, ProjectTOML)
 	DatabasePath      = filepath.Join(ProjectRoot, DatabaseFileName)
 	WaitingFolder     = filepath.Join(ProjectRoot, WaitingFolderName)
@@ -57,7 +59,7 @@ func init() {
 }
 
 func initDB() {
-	lo.Must0(db.Open(DatabasePath, ProjectConfig))
+	db = lo.Must1(database.OpenDB(DatabasePath, ProjectConfig))
 }
 
 func createFolders() {
@@ -81,6 +83,15 @@ func createBucketFolder(bucketID string) error {
 func readProjectConfig() {
 	data := lo.Must(os.ReadFile(ProjectConfigPath))
 	lo.Must0(toml.Unmarshal(data, &ProjectConfig))
+}
+
+func readProjCfgFrom(cfgPath string) (cfg Project, err error) {
+	data, err := os.ReadFile(cfgPath)
+	if err != nil {
+		return
+	}
+	err = toml.Unmarshal(data, &cfg)
+	return
 }
 
 func writeProjectConfig() error {

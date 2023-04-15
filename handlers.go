@@ -17,7 +17,6 @@ import (
 	"github.com/ahui2016/local-buckets/util"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
-	"github.com/pelletier/go-toml/v2"
 	"github.com/ricochet2200/go-disk-usage/du"
 	"github.com/samber/lo"
 )
@@ -936,24 +935,91 @@ func getBKProjStat(c *fiber.Ctx) error {
 }
 
 // 注意 open 后应立即 defer bk.DB.Close()
-func openBackupDB(bkProjRoot string) (bk *database.DB, bkProjStat *ProjectStatus, err error) {
+func openBackupDB(bkProjRoot string) (*database.DB, *ProjectStatus, error) {
 	bkPath := filepath.Join(bkProjRoot, DatabaseFileName)
 	bkProjCfgPath := filepath.Join(bkProjRoot, ProjectTOML)
-	data, err := os.ReadFile(bkProjCfgPath)
+
+	bkProjCfg, err := readProjCfgFrom(bkProjCfgPath)
 	if err != nil {
-		return
+		return nil, nil, err
 	}
-	bk = new(database.DB)
-	bkProjStat = new(ProjectStatus)
-	var bkProjCfg Project
-	if err = toml.Unmarshal(data, &bkProjCfg); err != nil {
-		return
+
+	bk, err := database.OpenDB(bkPath, &bkProjCfg)
+	if err != nil {
+		return nil, nil, err
 	}
-	if err = bk.Open(bkPath, &bkProjCfg); err != nil {
-		return
+
+	bkProjStat, err := bk.GetProjStat(&bkProjCfg)
+	return bk, &bkProjStat, err
+}
+
+func checkNow(c *fiber.Ctx) error {
+	form := new(model.OneTextForm)
+	if err := parseValidate(form, c); err != nil {
+		return err
 	}
-	*bkProjStat, err = bk.GetProjStat(&bkProjCfg)
-	return
+
+	root := form.Text
+	db1, cfg, err := getDatabaseFrom(root)
+	if err != nil {
+		return err
+	}
+	defer db1.DB.Close()
+
+	if err = checkFilesChecksum(root, db1); err != nil {
+		return err
+	}
+
+	projStat, err := db1.GetProjStat(cfg)
+	if err != nil {
+		return err
+	}
+	return c.JSON(projStat)
+}
+
+func getDatabaseFrom(root string) (*database.DB, *Project, error) {
+	yes, err := util.SamePath(root, ProjectRoot)
+	if err != nil {
+		return nil, nil, err
+	}
+	if yes {
+		return db, ProjectConfig, nil
+	}
+	bk, bkStat, err := openBackupDB(root)
+	return bk, bkStat.Project, err
+}
+
+// root 是被檢查的專案根目錄, db1 是被檢查的專案數據庫.
+func checkFilesChecksum(root string, db1 *database.DB) error {
+	var totalChecked int64
+	files, err := db1.GetFilesNeedCheck(ProjectConfig.CheckInterval * Day)
+	if err != nil {
+		return err
+	}
+	for _, file := range files {
+		// 先檢查一個檔案
+		if err = checkFile(root, file, db1); err != nil {
+			return err
+		}
+		// 然後根據 ProjectConfig.CheckSizeLimit 終止檢查
+		totalChecked += file.Size
+		if totalChecked > ProjectConfig.CheckSizeLimit {
+			return nil
+		}
+	}
+	return nil
+}
+
+func checkFile(root string, file *File, db1 *database.DB) error {
+	filePath := filepath.Join(root, BucketsFolderName, file.BucketName, file.Name)
+	sum, err := util.FileSum512(filePath)
+	if err != nil {
+		return err
+	}
+	if sum != file.Checksum {
+		file.Damaged = true
+	}
+	return db1.SetFileCheckedDamaged(file)
 }
 
 func syncBackup(c *fiber.Ctx) error {

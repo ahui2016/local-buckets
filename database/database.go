@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/ahui2016/local-buckets/model"
 	"github.com/ahui2016/local-buckets/stmt"
@@ -30,11 +31,28 @@ type (
 )
 
 type DB struct {
-	Path             string
-	RecentFilesLimit int64
 	DB               *sql.DB
+	Path             string // 数据库的路径
+	RecentFilesLimit int64
 	cipherKey        HexString
 	aesgcm           cipher.AEAD
+}
+
+func OpenDB(dbPath string, projCfg *Project) (*DB, error) {
+	const turnOnForeignKeys = "?_pragma=foreign_keys(1)"
+	sqlDB, err := sql.Open("sqlite", dbPath+turnOnForeignKeys)
+	if err != nil {
+		return nil, err
+	}
+	db := &DB{
+		DB:               sqlDB,
+		Path:             dbPath,
+		RecentFilesLimit: projCfg.RecentFilesLimit,
+		cipherKey:        projCfg.CipherKey,
+		aesgcm:           nil,
+	}
+	err = db.Exec(stmt.CreateTables)
+	return db, err
 }
 
 func (db *DB) Exec(query string, args ...any) (err error) {
@@ -52,20 +70,6 @@ func (db *DB) Query(query string, args ...any) (*sql.Rows, error) {
 
 func (db *DB) MustBegin() *sql.Tx {
 	return lo.Must(db.DB.Begin())
-}
-
-func (db *DB) Open(dbPath string, projCfg *Project) (err error) {
-	const turnOnForeignKeys = "?_pragma=foreign_keys(1)"
-	if db.DB, err = sql.Open("sqlite", dbPath+turnOnForeignKeys); err != nil {
-		return
-	}
-	if err = db.Exec(stmt.CreateTables); err != nil {
-		return
-	}
-	db.Path = dbPath
-	db.RecentFilesLimit = projCfg.RecentFilesLimit
-	db.cipherKey = projCfg.CipherKey
-	return nil
 }
 
 // GetInt1 gets one Integer value from the database.
@@ -450,4 +454,16 @@ func (db *DB) DecryptFile(filePath string) ([]byte, error) {
 		return nil, err
 	}
 	return decrypt(data, db.aesgcm)
+}
+
+// GetFilesNeedCheck 获取需要检查的文件, checkInterval 的单位是秒.
+func (db *DB) GetFilesNeedCheck(checkInterval int64) ([]*File, error) {
+	// 如果一个文件的上次校验日期小于(早于) needCheckDate, 那么这个文件就需要再次校验。
+	needCheckDateUnix := time.Now().Unix() - checkInterval
+	needCheckDate := time.Unix(needCheckDateUnix, 0).Format(model.RFC3339)
+	return getFiles(db.DB, stmt.GetFilesNeedCheck, needCheckDate)
+}
+
+func (db *DB) SetFileCheckedDamaged(file *File) error {
+	return db.Exec(stmt.CheckFile, file.Checked, file.Damaged, file.ID)
 }

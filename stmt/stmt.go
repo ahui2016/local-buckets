@@ -174,8 +174,11 @@ FROM file
 
 const CountAllFiles = `SELECT count(*) FROM file;`
 const CountFilesNeedCheck = `SELECT count(*) FROM file WHERE checked<?;`
+const GetFilesNeedCheck = `SELECT * FROM file WHERE checked<?;`
 const CountDamagedFiles = `SELECT count(*) FROM file WHERE damaged=TRUE;`
 const TotalSize = `SELECT COALESCE(sum(size),0) as totalsize FROM file;`
+
+const CheckFile = `UPDATE file SET checked=?, damaged=? WHERE id=?;`
 
 const BucketTotalSize = `SELECT COALESCE(sum(size),0) as totalsize FROM file
 	INNER JOIN bucket ON file.bucket_name = bucket.name

@@ -14,7 +14,9 @@ const navBar = m("div")
       .append(
         MJBS.createLinkElem("#", { text: "NewNote" }).addClass("NewNoteBtn"),
         " | ",
-        MJBS.createLinkElem("/recent-files.html", { text: "Files" })
+        MJBS.createLinkElem("/buckets.html", { text: "Buckets" }),
+        " | ",
+        MJBS.createLinkElem("/recent-files.html", { text: "Files" }),
       )
   );
 

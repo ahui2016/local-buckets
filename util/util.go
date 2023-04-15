@@ -135,6 +135,15 @@ func PathExists(name string) bool {
 	return !PathNotExists(name)
 }
 
+func SamePath(path1, path2 string) (yes bool, err error) {
+	info1, e1 := os.Lstat(path1)
+	info2, e2 := os.Lstat(path2)
+	if err = WrapErrors(e1, e2); err != nil {
+		return
+	}
+	return os.SameFile(info1, info2), nil
+}
+
 func DirIsEmpty(dirpath string) (ok bool, err error) {
 	items, err := filepath.Glob(dirpath + "/*")
 	ok = len(items) == 0

@@ -215,7 +215,13 @@ function createProjStat(projStat) {
               m("dt").addClass("col-sm-3").text("其中待檢查檔案 (個): "),
               m("dt")
                 .addClass("col-sm-9 text-muted")
-                .text(projStat.WaitingCheckCount),
+                .append(
+                  span(projStat.WaitingCheckCount).addClass("me-5"),
+                  m("button")
+                    .text("check now")
+                    .attr({ type: "button" })
+                    .addClass("btn btn-sm btn-light")
+                ),
 
               m("dt").addClass("col-sm-3").text("其中損毀檔案 (個): "),
               m("dt")
@@ -262,9 +268,9 @@ $("#root")
   .css(RootCss)
   .append(
     navBar.addClass("my-3"),
-    m(PageAlert).addClass("my-5"),
     m(PageLoading).addClass("my-5"),
     m(CreateBKProjForm).addClass("my-5").hide(),
+    m(PageAlert).addClass("my-5"),
     m(ProjectsStatusArea).addClass("my-5"),
     m(BKProjListArea).addClass("my-5").hide()
   );
