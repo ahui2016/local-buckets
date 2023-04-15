@@ -12,9 +12,11 @@ const navBar = m("div")
     m("div")
       .addClass("col text-end")
       .append(
-        MJBS.createLinkElem("#", { text: "help" }).addClass("HelpBtn"),
+        MJBS.createLinkElem("#", { text: "Files" }).addClass("FilesBtn"),
         " | ",
-        MJBS.createLinkElem("#", { text: "Link2" }).addClass("Link2")
+        MJBS.createLinkElem("/buckets.html", { text: "Buckets" }),
+        " | ",
+        MJBS.createLinkElem("#", { text: "help" }).addClass("HelpBtn")
       )
   );
 
@@ -77,17 +79,27 @@ $("#root")
 init();
 
 async function init() {
+  let bucketID = getUrlParam("bucket");
+
   PageConfig.bsFileEditCanvas = new bootstrap.Offcanvas(FileEditCanvas.id);
+
   FileEditCanvas.elem().on("hidden.bs.offcanvas", () => {
     $("#root").css({ marginLeft: "" });
   });
   FileInfoPageCfg.buckets = await getBuckets(PageAlert);
   getWaitingFolder();
-  getRecentPics();
+  getRecentPics(bucketID);
+
+  initNavButtons(bucketID);
 }
 
-function getRecentPics() {
-  let bucketID = getUrlParam("bucket");
+function initNavButtons(bucketID) {
+  let href = "/recent-files.html";
+  if (bucketID) href += `?bucket=${bucketID}`;
+  $(".FilesBtn").attr({ href: href });
+}
+
+function getRecentPics(bucketID) {
   bucketID = parseInt(bucketID);
   if (bucketID > 0) {
     PageConfig.picsInBucket = true;
@@ -102,10 +114,9 @@ function getRecentPics() {
       if (files && files.length > 0) {
         MJBS.appendToList(FileList, files.map(FileItem));
       } else {
-        const errMsg =
-          bucketID == 0
-            ? "未找到任何圖片, 請返回首頁, 點擊 Upload 上傳檔案."
-            : "在本倉庫中未找到任何圖片";
+        const errMsg = bucketID
+          ? "在本倉庫中未找到任何圖片"
+          : "未找到任何圖片, 請返回首頁, 點擊 Upload 上傳圖片.";
         PageAlert.insert("warning", errMsg);
       }
     },

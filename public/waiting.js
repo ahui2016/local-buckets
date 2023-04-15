@@ -14,7 +14,7 @@ const navBar = m("div")
       .append(
         MJBS.createLinkElem("#", { text: "NewNote" }).addClass("NewNoteBtn"),
         " | ",
-        MJBS.createLinkElem("#", { text: "Link2" }).addClass("Link2")
+        MJBS.createLinkElem("/recent-files.html", { text: "Files" })
       )
   );
 
@@ -119,6 +119,10 @@ const UploadButtonArea = cc("div", {
         alert: UploadAlert,
         onSuccess: () => {
           UploadAlert.clear().insert("success", "上傳成功");
+          UploadAlert.insert(
+            "info",
+            "點擊本頁右上角的 Files 按鈕可查看新上傳的檔案."
+          );
           UploadButton.hide();
         },
         onAlways: () => {
@@ -180,8 +184,8 @@ function initBuckets() {
 
 function initDefaultBucket() {
   const bucket = getUrlParam("bucket");
-  if (!bucket) return
-  $('#B-'+bucket).prop({selected: true});
+  if (!bucket) return;
+  $("#B-" + bucket).prop({ selected: true });
 }
 
 function getWaitingFiles() {
@@ -296,10 +300,7 @@ function initNewNoteBtn() {
       url: "/api/create-new-note",
       alert: PageAlert,
       onSuccess: (resp) => {
-        PageAlert.insert(
-          "success",
-          `已生成文字檔案 ${resp.data.text}`
-        );
+        PageAlert.insert("success", `已生成文字檔案 ${resp.data.text}`);
       },
     });
   });

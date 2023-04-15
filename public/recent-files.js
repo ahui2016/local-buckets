@@ -12,9 +12,9 @@ const navBar = m("div")
     m("div")
       .addClass("col text-end")
       .append(
-        MJBS.createLinkElem("#", { text: "Link1" }).addClass("Link1"),
+        MJBS.createLinkElem("#", { text: "Pics" }).addClass("PicsBtn"),
         " | ",
-        MJBS.createLinkElem("#", { text: "Link2" }).addClass("Link2")
+        MJBS.createLinkElem("/buckets.html", { text: "Buckets" }),
       )
   );
 
@@ -187,6 +187,8 @@ $("#root")
 init();
 
 async function init() {
+  const bucketID = getUrlParam("bucket");
+
   PageConfig.bsFileEditCanvas = new bootstrap.Offcanvas(FileEditCanvas.id);
 
   FileEditCanvas.elem().on("hidden.bs.offcanvas", () => {
@@ -195,11 +197,18 @@ async function init() {
   getWaitingFolder();
   FileInfoPageCfg.buckets = await getBuckets(PageAlert);
   PageConfig.projectInfo = await getProjectInfo();
-  getRecentFiles();
+  getRecentFiles(bucketID);
+
+  initNavButtons(bucketID);
 }
 
-function getRecentFiles() {
-  const bucketID = getUrlParam("bucket");
+function initNavButtons(bucketID) {
+  let href = "/recent-pics.html";
+  if (bucketID) href += `?bucket=${bucketID}`;
+  $(".PicsBtn").attr({ href: href });
+}
+
+function getRecentFiles(bucketID) {
   axiosPost({
     url: "/api/recent-files",
     body: { id: parseInt(bucketID) },
@@ -213,10 +222,9 @@ function getRecentFiles() {
           .removeClass("btn-light text-muted")
           .addClass("btn-danger");
       } else {
-        const errMsg =
-          bucketID == 0
-            ? "未找到任何檔案, 請返回首頁, 點擊 Upload 上傳檔案."
-            : "在本倉庫中未找到任何檔案";
+        const errMsg = bucketID
+          ? "在本倉庫中未找到任何檔案"
+          : "未找到任何檔案, 請返回首頁, 點擊 Upload 上傳檔案.";
         PageAlert.insert("warning", errMsg);
       }
     },

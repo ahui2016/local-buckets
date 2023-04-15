@@ -12,9 +12,11 @@ const navBar = m("div")
     m("div")
       .addClass("col text-end")
       .append(
-        MJBS.createLinkElem("#", { text: "Link1" }).addClass("Link1"),
+        MJBS.createLinkElem("/recent-files.html", { text: "Files" }),
         " | ",
-        MJBS.createLinkElem("#", { text: "Link2" }).addClass("Link2")
+        MJBS.createLinkElem("/recent-pics.html", { text: "Pics" }),
+        " | ",
+        MJBS.createLinkElem("/create-bucket.html", { text: "New" }),
       )
   );
 

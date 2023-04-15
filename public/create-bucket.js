@@ -11,11 +11,7 @@ const navBar = m("div")
       ),
     m("div")
       .addClass("col text-end")
-      .append(
-        MJBS.createLinkElem("#", { text: "Link1" }).addClass("Link1"),
-        " | ",
-        MJBS.createLinkElem("#", { text: "Link2" }).addClass("Link2")
-      )
+      .append(MJBS.createLinkElem("/buckets.html", { text: "Buckets" }))
   );
 
 const PageAlert = MJBS.createAlert();
@@ -32,7 +28,7 @@ const CreateBucketForm = cc("form", {
       "Bucket Name",
       "倉庫資料夾名稱, 只能使用 0-9, a-z, A-Z, _(下劃線), -(連字號), .(點)"
     ),
-    MJBS.createFormCheck(BucketEncryptBox, "Secret Bucket", "是否設為加密倉庫"),
+    MJBS.createFormCheck(BucketEncryptBox, "Secret Bucket", "設為加密倉庫"),
     MJBS.hiddenButtonElem(),
     m(CreateBucketBtn).on("click", (event) => {
       event.preventDefault();
