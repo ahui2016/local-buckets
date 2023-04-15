@@ -87,22 +87,26 @@ async function init() {
 }
 
 function getRecentPics() {
-  const bucketID = getUrlParam("bucket");
+  let bucketID = getUrlParam("bucket");
+  bucketID = parseInt(bucketID);
+  if (bucketID > 0) {
+    PageConfig.picsInBucket = true;
+  }
+
   axiosPost({
     url: "/api/recent-pics",
-    body: { id: parseInt(bucketID) },
+    body: { id: bucketID },
     alert: PageAlert,
     onSuccess: (resp) => {
       const files = resp.data;
       if (files && files.length > 0) {
         MJBS.appendToList(FileList, files.map(FileItem));
       } else {
-        if (bucketID == 0) {
-          PageAlert.insert(
-            "warning",
-            "未找到任何圖片, 請返回首頁, 點擊 Upload 上傳檔案."
-          );
-        }
+        const errMsg =
+          bucketID == 0
+            ? "未找到任何圖片, 請返回首頁, 點擊 Upload 上傳檔案."
+            : "在本倉庫中未找到任何圖片";
+        PageAlert.insert("warning", errMsg);
       }
     },
     onAlways: () => {

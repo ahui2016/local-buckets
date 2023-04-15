@@ -324,7 +324,6 @@ function getBuckets(alert) {
 
         let hasID = false;
         for (const bucket of buckets) {
-          console.log(currentID, bucket.id, bucket.name);
           if (currentID == bucket.id) {
             hasID = true;
             const name =
@@ -367,6 +366,10 @@ function initBucketSelect(currentbucketName) {
 }
 
 function updateFileItem(file) {
+  if (PageConfig.picsInBucket) {
+    $("#F-" + file.id).hide();
+    return;
+  }
   const item = FileItem(file);
   item.elem().replaceWith(m(item));
   item.init();

@@ -213,12 +213,11 @@ function getRecentFiles() {
           .removeClass("btn-light text-muted")
           .addClass("btn-danger");
       } else {
-        if (bucketID == 0) {
-          PageAlert.insert(
-            "warning",
-            "未找到任何檔案, 請返回首頁, 點擊 Upload 上傳檔案."
-          );
-        }
+        const errMsg =
+          bucketID == 0
+            ? "未找到任何檔案, 請返回首頁, 點擊 Upload 上傳檔案."
+            : "在本倉庫中未找到任何檔案";
+        PageAlert.insert("warning", errMsg);
       }
     },
     onAlways: () => {
