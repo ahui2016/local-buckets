@@ -43,9 +43,10 @@ func main() {
 
 	api.Post("/create-bk-proj", createBKProjHandler)
 	api.Post("/delete-bk-proj", deleteBKProjHandler)
-	api.Get("/project-status", getProjectStatus)  // resp.data: ProjectStatus
-	api.Post("/bk-project-status", getBKProjStat) // resp.data: ProjectStatus
-	api.Post("/check-now", checkNow)              // resp.data: ProjectStatus
+	api.Get("/project-status", getProjectStatus)   // resp.data: ProjectStatus
+	api.Post("/bk-project-status", getBKProjStat)  // resp.data: ProjectStatus
+	api.Post("/check-now", checkNow)               // resp.data: ProjectStatus
+	api.Get("/damaged-files", damagedFilesHandler) // resp.data: File[]
 	api.Post("/sync-backup", syncBackup)
 
 	api.Get("/login-status", getLoginStatus) // resp.data: OneTextForm

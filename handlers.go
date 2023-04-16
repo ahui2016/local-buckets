@@ -964,7 +964,9 @@ func checkNow(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	defer db1.DB.Close()
+	if db1.IsBackup {
+		defer db1.DB.Close()
+	}
 
 	if err = checkFilesChecksum(root, db1); err != nil {
 		return err
@@ -1003,7 +1005,7 @@ func checkFilesChecksum(root string, db1 *database.DB) error {
 		}
 		// 然後根據 ProjectConfig.CheckSizeLimit 終止檢查
 		totalChecked += file.Size
-		if totalChecked > ProjectConfig.CheckSizeLimit {
+		if totalChecked > ProjectConfig.CheckSizeLimit*GB {
 			return nil
 		}
 	}
@@ -1019,6 +1021,7 @@ func checkFile(root string, file *File, db1 *database.DB) error {
 	if sum != file.Checksum {
 		file.Damaged = true
 	}
+	file.Checked = model.Now()
 	return db1.SetFileCheckedDamaged(file)
 }
 
@@ -1366,4 +1369,12 @@ func createNewNote(c *fiber.Ctx) error {
 		return err
 	}
 	return c.JSON(TextMsg{f.Name()})
+}
+
+func damagedFilesHandler(c *fiber.Ctx) error {
+	files, err := db.GetDamagedFiles()
+	if err != nil {
+		return err
+	}
+	return c.JSON(files)
 }

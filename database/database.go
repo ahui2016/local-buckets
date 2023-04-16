@@ -33,6 +33,7 @@ type (
 type DB struct {
 	DB               *sql.DB
 	Path             string // 数据库的路径
+	IsBackup         bool
 	RecentFilesLimit int64
 	cipherKey        HexString
 	aesgcm           cipher.AEAD
@@ -47,6 +48,7 @@ func OpenDB(dbPath string, projCfg *Project) (*DB, error) {
 	db := &DB{
 		DB:               sqlDB,
 		Path:             dbPath,
+		IsBackup:         projCfg.IsBackup,
 		RecentFilesLimit: projCfg.RecentFilesLimit,
 		cipherKey:        projCfg.CipherKey,
 		aesgcm:           nil,
@@ -454,6 +456,10 @@ func (db *DB) DecryptFile(filePath string) ([]byte, error) {
 		return nil, err
 	}
 	return decrypt(data, db.aesgcm)
+}
+
+func (db *DB) GetDamagedFiles() ([]*File, error) {
+	return getFiles(db.DB, stmt.GetDamagedFiles)
 }
 
 // GetFilesNeedCheck 获取需要检查的文件, checkInterval 的单位是秒.

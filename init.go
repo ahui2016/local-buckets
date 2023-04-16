@@ -24,7 +24,10 @@ type (
 	TX            = database.TX
 )
 
-const Day = model.Day
+const (
+	GB  = model.GB
+	Day = model.Day
+)
 
 const (
 	ProjectTOML       = "project.toml"

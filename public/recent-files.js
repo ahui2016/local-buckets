@@ -14,7 +14,7 @@ const navBar = m("div")
       .append(
         MJBS.createLinkElem("#", { text: "Pics" }).addClass("PicsBtn"),
         " | ",
-        MJBS.createLinkElem("/buckets.html", { text: "Buckets" }),
+        MJBS.createLinkElem("/buckets.html", { text: "Buckets" })
       )
   );
 
@@ -33,9 +33,7 @@ function FileItem(file) {
 
   const ItemAlert = MJBS.createAlert();
 
-  const bodyRowOne = m("div")
-    .addClass("mb-2 FileItemBodyRowOne")
-    .append(m("div").addClass("text-right FileItemBadges"));
+  const bodyRowOne = m("div").addClass("mb-2 FileItemBodyRowOne");
 
   const bodyRowTwoLeft = m("div")
     .addClass("col-2 text-start")
@@ -129,7 +127,12 @@ function FileItem(file) {
     id: fileItemID,
     classes: "card mb-4",
     children: [
-      m("div").addClass("card-header").text(headerText),
+      m("div")
+        .addClass("card-header")
+        .append(
+          span("DAMAGED").addClass("badge text-bg-danger DamagedBadge").hide(),
+          span(headerText)
+        ),
       m("div")
         .addClass("card-body")
         .append(
@@ -141,13 +144,18 @@ function FileItem(file) {
   });
 
   self.init = () => {
-    const badges = self.find(".FileItemBadges");
     const rowOne = self.find(".FileItemBodyRowOne");
+    const damagedBadge = self.find(".DamagedBadge");
+
+    self.find(".FileInfoBtn").addClass("btn btn-sm btn-light text-muted");
+
+    self
+      .find(".FileInfoDangerDelBtn")
+      .removeClass("btn-light text-muted")
+      .addClass("btn-danger");
+
     if (file.damaged) {
-      badges.append(span("DAMAGED").addClass("badge text-bg-danger"));
-    }
-    if (file.deleted) {
-      badges.append(span("DELETED").addClass("badge text-bg-secondary ms-2"));
+      damagedBadge.show();
     }
     if (file.notes) {
       rowOne.append(m("div").append(span(file.notes).addClass("text-muted")));
@@ -194,12 +202,17 @@ async function init() {
   FileEditCanvas.elem().on("hidden.bs.offcanvas", () => {
     $("#root").css({ marginLeft: "" });
   });
+
+  initNavButtons(bucketID);
   getWaitingFolder();
   FileInfoPageCfg.buckets = await getBuckets(PageAlert);
   PageConfig.projectInfo = await getProjectInfo();
-  getRecentFiles(bucketID);
 
-  initNavButtons(bucketID);
+  if (getUrlParam("damaged")) {
+    getDamagedFiles();
+  } else {
+    getRecentFiles(bucketID);
+  }
 }
 
 function initNavButtons(bucketID) {
@@ -217,15 +230,30 @@ function getRecentFiles(bucketID) {
       const files = resp.data;
       if (files && files.length > 0) {
         MJBS.appendToList(FileList, files.map(FileItem));
-        $(".FileInfoBtn").addClass("btn btn-sm btn-light text-muted");
-        $(".FileInfoDangerDelBtn")
-          .removeClass("btn-light text-muted")
-          .addClass("btn-danger");
       } else {
         const errMsg = bucketID
           ? "在本倉庫中未找到任何檔案"
           : "未找到任何檔案, 請返回首頁, 點擊 Upload 上傳檔案.";
         PageAlert.insert("warning", errMsg);
+      }
+    },
+    onAlways: () => {
+      PageLoading.hide();
+    },
+  });
+}
+
+function getDamagedFiles() {
+  PageAlert.insert("info", "正在瀏覽損毀檔案 (damaged files)");
+  axiosGet({
+    url: "/api/damaged-files",
+    alert: PageAlert,
+    onSuccess: (resp) => {
+      const files = resp.data;
+      if (files && files.length > 0) {
+        MJBS.appendToList(FileList, files.map(FileItem));
+      } else {
+        PageAlert.insert("warning", "未找到損毀檔案");
       }
     },
     onAlways: () => {

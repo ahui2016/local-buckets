@@ -1,6 +1,7 @@
 $("title").text("Backup (備份專案) - Local Buckets");
 
 let mainProjStat = null;
+let bkProjStat = null;
 
 const PageAlert = MJBS.createAlert();
 const PageLoading = MJBS.createLoading(null, "large");
@@ -180,20 +181,62 @@ function BKProjItem(projPath) {
 
 // 根据 ProjectStatus 展示专案状态, "源专案" 与 "备份专案" 都使用该函数.
 function createProjStat(projStat) {
+  let projID = "source-proj";
   let projType = "Source (源專案)";
-  if (projStat.is_backup) projType = "Destination (備份專案)";
+  if (projStat.is_backup) {
+    projID = "destination-proj";
+    projType = "Destination (備份專案)";
+  }
 
   let lastBackup = projStat.last_backup_at.substr(0, 16);
   if (projStat.last_backup_at == "") lastBackup = "Not Yet";
 
+  const damageTextColor = projStat.DamagedCount ? " text-danger" : "text-muted";
+
+  const checkNowBtn = m("button")
+    .text("check now")
+    .attr({ type: "button" })
+    .addClass("btn btn-sm btn-light CheckNowBtn")
+    .on("click", (event) => {
+      event.preventDefault();
+      const checkNowBtnID = `#${projID} .CheckNowBtn`;
+      MJBS.disable(checkNowBtnID);
+      axiosPost({
+        url: "/api/check-now",
+        body: { text: projStat.Root },
+        alert: PageAlert,
+        onSuccess: (resp) => {
+          projStat = resp.data;
+          if (projID == 'source-proj') {
+            mainProjStat = projStat;
+          } else {
+            bkProjStat = projStat;
+          }
+          const checkCountID = `#${projID} .WaitingCheckCount`;
+          const damagedCountID = `#${projID} .DamagedCount`;
+          $(checkCountID).text(projStat.WaitingCheckCount);
+          $(damagedCountID).text(projStat.DamagedCount);
+          if (projStat.DamagedCount > 0) {
+            $(damagedCountID)
+              .removeClass("text-muted text-danger")
+              .addClass("text-danger");
+          }
+        },
+        onAlways: () => {
+          MJBS.enable(checkNowBtnID);
+        },
+      });
+    });
+
   return cc("div", {
+    id: projID,
     classes: "card mb-2",
     children: [
       m("div")
         .addClass("card-header")
         .append(
           m("div").text(projType),
-          m("div").text(projStat.Path).addClass("text-muted")
+          m("div").text(projStat.Root).addClass("text-muted")
         ),
       m("div")
         .addClass("card-body")
@@ -216,16 +259,15 @@ function createProjStat(projStat) {
               m("dt")
                 .addClass("col-sm-9 text-muted")
                 .append(
-                  span(projStat.WaitingCheckCount).addClass("me-5"),
-                  m("button")
-                    .text("check now")
-                    .attr({ type: "button" })
-                    .addClass("btn btn-sm btn-light")
+                  span(projStat.WaitingCheckCount).addClass(
+                    "me-5 WaitingCheckCount"
+                  ),
+                  checkNowBtn
                 ),
 
               m("dt").addClass("col-sm-3").text("其中損毀檔案 (個): "),
               m("dt")
-                .addClass("col-sm-9 text-muted")
+                .addClass("col-sm-9 DamagedCount " + damageTextColor)
                 .text(projStat.DamagedCount)
             )
         ),
@@ -321,7 +363,7 @@ function getBKProject(bkProjRoot, alert, btn) {
     alert: alert,
     body: { text: bkProjRoot },
     onSuccess: (resp) => {
-      const bkProjStat = resp.data;
+      bkProjStat = resp.data;
       const BKProjStat = createProjStat(bkProjStat);
       ProjectsStatusArea.elem().append(
         m("div").addClass("my-2 text-center").html(IconDownArrow),
@@ -350,6 +392,7 @@ function getBKProject(bkProjRoot, alert, btn) {
     },
   });
 }
+
 function initBKProjects(projects) {
   if (projects && projects.length > 0) {
     BKProjListArea.show();

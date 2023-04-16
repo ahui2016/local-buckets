@@ -172,11 +172,12 @@ FROM file
 	WHERE bucket.id=? AND bucket.encrypted=FALSE AND file.type LIKE "image/%"
 	ORDER BY file.utime DESC LIMIT ?;`
 
+const TotalSize = `SELECT COALESCE(sum(size),0) as totalsize FROM file;`
 const CountAllFiles = `SELECT count(*) FROM file;`
 const CountFilesNeedCheck = `SELECT count(*) FROM file WHERE checked<?;`
 const GetFilesNeedCheck = `SELECT * FROM file WHERE checked<?;`
 const CountDamagedFiles = `SELECT count(*) FROM file WHERE damaged=TRUE;`
-const TotalSize = `SELECT COALESCE(sum(size),0) as totalsize FROM file;`
+const GetDamagedFiles = `SELECT * FROM file WHERE damaged=TRUE;`
 
 const CheckFile = `UPDATE file SET checked=?, damaged=? WHERE id=?;`
 
