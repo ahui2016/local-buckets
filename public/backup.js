@@ -222,7 +222,7 @@ function createProjStat(projStat) {
               .addClass("text-danger");
           }
           if (projStat.WaitingCheckCount == 0) {
-            $(checkCountID).hide();
+            $(checkNowBtnID).hide();
           }
         },
         onAlways: () => {
