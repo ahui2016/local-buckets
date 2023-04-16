@@ -207,7 +207,7 @@ function createProjStat(projStat) {
         alert: PageAlert,
         onSuccess: (resp) => {
           projStat = resp.data;
-          if (projID == 'source-proj') {
+          if (projID == "source-proj") {
             mainProjStat = projStat;
           } else {
             bkProjStat = projStat;
@@ -221,12 +221,19 @@ function createProjStat(projStat) {
               .removeClass("text-muted text-danger")
               .addClass("text-danger");
           }
+          if (projStat.WaitingCheckCount == 0) {
+            $(checkCountID).hide();
+          }
         },
         onAlways: () => {
           MJBS.enable(checkNowBtnID);
         },
       });
     });
+
+  if (projStat.WaitingCheckCount == 0) {
+    checkNowBtn.hide();
+  }
 
   return cc("div", {
     id: projID,
@@ -370,10 +377,10 @@ function getBKProject(bkProjRoot, alert, btn) {
         m(BKProjStat),
         m(BackupButtonsArea)
       );
-      if (mainProjStat.TotalSize - bkProjStat.TotalSize > 100 * GB) {
+      if (mainProjStat.TotalSize - bkProjStat.TotalSize > 10 * GB) {
         BackupBtnAlert.insert(
           "warning",
-          "注意, 待備份資料超過 100GB, 可能需要很長時間, 請確保電腦電量充足."
+          "注意, 待備份資料超過 10GB, 可能需要很長時間, 請確保電腦電量充足."
         );
       }
       if (bkProjStat.DamagedCount + mainProjStat.DamagedCount > 0) {
