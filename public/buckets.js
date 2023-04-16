@@ -6,7 +6,7 @@ const navBar = m("div")
     m("div")
       .addClass("col text-start")
       .append(
-        MJBS.createLinkElem("index.html", { text: "Local-Buckets" }),
+        MJBS.createLinkElem("index.html", { text: "Home" }),
         span(" .. Buckets (倉庫清單)")
       ),
     m("div")
@@ -16,7 +16,7 @@ const navBar = m("div")
         " | ",
         MJBS.createLinkElem("/recent-pics.html", { text: "Pics" }),
         " | ",
-        MJBS.createLinkElem("/create-bucket.html", { text: "New" }),
+        MJBS.createLinkElem("/create-bucket.html", { text: "New" })
       )
   );
 
@@ -102,7 +102,8 @@ $("#root")
     navBar.addClass("my-3"),
     m(PageAlert).addClass("my-5"),
     m(PageLoading).addClass("my-5"),
-    m(BucketList).addClass("my-5")
+    m(BucketList).addClass("my-5"),
+    bottomDot
   );
 
 init();

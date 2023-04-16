@@ -695,6 +695,8 @@ function fileSizeToString(fileSize, fixed) {
   return `${sizeGB.toFixed(fixed)} GB`;
 }
 
+const bottomDot = m("div").text(".").addClass("my-5 text-light");
+
 // 以下與 mj-bs.js 無關.
 
 const DateFormatYMD = "YYYY-MM-DD";

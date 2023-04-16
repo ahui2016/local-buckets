@@ -13,7 +13,7 @@ const CTimeInput = MJBS.createInput("text", "required");
 const UTimeInput = MJBS.createInput();
 const CheckedInput = MJBS.createInput(); // readonly
 const DamagedInput = MJBS.createInput(); // readonly
-const DeletedInput = MJBS.createInput(); // readonly
+// const DeletedInput = MJBS.createInput(); // readonly
 
 const MoveToBucketAlert = MJBS.createAlert();
 const BucketSelect = cc("select", { classes: "form-select" });
@@ -131,7 +131,7 @@ const EditFileForm = cc("form", {
       "上次檢查檔案完整性的時間."
     ),
     MJBS.createFormControl(DamagedInput, "Damaged", "檔案是否損壞"),
-    MJBS.createFormControl(DeletedInput, "Deleted", "檔案是否標記為刪除"),
+    // MJBS.createFormControl(DeletedInput, "Deleted", "檔案是否標記為刪除"),
 
     m(SubmitBtnAlert).addClass("my-3"),
     m("div")
@@ -278,14 +278,14 @@ function initEditFileForm(fileID, selfButton, onlyImages) {
       UTimeInput.setVal(file.utime);
       CheckedInput.setVal(file.checked);
       DamagedInput.setVal(file.damaged);
-      DeletedInput.setVal(file.deleted);
+      // DeletedInput.setVal(file.deleted);
 
       MJBS.disable(IdInput);
       MJBS.disable(BucketInput);
       MJBS.disable(SizeInput);
       MJBS.disable(CheckedInput);
       MJBS.disable(DamagedInput);
-      MJBS.disable(DeletedInput);
+      // MJBS.disable(DeletedInput);
 
       EditFileForm.show();
       SubmitBtnAlert.clear();

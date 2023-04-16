@@ -63,7 +63,7 @@ const navBar = m("div")
     m("div")
       .addClass("col text-start")
       .append(
-        MJBS.createLinkElem("index.html", { text: "Local-Buckets" }),
+        MJBS.createLinkElem("index.html", { text: "Home" }),
         span(" .. Backup (備份專案)")
       ),
     m("div")

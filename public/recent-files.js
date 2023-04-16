@@ -6,7 +6,7 @@ const navBar = m("div")
     m("div")
       .addClass("col text-start")
       .append(
-        MJBS.createLinkElem("index.html", { text: "Local-Buckets" }),
+        MJBS.createLinkElem("index.html", { text: "Home" }),
         span(" .. Recent files (最近檔案)")
       ),
     m("div")
@@ -189,7 +189,7 @@ $("#root")
     m(PageLoading).addClass("my-5"),
     m(FileEditCanvas),
     m(FileList).addClass("my-5"),
-    m("div").text(".").addClass("my-5 text-light")
+    bottomDot,
   );
 
 init();
