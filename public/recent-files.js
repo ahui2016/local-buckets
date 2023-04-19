@@ -84,7 +84,7 @@ function FileItem(file) {
           );
         }),
       MJBS.createLinkElem("#", { text: "del" })
-        .addClass("FileInfoBtn FileInfoDelBtn me-1")
+        .addClass("FileInfoBtn FileInfoDelBtn HideIfBackup me-1")
         .attr({ title: "delete" })
         .on("click", (event) => {
           event.preventDefault();
@@ -130,7 +130,9 @@ function FileItem(file) {
       m("div")
         .addClass("card-header")
         .append(
-          span("DAMAGED").addClass("badge text-bg-danger DamagedBadge me-1").hide(),
+          span("DAMAGED")
+            .addClass("badge text-bg-danger DamagedBadge me-1")
+            .hide(),
           span(headerText)
         ),
       m("div")
@@ -189,7 +191,7 @@ $("#root")
     m(PageLoading).addClass("my-5"),
     m(FileEditCanvas),
     m(FileList).addClass("my-5"),
-    bottomDot,
+    bottomDot
   );
 
 init();
@@ -230,6 +232,7 @@ function getRecentFiles(bucketID) {
       const files = resp.data;
       if (files && files.length > 0) {
         MJBS.appendToList(FileList, files.map(FileItem));
+        initBackupProject(PageConfig.projectInfo, PageAlert);
       } else {
         const errMsg = bucketID
           ? "在本倉庫中未找到任何檔案"
@@ -252,6 +255,7 @@ function getDamagedFiles() {
       const files = resp.data;
       if (files && files.length > 0) {
         MJBS.appendToList(FileList, files.map(FileItem));
+        initBackupProject(PageConfig.projectInfo, PageAlert);
       } else {
         PageAlert.insert("warning", "未找到損毀檔案");
       }

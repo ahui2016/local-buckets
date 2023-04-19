@@ -91,6 +91,7 @@ async function init() {
   getRecentPics(bucketID);
 
   initNavButtons(bucketID);
+  initProjectInfo();
 }
 
 function initNavButtons(bucketID) {
@@ -136,6 +137,16 @@ function rebuildThumbs(start, end) {
     },
     onAlways: () => {
       PageLoading.hide();
+    },
+  });
+}
+
+function initProjectInfo() {
+  axiosGet({
+    url: "/api/project-status",
+    alert: PageAlert,
+    onSuccess: (resp) => {
+      PageConfig.projectInfo = resp.data;
     },
   });
 }

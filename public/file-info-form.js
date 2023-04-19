@@ -19,7 +19,7 @@ const MoveToBucketAlert = MJBS.createAlert();
 const BucketSelect = cc("select", { classes: "form-select" });
 const MoveToBucketBtn = MJBS.createButton("Move", "outline-primary");
 const MoveToBucketGroup = cc("div", {
-  classes: "input-group mb-3",
+  classes: "input-group HideIfBackup mb-3",
   children: [
     span("Move to").addClass("input-group-text"),
     m(BucketSelect),
@@ -81,7 +81,9 @@ const FileFormButtonsArea = cc("div", {
       .addClass("ImagePreviewBtn btn btn-sm btn-light text-muted me-2"),
     MJBS.createLinkElem("#", { text: "del" })
       .attr({ title: "delete" })
-      .addClass("ImageDelBtn btn btn-sm btn-light text-muted me-2"),
+      .addClass(
+        "ImageDelBtn btn btn-sm btn-light text-muted HideIfBackup me-2"
+      ),
     MJBS.createLinkElem("#", { text: "DELETE" })
       .addClass("ImageDangerDelBtn btn btn-sm btn-danger")
       .hide(),
@@ -137,34 +139,36 @@ const EditFileForm = cc("form", {
     m("div")
       .addClass("text-center my-3")
       .append(
-        m(SubmitBtn).on("click", (event) => {
-          event.preventDefault();
+        m(SubmitBtn)
+          .addClass("HideIfBackup")
+          .on("click", (event) => {
+            event.preventDefault();
 
-          const body = {
-            id: IdInput.intVal(),
-            name: NameInput.val(),
-            notes: NotesInput.val(),
-            keywords: KeywordsInput.val(),
-            like: LikeInput.intVal(),
-            ctime: CTimeInput.val(),
-            utime: UTimeInput.val(),
-          };
+            const body = {
+              id: IdInput.intVal(),
+              name: NameInput.val(),
+              notes: NotesInput.val(),
+              keywords: KeywordsInput.val(),
+              like: LikeInput.intVal(),
+              ctime: CTimeInput.val(),
+              utime: UTimeInput.val(),
+            };
 
-          MJBS.disable(SubmitBtn); // --------------------------- disable
-          axiosPost({
-            url: "/api/update-file-info",
-            alert: SubmitBtnAlert,
-            body: body,
-            onSuccess: (resp) => {
-              const file = resp.data;
-              SubmitBtnAlert.clear().insert("success", "修改成功");
-              updateFileItem(file);
-            },
-            onAlways: () => {
-              MJBS.enable(SubmitBtn); // ------------------------ enable
-            },
-          });
-        })
+            MJBS.disable(SubmitBtn); // --------------------------- disable
+            axiosPost({
+              url: "/api/update-file-info",
+              alert: SubmitBtnAlert,
+              body: body,
+              onSuccess: (resp) => {
+                const file = resp.data;
+                SubmitBtnAlert.clear().insert("success", "修改成功");
+                updateFileItem(file);
+              },
+              onAlways: () => {
+                MJBS.enable(SubmitBtn); // ------------------------ enable
+              },
+            });
+          })
       ),
   ],
 });
@@ -244,6 +248,8 @@ function initEditFileForm(fileID, selfButton, onlyImages) {
   EditFileForm.hide();
   FileInfoPageLoading.show();
   FileInfoPageAlert.clear();
+  SubmitBtnAlert.clear();
+  MoveToBucketAlert.clear();
 
   if (onlyImages) {
     FileFormBadgesArea.show();
@@ -288,10 +294,12 @@ function initEditFileForm(fileID, selfButton, onlyImages) {
       // MJBS.disable(DeletedInput);
 
       EditFileForm.show();
-      SubmitBtnAlert.clear();
       initBucketSelect(file.bucket_name);
     },
     onAlways: () => {
+      if (PageConfig.projectInfo.is_backup) {
+        $(".HideIfBackup").hide();
+      }
       FileInfoPageLoading.hide();
       if (selfButton) MJBS.enable(selfButton);
       window.location = PicPreview.id;

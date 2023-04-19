@@ -135,24 +135,12 @@ function initProjectInfo() {
       const project = resp.data;
       ProjectInfo.fill(project);
       LinkList.show();
-      initBackupProject(project);
+      initBackupProject(project, PageAlert);
     },
     onAlways: () => {
       ProjectInfoLoading.hide();
     },
   });
-}
-
-function initBackupProject(project) {
-  if (project.is_backup) {
-    $(".HideIfBackup").hide();
-    PageAlert.insertElem(
-      m("div")
-        .addClass(`alert alert-info`)
-        .text("當前專案是「備份專案」 部分功能不可用")
-    );
-    // PageAlert.insert("info", "當前專案是「備份專案」 部分功能不可用");
-  }
 }
 
 function createIndexItem(text, link, description) {

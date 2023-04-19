@@ -44,6 +44,15 @@ func requireAdmin(c *fiber.Ctx) error {
 	return c.Next()
 }
 
+// notAllowInBackup is a middleware.
+// 使用 notAllowInBackup, 表示拒絕在備份專案中使用.
+func notAllowInBackup(c *fiber.Ctx) error {
+	if ProjectConfig.IsBackup {
+		return fmt.Errorf("這是備份專案, 不可使用該功能")
+	}
+	return c.Next()
+}
+
 // noCache is a middleware.
 // Cache-Control: no-store will refrain from caching.
 // You will always get the up-to-date response.
@@ -1034,7 +1043,7 @@ func syncBackup(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	e1 := projCfgBackupNow(bkProjStat)
+	e1 := projCfgUpdateTime(bkProjStat)
 	e2 := syncPublicFolder(form.Text)
 	e3 := syncExec(bkProjStat.Root)
 	return util.WrapErrors(e1, e2, e3)

@@ -113,7 +113,7 @@ func initProjectConfig() {
 }
 
 // 更新备份时间
-func projCfgBackupNow(bkProjStat *ProjectStatus) error {
+func projCfgUpdateTime(bkProjStat *ProjectStatus) error {
 	ProjectConfig.LastBackupAt = model.Now()
 	err1 := writeProjectConfig()
 	bkProjCfgPath := filepath.Join(bkProjStat.Root, ProjectTOML)

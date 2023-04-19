@@ -16,7 +16,9 @@ const navBar = m("div")
         " | ",
         MJBS.createLinkElem("/recent-pics.html", { text: "Pics" }),
         " | ",
-        MJBS.createLinkElem("/create-bucket.html", { text: "New" })
+        MJBS.createLinkElem("/create-bucket.html", { text: "New" }).addClass(
+          "HideIfBackup"
+        )
       )
   );
 
@@ -86,10 +88,10 @@ function BucketItem(bucket) {
               }).addClass(`btn btn-sm ${btnColor} me-2`),
               MJBS.createLinkElem("waiting.html?bucket=" + bucket.name, {
                 text: "upload",
-              }).addClass(`btn btn-sm ${btnColor} me-2`),
+              }).addClass(`btn btn-sm ${btnColor} HideIfBackup me-2`),
               MJBS.createLinkElem("edit-bucket.html?id=" + bucket.id, {
                 text: "edit",
-              }).addClass(`btn btn-sm ${btnColor}`)
+              }).addClass(`btn btn-sm ${btnColor} HideIfBackup`)
             )
         ),
     ],
@@ -120,6 +122,7 @@ function getBuckets() {
       const buckets = resp.data;
       if (buckets && buckets.length > 0) {
         MJBS.appendToList(BucketList, buckets.map(BucketItem));
+        initProjectInfo();
       } else {
         PageAlert.insert(
           "warning",
@@ -129,6 +132,19 @@ function getBuckets() {
     },
     onAlways: () => {
       PageLoading.hide();
+    },
+  });
+}
+
+function initProjectInfo() {
+  axiosGet({
+    url: "/api/project-status",
+    alert: PageAlert,
+    onSuccess: (resp) => {
+      initBackupProject(resp.data, PageAlert);
+    },
+    onAlways: () => {
+      ProjectInfoLoading.hide();
     },
   });
 }

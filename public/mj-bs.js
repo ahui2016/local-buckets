@@ -703,3 +703,14 @@ const DateFormatYMD = "YYYY-MM-DD";
 const RootCss = { maxWidth: "768px" };
 const RootCssWide = { maxWidth: "992px" };
 const GB = 1 << 30;
+
+function initBackupProject(project, alert) {
+  if (project.is_backup) {
+    $(".HideIfBackup").hide();
+    alert.insertElem(
+      m("div")
+        .addClass(`alert alert-info`)
+        .text("當前專案是「備份專案」 部分功能不可用")
+    );
+  }
+}
