@@ -6,7 +6,7 @@ const pageTitleArea = m("div")
   .append(pageTitle, pageSubtitle)
   .addClass("text-center");
 
-const AppAlert = MJBS.createAlert();
+const PageAlert = MJBS.createAlert();
 
 const ProjectInfoAlert = MJBS.createAlert();
 const ProjectInfoLoading = MJBS.createLoading("", "large");
@@ -17,8 +17,25 @@ const ProjectInfo = cc("div", {
     m("div")
       .addClass("card-header")
       .append(
-        span("Project (正在使用的專案)"),
+        span("Backup Project (備份專案)")
+          .addClass("BackupProject badge text-bg-dark fs-6")
+          .hide(),
         span("ℹ️")
+          .addClass("BcakupProject")
+          .css({ cursor: "pointer" })
+          .on("click", (event) => {
+            event.preventDefault();
+            ProjectInfoAlert.insert(
+              "info",
+              "備份專案, 專用於備份, 部分功能不可用.",
+              "no-time"
+            );
+          })
+          .hide(),
+
+        span("Project (正在使用的專案)").addClass("NormalProject"),
+        span("ℹ️")
+          .addClass("NormalProject")
           .css({ cursor: "pointer" })
           .on("click", (event) => {
             event.preventDefault();
@@ -59,6 +76,10 @@ const ProjectInfo = cc("div", {
 
 ProjectInfo.fill = (project) => {
   const elem = ProjectInfo.elem();
+  if (project.is_backup) {
+    elem.find(".NormalProject").hide();
+    elem.find(".BackupProject").show();
+  }
   elem.find(".ProjectTitle").text(project.title);
   elem.find(".ProjectSubtitle").text(project.subtitle);
   elem.find(".ProjectPath").text(project.Root);
@@ -74,10 +95,18 @@ const LinkList = cc("div", {
   children: [
     createIndexItem("Recent Files", "recent-files.html", "最近檔案"),
     createIndexItem("Recent Pics", "recent-pics.html", "最近圖片"),
-    createIndexItem("Upload", "waiting.html", "上傳檔案"),
+    createIndexItem("Upload", "waiting.html", "上傳檔案").addClass(
+      "HideIfBackup"
+    ),
     createIndexItem("All Buckets", "buckets.html", "倉庫清單"),
-    createIndexItem("Create Bucket", "create-bucket.html", "新建倉庫"),
-    createIndexItem("Change Password", "change-password.html", "更改密碼"),
+    createIndexItem("Create Bucket", "create-bucket.html", "新建倉庫").addClass(
+      "HideIfBackup"
+    ),
+    createIndexItem(
+      "Change Password",
+      "change-password.html",
+      "更改密碼"
+    ).addClass("HideIfBackup"),
     createIndexItem("Backup", "backup.html", "備份專案"),
     createIndexItem("Admin Login", "admin-login.html", "管理登入"),
   ],
@@ -87,7 +116,7 @@ $("#root")
   .css(RootCss)
   .append(
     pageTitleArea.addClass("my-5"),
-    m(AppAlert).addClass("my-3"),
+    m(PageAlert).addClass("my-3"),
     m(ProjectInfo).addClass("my-3"),
     m(LinkList).addClass("my-5").hide()
   );
@@ -101,16 +130,29 @@ function init() {
 function initProjectInfo() {
   axiosGet({
     url: "/api/project-status",
-    alert: AppAlert,
+    alert: PageAlert,
     onSuccess: (resp) => {
       const project = resp.data;
       ProjectInfo.fill(project);
       LinkList.show();
+      initBackupProject(project);
     },
     onAlways: () => {
       ProjectInfoLoading.hide();
     },
   });
+}
+
+function initBackupProject(project) {
+  if (project.is_backup) {
+    $(".HideIfBackup").hide();
+    PageAlert.insertElem(
+      m("div")
+        .addClass(`alert alert-info`)
+        .text("當前專案是「備份專案」 部分功能不可用")
+    );
+    // PageAlert.insert("info", "當前專案是「備份專案」 部分功能不可用");
+  }
 }
 
 function createIndexItem(text, link, description) {

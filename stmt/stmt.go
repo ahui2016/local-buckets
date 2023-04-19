@@ -177,7 +177,14 @@ const CountAllFiles = `SELECT count(*) FROM file;`
 const CountFilesNeedCheck = `SELECT count(*) FROM file WHERE checked<?;`
 const GetFilesNeedCheck = `SELECT * FROM file WHERE checked<?;`
 const CountDamagedFiles = `SELECT count(*) FROM file WHERE damaged=TRUE;`
-const GetDamagedFiles = `SELECT * FROM file WHERE damaged=TRUE;`
+
+const GetDamagedFiles =  `SELECT file.id, file.checksum, file.bucket_name,
+	file.name,    file.notes,   file.keywords, file.size,
+	file.type,    file.like,    file.ctime,    file.utime,
+	file.checked, file.damaged, file.deleted,  bucket.encrypted
+FROM file
+	INNER JOIN bucket ON file.bucket_name = bucket.name
+	WHERE damaged=TRUE ORDER BY file.utime DESC;`
 
 const CheckFile = `UPDATE file SET checked=?, damaged=? WHERE id=?;`
 
@@ -188,3 +195,4 @@ const BucketTotalSize = `SELECT COALESCE(sum(size),0) as totalsize FROM file
 const BucketCountFiles = `SELECT count(*) FROM file
 	INNER JOIN bucket ON file.bucket_name = bucket.name
 	WHERE bucket.id=?;`
+

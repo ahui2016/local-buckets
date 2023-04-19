@@ -458,8 +458,8 @@ func (db *DB) DecryptFile(filePath string) ([]byte, error) {
 	return decrypt(data, db.aesgcm)
 }
 
-func (db *DB) GetDamagedFiles() ([]*File, error) {
-	return getFiles(db.DB, stmt.GetDamagedFiles)
+func (db *DB) GetDamagedFiles() ([]*FilePlus, error) {
+	return getFilesPlus(db.DB, stmt.GetDamagedFiles)
 }
 
 // GetFilesNeedCheck 获取需要检查的文件, checkInterval 的单位是秒.

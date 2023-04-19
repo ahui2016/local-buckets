@@ -1376,5 +1376,10 @@ func damagedFilesHandler(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
+	for _, file := range files {
+		if err := checkRequireAdmin(file.Encrypted); err != nil {
+			return err
+		}
+	}
 	return c.JSON(files)
 }

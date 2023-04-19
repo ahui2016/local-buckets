@@ -388,6 +388,12 @@ function getBKProject(bkProjRoot, alert, btn) {
           "warning",
           "damaged found (發現損毀檔案, 必須修復後才可備份)"
         );
+        BackupBtnAlert.insert(
+          "info",
+          "修復方法: 1.點擊 Repair 按鈕嘗試自動修復; 2.如果不能自動修復, 則需要手動修復. "+
+          "手動修復方法: 下載損毀檔案, 刪除損毀檔案.",
+          "no-time"
+        );
         BackupButtonsArea.elem().append(m(RepairButton));
       } else {
         BackupButtonsArea.appendBackupButton(bkProjRoot);

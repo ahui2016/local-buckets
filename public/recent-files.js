@@ -130,7 +130,7 @@ function FileItem(file) {
       m("div")
         .addClass("card-header")
         .append(
-          span("DAMAGED").addClass("badge text-bg-danger DamagedBadge").hide(),
+          span("DAMAGED").addClass("badge text-bg-danger DamagedBadge me-1").hide(),
           span(headerText)
         ),
       m("div")
