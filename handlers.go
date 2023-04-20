@@ -13,6 +13,7 @@ import (
 
 	"github.com/ahui2016/local-buckets/database"
 	"github.com/ahui2016/local-buckets/model"
+	"github.com/ahui2016/local-buckets/stmt"
 	"github.com/ahui2016/local-buckets/thumb"
 	"github.com/ahui2016/local-buckets/util"
 	"github.com/go-playground/validator/v10"
@@ -1106,69 +1107,123 @@ func syncToBackupProject(bkProjRoot string) (*ProjectStatus, error) {
 		return nil, err
 	}
 
-	// TODO: 改善(不要一次性讀取)
-	dbFiles, e1 := db.GetAllFiles()
-	bkFiles, e2 := bk.GetAllFiles()
-	if err := util.WrapErrors(e1, e2); err != nil {
+	// 删除文档
+	if err := deleteInBKFiles(bk, bkBucketsDir, bkTemp); err != nil {
 		return nil, err
 	}
 
-	for _, bkFile := range bkFiles {
+	// 必须先执行 deleteInBKFiles, 再执行 updateBKFiles
+	if err := updateBKFiles(bk, bkBucketsDir, bkTemp); err != nil {
+		return nil, err
+	}
+
+	// 必须先执行 updateBKFiles, 再执行 insertBKFiles
+	if err := insertBKFiles(bk, bkBucketsDir); err != nil {
+		return nil, err
+	}
+	return bkProjStat, nil
+}
+
+func deleteInBKFiles(bk *database.DB, bkBucketsDir, bkTemp string) error {
+	rows, err := bk.Query(stmt.GetAllFiles)
+	if err != nil {
+		return err
+	}
+	for rows.Next() {
+		bkFile, err := database.ScanFile(rows)
+		if err != nil {
+			return err
+		}
 		// 如果一个文档存在于备份仓库中，但不存在于主仓库中，
 		// 那么说明该文档已被彻底删除，因此在备份仓库中也需要删除它。
-		dbFile, err := db.GetFileByID(bkFile.ID)
+		_, err = db.GetFileByID(bkFile.ID)
 		if errors.Is(err, sql.ErrNoRows) {
 			err = nil
 			if err2 := bk.DeleteFile(
-				bkBucketsDir, bkTemp, thumbFilePath(bkFile.ID), bkFile,
+				bkBucketsDir, bkTemp, thumbFilePath(bkFile.ID), &bkFile,
 			); err2 != nil {
-				return nil, err2
+				return err2
 			}
-			continue // 这句是必须的
 		}
 		if err != nil {
-			return nil, err
+			return err
 		}
-		// 从这里开始 dbFile 和 bkFile 同时存在, 是同一个文档的新旧版本.
+	}
+	return util.WrapErrors(rows.Err(), rows.Close())
+}
+
+// 必须先执行 deleteInBKFiles, 删除多余的备份文档后,
+// 这里的 dbFile 和 bkFile 就必然同时存在, 是同一个文档的新旧版本.
+func updateBKFiles(bk *database.DB, bkBucketsDir, bkTemp string) error {
+	rows, err := bk.Query(stmt.GetAllFiles)
+	if err != nil {
+		return err
+	}
+	for rows.Next() {
+		bkFile, e1 := database.ScanFile(rows)
+		dbFile, e2 := db.GetFileByID(bkFile.ID)
+		if err := util.WrapErrors(e1, e2); err != nil {
+			return err
+		}
+
+		// 对比除 Checksum 和 BucketName 以外的属性, 如果不一致则更新属性。
+		if !filesHaveSameProperties(&bkFile, &dbFile) {
+			if err := updateBKFile(&bkFile, &dbFile, bk, bkBucketsDir); err != nil {
+				return err
+			}
+			bkFile.Name = dbFile.Name
+		}
 
 		// 对比 BucketName, 不一致则移动文档.
-		// Bug: 有很低的可能性发生文档名称冲突，知道就行，暂时可以偷懒不处理。
-		if dbFile.BucketName != bkFile.BucketName {
-			if err := moveBKFileToBucket(
-				bkBucketsDir, dbFile.BucketName, bkFile, bk); err != nil {
-				return nil, err
+		if bkFile.BucketName != dbFile.BucketName {
+			if err := moveBKFileToBucket(bkBucketsDir, dbFile.BucketName, &bkFile, bk); err != nil {
+				return err
 			}
-			// 这里不能 continue
+			bkFile.BucketName = dbFile.BucketName
 		}
 
 		// 对比 checksum，不一致则拷贝覆盖。
-		// Bug: 有很低的可能性发生 checksum 冲突，知道就行，暂时可以偷懒不处理。
-		if dbFile.Checksum != bkFile.Checksum {
-			if err := overwriteBKFile(bkBucketsDir, bkTemp, &dbFile, bkFile, bk); err != nil {
-				return nil, err
+		if bkFile.Checksum != dbFile.Checksum {
+			if err := overwriteBKFile(bkBucketsDir, bkTemp, &dbFile, &bkFile, bk); err != nil {
+				return err
 			}
-			continue // 这句是必须的, 因为在 overwriteBKFile 里会更新文档的全部属性.
-		}
-
-		// 前面已经对比过 Checksum 和 BucketName, 现在对比其他属性，
-		// 如果不一致则更新属性。
-		if filesHaveSameProperties(bkFile, &dbFile) {
-			continue
-		}
-		if err := bk.UpdateBackupFileInfo(&dbFile); err != nil {
-			return nil, err
 		}
 	}
+	return util.WrapErrors(rows.Err(), rows.Close())
+}
 
-	// 如果一个文档存在于主仓库中，但不存在于备份仓库中，则直接拷贝。
-	// 这一步应该在更新 checksum 不同的文档之后，避免 checksum 冲突。
-	for _, file := range dbFiles {
-		if err := insertBKFile(bkBucketsDir, file, bk); err != nil {
-			return nil, err
+func updateBKFile(bkFile, dbFile *File, bk *database.DB, bkBucketsDir string) error {
+	// 如果文档名不一致, 还要重命名
+	moved := new(MovedFile)
+	if bkFile.Name != dbFile.Name {
+		moved.Src = filepath.Join(bkBucketsDir, bkFile.BucketName, bkFile.Name)
+		moved.Dst = filepath.Join(bkBucketsDir, bkFile.BucketName, dbFile.Name)
+		if err := moved.Move(); err != nil {
+			return err
 		}
 	}
+	if err := bk.UpdateBackupFileInfo(dbFile); err != nil {
+		err2 := moved.Rollback()
+		return util.WrapErrors(err, err2)
+	}
+	return nil
+}
 
-	return bkProjStat, err
+func insertBKFiles(bk *database.DB, bkBucketsDir string) error {
+	rows, err := db.Query(stmt.GetAllFiles)
+	if err != nil {
+		return err
+	}
+	for rows.Next() {
+		dbFile, err := database.ScanFile(rows)
+		if err != nil {
+			return err
+		}
+		if err := insertBKFile(bkBucketsDir, &dbFile, bk); err != nil {
+			return err
+		}
+	}
+	return util.WrapErrors(rows.Err(), rows.Close())
 }
 
 // 更新备份专案的 Title, Subtitle, Cipherkey.
@@ -1283,11 +1338,9 @@ func filesHaveSameProperties(bkFile, file *File) bool {
 	return file.Name == bkFile.Name &&
 		file.Notes == bkFile.Notes &&
 		file.Keywords == bkFile.Keywords &&
-		file.Type == bkFile.Type &&
 		file.Like == bkFile.Like &&
 		file.CTime == bkFile.CTime &&
-		file.UTime == bkFile.UTime &&
-		file.Deleted == bkFile.Deleted
+		file.UTime == bkFile.UTime
 }
 
 func insertBKFile(bkBuckets string, file *File, bk *database.DB) error {

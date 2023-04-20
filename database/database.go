@@ -266,17 +266,17 @@ func (db *DB) CheckSameChecksum(file *File) error {
 
 func (db *DB) GetFileByChecksum(checksum string) (File, error) {
 	row := db.QueryRow(stmt.GetFileByChecksum, checksum)
-	return scanFile(row)
+	return ScanFile(row)
 }
 
 func (db *DB) GetFileByName(name string) (File, error) {
 	row := db.QueryRow(stmt.GetFileByName, name)
-	return scanFile(row)
+	return ScanFile(row)
 }
 
 func (db *DB) GetFileByID(id int64) (File, error) {
 	row := db.QueryRow(stmt.GetFileByID, id)
-	return scanFile(row)
+	return ScanFile(row)
 }
 
 func (db *DB) GetFilePlusWithChecksum(id int64) (file FilePlus, err error) {

@@ -29,7 +29,7 @@ func getInt1(tx TX, query string, arg ...any) (n int64, err error) {
 // txGetFileByID 可能可以删除
 func txGetFileByID(tx TX, id int64) (File, error) {
 	row := tx.QueryRow(stmt.GetFileByID, id)
-	return scanFile(row)
+	return ScanFile(row)
 }
 
 func insertBucket(tx TX, b *Bucket) error {
@@ -122,7 +122,7 @@ func insertFileWithID(tx TX, f *File) error {
 	return err
 }
 
-func scanFile(row Row) (f File, err error) {
+func ScanFile(row Row) (f File, err error) {
 	err = row.Scan(
 		&f.ID,
 		&f.Checksum,
@@ -165,7 +165,7 @@ func scanFilePlus(row Row) (f FilePlus, err error) {
 
 func scanFiles(rows *sql.Rows) (all []*File, err error) {
 	for rows.Next() {
-		f, err := scanFile(rows)
+		f, err := ScanFile(rows)
 		if err != nil {
 			return nil, err
 		}
