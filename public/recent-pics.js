@@ -147,6 +147,7 @@ function initProjectInfo() {
     alert: PageAlert,
     onSuccess: (resp) => {
       PageConfig.projectInfo = resp.data;
+      initBackupProject(PageConfig.projectInfo, PageAlert)
     },
   });
 }

@@ -1103,21 +1103,25 @@ func syncToBackupProject(bkProjRoot string) (*ProjectStatus, error) {
 	bkTemp := filepath.Join(bkProjRoot, TempFolderName)
 
 	// 先处理仓库, 包括新建或删除仓库资料夹.
+	fmt.Println("syncBuckets")
 	if err := syncBuckets(bkBucketsDir, bk); err != nil {
 		return nil, err
 	}
 
 	// 删除文档
+	fmt.Println("deleteInBKFiles")
 	if err := deleteInBKFiles(bk, bkBucketsDir, bkTemp); err != nil {
 		return nil, err
 	}
 
 	// 必须先执行 deleteInBKFiles, 再执行 updateBKFiles
+	fmt.Println("updateBKFiles")
 	if err := updateBKFiles(bk, bkBucketsDir, bkTemp); err != nil {
 		return nil, err
 	}
 
 	// 必须先执行 updateBKFiles, 再执行 insertBKFiles
+	fmt.Println("insertBKFiles")
 	if err := insertBKFiles(bk, bkBucketsDir); err != nil {
 		return nil, err
 	}
@@ -1129,6 +1133,9 @@ func deleteInBKFiles(bk *database.DB, bkBucketsDir, bkTemp string) error {
 	if err != nil {
 		return err
 	}
+	defer rows.Close()
+
+	var deletedFiles []*File
 	for rows.Next() {
 		bkFile, err := database.ScanFile(rows)
 		if err != nil {
@@ -1139,19 +1146,24 @@ func deleteInBKFiles(bk *database.DB, bkBucketsDir, bkTemp string) error {
 		_, err = db.GetFileByID(bkFile.ID)
 		if errors.Is(err, sql.ErrNoRows) {
 			err = nil
-			if err2 := bk.DeleteFile(
-				bkBucketsDir, bkTemp, thumbFilePath(bkFile.ID), &bkFile,
-			); err2 != nil {
-				return err2
-			}
+			deletedFiles = append(deletedFiles, &bkFile)
 		}
 		if err != nil {
 			return err
 		}
 	}
-	return util.WrapErrors(rows.Err(), rows.Close())
+	if err := rows.Err(); err != nil {
+		return err
+	}
+	for _, f := range deletedFiles {
+		if err := bk.DeleteFile(bkBucketsDir, bkTemp, thumbFilePath(f.ID), f); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
+// TODO: 拆分为三个函数
 // 必须先执行 deleteInBKFiles, 删除多余的备份文档后,
 // 这里的 dbFile 和 bkFile 就必然同时存在, 是同一个文档的新旧版本.
 func updateBKFiles(bk *database.DB, bkBucketsDir, bkTemp string) error {
@@ -1159,6 +1171,13 @@ func updateBKFiles(bk *database.DB, bkBucketsDir, bkTemp string) error {
 	if err != nil {
 		return err
 	}
+	defer rows.Close()
+
+	var (
+		updatedFiles    []*File
+		movedFiles      []*File
+		overwritedFiles []*File
+	)
 	for rows.Next() {
 		bkFile, e1 := database.ScanFile(rows)
 		dbFile, e2 := db.GetFileByID(bkFile.ID)
@@ -1168,28 +1187,53 @@ func updateBKFiles(bk *database.DB, bkBucketsDir, bkTemp string) error {
 
 		// 对比除 Checksum 和 BucketName 以外的属性, 如果不一致则更新属性。
 		if !filesHaveSameProperties(&bkFile, &dbFile) {
-			if err := updateBKFile(&bkFile, &dbFile, bk, bkBucketsDir); err != nil {
-				return err
-			}
+			updatedFiles = append(updatedFiles, &bkFile)
+			// Bug: 这里影响了后面的判断, 因为是指针, 导致不会重命名
 			bkFile.Name = dbFile.Name
 		}
 
 		// 对比 BucketName, 不一致则移动文档.
 		if bkFile.BucketName != dbFile.BucketName {
-			if err := moveBKFileToBucket(bkBucketsDir, dbFile.BucketName, &bkFile, bk); err != nil {
-				return err
-			}
+			movedFiles = append(movedFiles, &bkFile)
 			bkFile.BucketName = dbFile.BucketName
 		}
 
 		// 对比 checksum，不一致则拷贝覆盖。
 		if bkFile.Checksum != dbFile.Checksum {
-			if err := overwriteBKFile(bkBucketsDir, bkTemp, &dbFile, &bkFile, bk); err != nil {
-				return err
-			}
+			overwritedFiles = append(overwritedFiles, &bkFile)
 		}
 	}
-	return util.WrapErrors(rows.Err(), rows.Close())
+	if err := rows.Err(); err != nil {
+		return err
+	}
+	for _, f := range updatedFiles {
+		dbFile, err := db.GetFileByID(f.ID)
+		if err != nil {
+			return err
+		}
+		if err := updateBKFile(f, &dbFile, bk, bkBucketsDir); err != nil {
+			return err
+		}
+	}
+	for _, f := range movedFiles {
+		dbFile, err := db.GetFileByID(f.ID)
+		if err != nil {
+			return err
+		}
+		if err := moveBKFileToBucket(bkBucketsDir, dbFile.BucketName, f, bk); err != nil {
+			return err
+		}
+	}
+	for _, f := range overwritedFiles {
+		dbFile, err := db.GetFileByID(f.ID)
+		if err != nil {
+			return err
+		}
+		if err := overwriteBKFile(bkBucketsDir, bkTemp, &dbFile, f, bk); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func updateBKFile(bkFile, dbFile *File, bk *database.DB, bkBucketsDir string) error {
@@ -1214,16 +1258,28 @@ func insertBKFiles(bk *database.DB, bkBucketsDir string) error {
 	if err != nil {
 		return err
 	}
+	defer rows.Close()
+
+	var insertedFiles []*File
 	for rows.Next() {
 		dbFile, err := database.ScanFile(rows)
 		if err != nil {
 			return err
 		}
-		if err := insertBKFile(bkBucketsDir, &dbFile, bk); err != nil {
+		_, err = bk.GetFileByID(dbFile.ID)
+		if errors.Is(err, sql.ErrNoRows) {
+			insertedFiles = append(insertedFiles, &dbFile)
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return err
+	}
+	for _, f := range insertedFiles {
+		if err := insertBKFile(bkBucketsDir, f, bk); err != nil {
 			return err
 		}
 	}
-	return util.WrapErrors(rows.Err(), rows.Close())
+	return nil
 }
 
 // 更新备份专案的 Title, Subtitle, Cipherkey.
@@ -1344,20 +1400,16 @@ func filesHaveSameProperties(bkFile, file *File) bool {
 }
 
 func insertBKFile(bkBuckets string, file *File, bk *database.DB) error {
-	_, err := bk.GetFileByID(file.ID)
-	if errors.Is(err, sql.ErrNoRows) {
-		err = nil
-		dstFile := filepath.Join(bkBuckets, file.BucketName, file.Name)
-		srcFile := filepath.Join(BucketsFolder, file.BucketName, file.Name)
-		if err := util.CopyAndLockFile(dstFile, srcFile); err != nil {
-			return err
-		}
-		if err := bk.InsertFileWithID(file); err != nil {
-			err2 := os.Remove(dstFile)
-			return util.WrapErrors(err, err2)
-		}
+	dstFile := filepath.Join(bkBuckets, file.BucketName, file.Name)
+	srcFile := filepath.Join(BucketsFolder, file.BucketName, file.Name)
+	if err := util.CopyAndLockFile(dstFile, srcFile); err != nil {
+		return err
 	}
-	return err
+	if err := bk.InsertFileWithID(file); err != nil {
+		err2 := os.Remove(dstFile)
+		return util.WrapErrors(err, err2)
+	}
+	return nil
 }
 
 func overwriteBKFile(bkBucketsDir, bkTemp string, file, bkFile *File, bk *database.DB) error {
