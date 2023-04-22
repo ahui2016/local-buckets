@@ -1103,7 +1103,6 @@ func syncToBackupProject(bkProjRoot string) (*ProjectStatus, error) {
 	bkTemp := filepath.Join(bkProjRoot, TempFolderName)
 
 	// 先处理仓库, 包括新建或删除仓库资料夹.
-	fmt.Println("syncBuckets")
 	if err := syncBuckets(bkBucketsDir, bk); err != nil {
 		return nil, err
 	}
@@ -1209,9 +1208,9 @@ func getChangedFiles(db, bk *database.DB, bkBuckets, bkTemp string) (files Chang
 	return files, rows.Err()
 }
 
-func (files ChangedFiles) getFilePair(id int64) (bkFile, dbFile File, err error) {
-	bkFile, e1 := files.BK.GetFileByID(id)
-	dbFile, e2 := files.DB.GetFileByID(id)
+func (files ChangedFiles) getFilePair(id int64) (bkFile, dbFile FilePlus, err error) {
+	bkFile, e1 := files.BK.GetFilePlus(id)
+	dbFile, e2 := files.DB.GetFilePlus(id)
 	err = util.WrapErrors(e1, e2)
 	return
 }
@@ -1265,7 +1264,14 @@ func (files ChangedFiles) syncMove() error {
 		if err != nil {
 			return err
 		}
-		if err = moveBKFileToBucket(files.BKBuckets, dbFile.BucketName, &bkFile, files.BK); err != nil {
+		if bkFile.Encrypted != dbFile.Encrypted {
+			// 需要复制文档
+			err = moveEncrypedBKFile(files.BKBuckets, files.BKTemp, bkFile, dbFile, files.BK)
+		} else {
+			// 可以直接移动
+			err = moveBKFileToBucket(files.BKBuckets, dbFile.BucketName, &bkFile, files.BK)
+		}
+		if err != nil {
 			return err
 		}
 	}
@@ -1298,7 +1304,7 @@ func (files ChangedFiles) syncInsert() error {
 	return nil
 }
 
-func updateBKFile(bkFile, dbFile *File, bk *database.DB, bkBucketsDir string) error {
+func updateBKFile(bkFile, dbFile *FilePlus, bk *database.DB, bkBucketsDir string) error {
 	// 如果文档名不一致, 还要重命名
 	moved := new(MovedFile)
 	if bkFile.Name != dbFile.Name {
@@ -1308,7 +1314,7 @@ func updateBKFile(bkFile, dbFile *File, bk *database.DB, bkBucketsDir string) er
 			return err
 		}
 	}
-	if err := bk.UpdateBackupFileInfo(dbFile); err != nil {
+	if err := bk.UpdateBackupFileInfo(&dbFile.File); err != nil {
 		err2 := moved.Rollback()
 		return util.WrapErrors(err, err2)
 	}
@@ -1403,7 +1409,7 @@ func renameBucket(oldName, newName, buckets string, bucketid int64) error {
 }
 
 func moveBKFileToBucket(
-	bkBucketsDir, newBucketName string, bkFile *File, bk *database.DB,
+	bkBucketsDir, newBucketName string, bkFile *FilePlus, bk *database.DB,
 ) error {
 	moved := MovedFile{
 		Src: filepath.Join(bkBucketsDir, bkFile.BucketName, bkFile.Name),
@@ -1417,6 +1423,31 @@ func moveBKFileToBucket(
 		return util.WrapErrors(err, err2)
 	}
 	return nil
+}
+
+// 注意, 移动加密文档时, 不可重新加密, 以免 Checksum 发生变化.
+func moveEncrypedBKFile(
+	bkBuckets, bkTemp string, bkFile, dbFile FilePlus, bk *database.DB,
+) error {
+	tempFile := MovedFile{
+		Src: filepath.Join(bkBuckets, bkFile.BucketName, bkFile.Name),
+		Dst: filepath.Join(bkTemp, bkFile.Name),
+	}
+	if err := tempFile.Move(); err != nil {
+		return err
+	}
+
+	dstFile := filepath.Join(bkBuckets, dbFile.BucketName, dbFile.Name)
+	srcFile := filepath.Join(BucketsFolder, dbFile.BucketName, dbFile.Name)
+	if err := util.CopyAndLockFile(dstFile, srcFile); err != nil {
+		return err
+	}
+	if err := bk.MoveFileToBucket(bkFile.ID, dbFile.BucketName); err != nil {
+		err2 := os.Remove(dstFile)
+		err3 := tempFile.Rollback()
+		return util.WrapErrors(err, err2, err3)
+	}
+	return os.Remove(tempFile.Dst)
 }
 
 // 備份專案中的檔案 與 源專案中的檔案, 兩者的屬性相同嗎?
@@ -1445,7 +1476,7 @@ func insertBKFile(bkBuckets string, file *File, bk *database.DB) error {
 	return nil
 }
 
-func overwriteBKFile(bkBucketsDir, bkTemp string, file, bkFile *File, bk *database.DB) error {
+func overwriteBKFile(bkBucketsDir, bkTemp string, file, bkFile *FilePlus, bk *database.DB) error {
 	// tempFile 把旧文档临时移动到安全的地方
 	tempFile := MovedFile{
 		Src: filepath.Join(bkBucketsDir, bkFile.BucketName, bkFile.Name),
@@ -1464,7 +1495,7 @@ func overwriteBKFile(bkBucketsDir, bkTemp string, file, bkFile *File, bk *databa
 	}
 
 	// 更新数据库信息, 如果出错, 要删除 newFile 并把 tempFile 都移回原位.
-	if err := bk.UpdateBackupFileInfo(file); err != nil {
+	if err := bk.UpdateBackupFileInfo(&file.File); err != nil {
 		err2 := os.Remove(newFileDst)
 		err3 := tempFile.Rollback()
 		return util.WrapErrors(err, err2, err3)
