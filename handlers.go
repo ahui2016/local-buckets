@@ -1121,10 +1121,16 @@ func syncToBackupProject(bkProjRoot string) (*ProjectStatus, error) {
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("Deleted: ", len(changedFiles.Deleted))
+	fmt.Println("Updated: ", len(changedFiles.Updated))
+	fmt.Println("Moved: ", len(changedFiles.Moved))
+	fmt.Println("Overwrited: ", len(changedFiles.Overwrited))
+	fmt.Println("Inserted: ", len(changedFiles.Inserted))
 	// 同步文档(单向同步)
 	if err = changedFiles.Sync(); err != nil {
 		return nil, err
 	}
+	fmt.Println(err)
 
 	return bkProjStat, nil
 }
@@ -1227,18 +1233,24 @@ func (files ChangedFiles) getFilePair(id int64) (bkFile, dbFile FilePlus, err er
 func (files ChangedFiles) Sync() (err error) {
 	// 这里几种操作的顺序不能错, 比如最好是最后才添加文档.
 	if err = files.syncDelete(); err != nil {
+		fmt.Println("del", err)
 		return
 	}
 	if err = files.syncUpdate(); err != nil {
+		fmt.Println("upd", err)
 		return
 	}
 	if err = files.syncMove(); err != nil {
+		fmt.Println("mov", err)
 		return
 	}
 	if err = files.syncOverwrite(); err != nil {
+		fmt.Println("ovw", err)
 		return
 	}
-	return files.syncInsert()
+	err = files.syncInsert()
+	fmt.Println("ins", err)
+	return err
 }
 
 func (files ChangedFiles) syncDelete() error {
@@ -1256,11 +1268,14 @@ func (files ChangedFiles) syncDelete() error {
 
 func (files ChangedFiles) syncUpdate() error {
 	for _, id := range files.Updated {
+		fmt.Println("id", id)
 		bkFile, dbFile, err := files.getFilePair(id)
+		fmt.Println(err)
 		if err != nil {
 			return err
 		}
 		if err = updateBKFile(&bkFile, &dbFile, files.BK, files.BKBuckets); err != nil {
+			fmt.Println(err)
 			return err
 		}
 	}

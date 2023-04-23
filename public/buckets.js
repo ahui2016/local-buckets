@@ -126,7 +126,7 @@ function getBuckets() {
       } else {
         PageAlert.insert(
           "warning",
-          "沒有倉庫, 請返回首頁, 點擊 Create Bucket 新建倉庫."
+          "沒有倉庫, 請點擊右上角的 New 新建倉庫."
         );
       }
     },

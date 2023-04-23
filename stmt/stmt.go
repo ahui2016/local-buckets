@@ -3,7 +3,7 @@ package stmt
 const CreateTables = `
 CREATE TABLE IF NOT EXISTS bucket
 (
-	id           INTEGER   PRIMARY KEY,
+	id           INTEGER   PRIMARY KEY AUTOINCREMENT,
 	name         TEXT      NOT NULL COLLATE NOCASE UNIQUE,
 	title        TEXT      NOT NULL COLLATE NOCASE UNIQUE,
 	subtitle     TEXT      NOT NULL,
@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS bucket
 
 CREATE TABLE IF NOT EXISTS file
 (
-	id          INTEGER   PRIMARY KEY,
+	id          INTEGER   PRIMARY KEY AUTOINCREMENT,
 	checksum    TEXT      NOT NULL COLLATE NOCASE UNIQUE,
 	bucket_name TEXT      REFERENCES bucket(name) ON UPDATE CASCADE,
 	name        TEXT      NOT NULL COLLATE NOCASE UNIQUE,
