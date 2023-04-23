@@ -386,6 +386,15 @@ func downloadFile(c *fiber.Ctx) error {
 	return nil
 }
 
+func setExportHandler(c *fiber.Ctx) error {
+	form := new(model.OneTextForm)
+	if err := parseValidate(form, c); err != nil {
+		return err
+	}
+	ProjectConfig.DownloadExport = form.Text == "true"
+	return c.JSON(ProjectConfig.DownloadExport)
+}
+
 func importFiles(c *fiber.Ctx) error {
 	form := new(model.OneTextForm)
 	if err := parseValidate(form, c); err != nil {

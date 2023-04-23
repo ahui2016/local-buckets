@@ -85,6 +85,14 @@
 - 所谓导入 (import), 就是在上传时把 toml 文档中的 Notes, Keywords 等信息写入数据库
 - 如果希望当作一个新文档来上传, 请删除同名的 toml 文档
 
+### 临时设定 DownloadExport
+
+在前端网页按 F12 进入控制台, 输入命令 `setExport(true)` 或 `setExport(false)`
+可临时设定下载时是否导出 toml 文档, 重启程式会恢复 project.toml 中的设定.
+
+但要注意, 如果发生重写 project.toml 的操作 (例如执行一次备份),
+就会把临时设定写到 project.toml 中.
+
 ### 特殊情況
 
 - 导入时, 会根据同名 toml 文档中的 BucketName 上传到指定的仓库中,  

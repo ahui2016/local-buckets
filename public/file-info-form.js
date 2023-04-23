@@ -423,3 +423,19 @@ function getWaitingFolder() {
     },
   });
 }
+
+function setExport(b) {
+  axiosPost({
+    url: "/api/set-export",
+    body: {text: ""+b},
+    alert: PageAlert,
+    onSuccess: resp => {
+      if (resp.data) {
+	console.log("OK, 已設定為: 下載同時導出.")
+      } else {
+	console.log("OK, 已設定為: 只下載, 不導出.");
+      }
+    }
+  });
+}
+

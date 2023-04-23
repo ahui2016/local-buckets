@@ -285,3 +285,4 @@ function canBePreviewed(fileType) {
     fileType.endsWith("pdf")
   );
 }
+
