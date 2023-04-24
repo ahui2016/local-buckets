@@ -1179,6 +1179,7 @@ func getChangedFiles(db, bk *database.DB, bkBuckets, bkTemp string) (files Chang
 		if errors.Is(err, sql.ErrNoRows) {
 			err = nil
 			files.Deleted = append(files.Deleted, bkFile.ID)
+			continue
 		}
 		if err != nil {
 			return
@@ -1267,14 +1268,11 @@ func (files ChangedFiles) syncDelete() error {
 
 func (files ChangedFiles) syncUpdate() error {
 	for _, id := range files.Updated {
-		fmt.Println("id", id)
 		bkFile, dbFile, err := files.getFilePair(id)
-		fmt.Println(err)
 		if err != nil {
 			return err
 		}
 		if err = updateBKFile(&bkFile, &dbFile, files.BK, files.BKBuckets); err != nil {
-			fmt.Println(err)
 			return err
 		}
 	}
