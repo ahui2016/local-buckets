@@ -671,6 +671,18 @@ func parseBucketIdForm(c *fiber.Ctx) (
 	return
 }
 
+func searchFiles(c *fiber.Ctx) error {
+	form := new(model.OneTextForm)
+	if err := parseValidate(form, c); err != nil {
+		return err
+	}
+	files, err := db.SearchFiles(form.Text, "", ProjectConfig.RecentFilesLimit)
+	if err != nil {
+		return err
+	}
+	return c.JSON(files)
+}
+
 func getFileByID(c *fiber.Ctx) error {
 	form := new(model.FileIdForm)
 	if err := parseValidate(form, c); err != nil {
@@ -1121,17 +1133,10 @@ func syncToBackupProject(bkProjRoot string) (*ProjectStatus, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("Deleted: ", len(changedFiles.Deleted))
-	fmt.Println("Updated: ", len(changedFiles.Updated))
-	fmt.Println("Moved: ", len(changedFiles.Moved))
-	fmt.Println("Overwrited: ", len(changedFiles.Overwrited))
-	fmt.Println("Inserted: ", len(changedFiles.Inserted))
 	// 同步文档(单向同步)
 	if err = changedFiles.Sync(); err != nil {
 		return nil, err
 	}
-	fmt.Println(err)
-
 	return bkProjStat, nil
 }
 
@@ -1233,24 +1238,18 @@ func (files ChangedFiles) getFilePair(id int64) (bkFile, dbFile FilePlus, err er
 func (files ChangedFiles) Sync() (err error) {
 	// 这里几种操作的顺序不能错, 比如最好是最后才添加文档.
 	if err = files.syncDelete(); err != nil {
-		fmt.Println("del", err)
 		return
 	}
 	if err = files.syncUpdate(); err != nil {
-		fmt.Println("upd", err)
 		return
 	}
 	if err = files.syncMove(); err != nil {
-		fmt.Println("mov", err)
 		return
 	}
 	if err = files.syncOverwrite(); err != nil {
-		fmt.Println("ovw", err)
 		return
 	}
-	err = files.syncInsert()
-	fmt.Println("ins", err)
-	return err
+	return files.syncInsert()
 }
 
 func (files ChangedFiles) syncDelete() error {
@@ -1303,7 +1302,7 @@ func (files ChangedFiles) syncMove() error {
 }
 
 func (files ChangedFiles) syncOverwrite() error {
-	for _, id := range files.Moved {
+	for _, id := range files.Overwrited {
 		bkFile, dbFile, err := files.getFilePair(id)
 		if err != nil {
 			return err
@@ -1316,7 +1315,7 @@ func (files ChangedFiles) syncOverwrite() error {
 }
 
 func (files ChangedFiles) syncInsert() error {
-	for _, id := range files.Moved {
+	for _, id := range files.Inserted {
 		dbFile, err := files.DB.GetFileByID(id)
 		if err != nil {
 			return err

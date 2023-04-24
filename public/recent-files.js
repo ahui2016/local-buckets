@@ -23,6 +23,42 @@ const PageConfig = {};
 const PageAlert = MJBS.createAlert();
 const PageLoading = MJBS.createLoading(null, "large");
 
+const SearchInput = MJBS.createInput("search", "required");
+const SearchBtn = MJBS.createButton("search", "primary", "submit");
+const SearchInputGroup = cc("form", {
+  classes: "input-group",
+  children: [
+    m(SearchInput),
+    m(SearchBtn).on("click", event => {
+      event.preventDefault();
+      const pattern = SearchInput.val();
+      if (!pattern) {
+	return;
+      }
+      PageAlert.insert("info", `正在尋找 ${pattern} ...`);
+      MJBS.disable(SearchBtn);
+      axiosPost({
+	url: "/api/search-files",
+	body: {text: pattern},
+	alert: PageAlert,
+	onSuccess: resp => {
+	  const files = resp.data;
+	  if (files && files.length > 0) {
+	    PageAlert.clear().insert("success", `找到 ${files.length} 個檔案`);
+	    FileList.elem().html('');
+	    MJBS.appendToList(FileList, files.map(FileItem));
+	  } else {
+	    PageAlert.insert("warning", "未找到任何檔案");
+	  }
+	},
+	onAlways: () => {
+	  MJBS.enable(SearchBtn);
+	}
+      });
+    })
+  ]
+});
+
 const FileList = cc("div");
 
 function FileItem(file) {
@@ -187,8 +223,9 @@ $("#root")
   .css(RootCss)
   .append(
     navBar.addClass("my-3"),
-    m(PageAlert).addClass("my-5"),
     m(PageLoading).addClass("my-5"),
+    m(SearchInputGroup).addClass("my-3"),
+    m(PageAlert).addClass("my-5"),
     m(FileEditCanvas),
     m(FileList).addClass("my-5"),
     bottomDot

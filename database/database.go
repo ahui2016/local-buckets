@@ -473,3 +473,20 @@ func (db *DB) GetFilesNeedCheck(checkInterval int64) ([]*File, error) {
 func (db *DB) SetFileCheckedDamaged(file *File) error {
 	return db.Exec(stmt.CheckFile, file.Checked, file.Damaged, file.ID)
 }
+
+func (db *DB) SearchFiles(pattern, fileType string, limit int64) (files []*FilePlus, err error) {
+	query := stmt.SearchAllFiles
+	if db.IsLoggedIn() && fileType == "" {
+		query = stmt.SearchPublicFiles
+	}
+	if fileType == "image" {
+		query = stmt.SearchAllPics
+	}
+	if fileType == "image" && db.IsLoggedIn() {
+		query = stmt.SearchPublicPics
+	}
+
+	pattern = "%"+pattern+"%"
+	return getFilesPlus(db.DB, query, pattern, pattern, pattern, limit)
+}
+

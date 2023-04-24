@@ -376,7 +376,7 @@ MJBS.createInput = function (type = "text", required = null, id = null) {
     prop: { required: required == "required" ? true : false },
   });
 
-  if (type == "text" || type == "number" || type == "password") {
+  if (type == "text" || type == "search" || type == "number" || type == "password") {
     self.setVal = (val) => {
       self.elem().val(val);
     };
@@ -387,7 +387,7 @@ MJBS.createInput = function (type = "text", required = null, id = null) {
       return parseInt(val);
     };
   }
-  if (type == "text") {
+  if (type == "text" || type == "search") {
     self.val = () => {
       return self.elem().val().trim();
     };

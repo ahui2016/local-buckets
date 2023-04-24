@@ -46,7 +46,7 @@ const LogoutBtnArea = cc("div", {
 });
 
 const PasswordInput = MJBS.createInput("password", "required");
-const LoginBtn = MJBS.createButton("Submit", "primary", "submit");
+const LoginBtn = MJBS.createButton("Login", "primary", "submit");
 
 const LoginForm = cc("form", {
   attr: { autocomplete: "off" },

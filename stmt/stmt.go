@@ -196,3 +196,42 @@ const BucketCountFiles = `SELECT count(*) FROM file
 	INNER JOIN bucket ON file.bucket_name = bucket.name
 	WHERE bucket.id=?;`
 
+const SearchAllFiles = `SELECT file.id, file.checksum, file.bucket_name,
+	file.name,    file.notes,   file.keywords, file.size,
+	file.type,    file.like,    file.ctime,    file.utime,
+	file.checked, file.damaged, file.deleted,  bucket.encrypted
+FROM file
+	INNER JOIN bucket ON file.bucket_name = bucket.name
+	WHERE file.name LIKE ? OR file.notes LIKE ? OR file.keywords LIKE ?
+	ORDER BY file.utime DESC LIMIT ?;`
+
+const SearchPublicFiles = `SELECT file.id, file.checksum, file.bucket_name,
+	file.name,    file.notes,   file.keywords, file.size,
+	file.type,    file.like,    file.ctime,    file.utime,
+	file.checked, file.damaged, file.deleted,  bucket.encrypted
+FROM file
+	INNER JOIN bucket ON file.bucket_name = bucket.name
+	WHERE bucket.encrypted=FALSE AND (
+		file.name LIKE ? OR file.notes LIKE ? OR file.keywords LIKE ?)
+	ORDER BY file.utime DESC LIMIT ?;`
+
+const SearchAllPics = `SELECT file.id, file.checksum, file.bucket_name,
+	file.name,    file.notes,   file.keywords, file.size,
+	file.type,    file.like,    file.ctime,    file.utime,
+	file.checked, file.damaged, file.deleted,  bucket.encrypted
+FROM file
+	INNER JOIN bucket ON file.bucket_name = bucket.name
+	WHERE file.type LIKE "image/%" AND (
+		file.name LIKE ? OR file.notes LIKE ? OR file.keywords LIKE ?
+	ORDER BY file.utime DESC LIMIT ?;`
+
+const SearchPublicPics = `SELECT file.id, file.checksum, file.bucket_name,
+	file.name,    file.notes,   file.keywords, file.size,
+	file.type,    file.like,    file.ctime,    file.utime,
+	file.checked, file.damaged, file.deleted,  bucket.encrypted
+FROM file
+	INNER JOIN bucket ON file.bucket_name = bucket.name
+	WHERE bucket.encrypted=FALSE AND file.type LIKE "image/%" AND (
+		file.name LIKE ? OR file.notes LIKE ? OR file.keywords LIKE ?)
+	ORDER BY file.utime DESC LIMIT ?;`
+
