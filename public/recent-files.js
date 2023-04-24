@@ -1,38 +1,16 @@
 $("title").text("Recent files (最近檔案) - Local Buckets");
 
-const navBar = m("div")
-  .addClass("row")
-  .append(
-    m("div")
-      .addClass("col text-start")
-      .append(
-        MJBS.createLinkElem("index.html", { text: "Home" }),
-        span(" .. Recent files (最近檔案)")
-      ),
-    m("div")
-      .addClass("col text-end")
-      .append(
-        MJBS.createLinkElem("#", { text: "Pics" }).addClass("PicsBtn"),
-        " | ",
-        MJBS.createLinkElem("/buckets.html", { text: "Buckets" })
-      )
-  );
-
-const PageConfig = {};
-
-const PageAlert = MJBS.createAlert();
-const PageLoading = MJBS.createLoading(null, "large");
-
 const SearchInput = MJBS.createInput("search", "required");
 const SearchBtn = MJBS.createButton("search", "primary", "submit");
 const SearchInputGroup = cc("form", {
   classes: "input-group",
   children: [
-    m(SearchInput),
+    m(SearchInput).attr({accesskey: "s"}),
     m(SearchBtn).on("click", event => {
       event.preventDefault();
       const pattern = SearchInput.val();
       if (!pattern) {
+	MJBS.focus(SearchInput);
 	return;
       }
       PageAlert.insert("info", `正在尋找 ${pattern} ...`);
@@ -52,12 +30,48 @@ const SearchInputGroup = cc("form", {
 	  }
 	},
 	onAlways: () => {
+	  MJBS.focus(SearchInput);
 	  MJBS.enable(SearchBtn);
 	}
       });
     })
   ]
 });
+
+const navBar = m("div")
+  .addClass("row")
+  .append(
+    m("div")
+      .addClass("col text-start")
+      .append(
+        MJBS.createLinkElem("index.html", { text: "Home" }),
+        span(" .. Recent files (最近檔案)")
+      ),
+    m("div")
+      .addClass("col text-end")
+      .append(
+        MJBS.createLinkElem("#", { text: "Pics" }).addClass("PicsBtn"),
+        " | ",
+        MJBS.createLinkElem("/buckets.html", { text: "Buckets" }),
+	m('div').addClass("ShowSearchBtnArea").css({display: "inline"}).append(
+	  " | ",
+	  MJBS.createLinkElem("#", { text: "Search"})
+	    .addClass("ShowSearchBtn")
+	    .on("click", event => {
+	      event.preventDefault();
+	      MJBS.disable(".ShowSearchBtn");
+	      $(".ShowSearchBtnArea").fadeOut(2000);
+	      SearchInputGroup.show();
+	      MJBS.focus(SearchInput);
+	    })
+	)
+      )
+  );
+
+const PageConfig = {};
+
+const PageAlert = MJBS.createAlert();
+const PageLoading = MJBS.createLoading(null, "large");
 
 const FileList = cc("div");
 
@@ -222,12 +236,12 @@ function FileItem(file) {
 $("#root")
   .css(RootCss)
   .append(
-    navBar.addClass("my-3"),
+    navBar.addClass("mt-3 mb-5"),
     m(PageLoading).addClass("my-5"),
-    m(SearchInputGroup).addClass("my-3"),
-    m(PageAlert).addClass("my-5"),
+    m(SearchInputGroup).addClass("my-3").hide(),
+    m(PageAlert).addClass("my-3"),
+    m(FileList).addClass("my-3"),
     m(FileEditCanvas),
-    m(FileList).addClass("my-5"),
     bottomDot
   );
 

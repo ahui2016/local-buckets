@@ -222,7 +222,7 @@ const SearchAllPics = `SELECT file.id, file.checksum, file.bucket_name,
 FROM file
 	INNER JOIN bucket ON file.bucket_name = bucket.name
 	WHERE file.type LIKE "image/%" AND (
-		file.name LIKE ? OR file.notes LIKE ? OR file.keywords LIKE ?
+		file.name LIKE ? OR file.notes LIKE ? OR file.keywords LIKE ?)
 	ORDER BY file.utime DESC LIMIT ?;`
 
 const SearchPublicPics = `SELECT file.id, file.checksum, file.bucket_name,

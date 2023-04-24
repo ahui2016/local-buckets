@@ -57,6 +57,7 @@ func main() {
 	api.Post("/recent-files", getRecentFiles) // resp.data: FilePlus[]
 	api.Post("/recent-pics", getRecentPics)   // resp.data: FilePlus[]
 	api.Post("/search-files", searchFiles)    // resp.data: FilePlus[]
+	api.Post("/search-pics", searchPics)      // resp.data: FilePlus[]
 
 	api.Post("/create-bk-proj", createBKProjHandler)
 	api.Post("/delete-bk-proj", deleteBKProjHandler)

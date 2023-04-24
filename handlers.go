@@ -683,6 +683,18 @@ func searchFiles(c *fiber.Ctx) error {
 	return c.JSON(files)
 }
 
+func searchPics(c *fiber.Ctx) error {
+	form := new(model.OneTextForm)
+	if err := parseValidate(form, c); err != nil {
+		return err
+	}
+	files, err := db.SearchFiles(form.Text, "image", ProjectConfig.RecentFilesLimit)
+	if err != nil {
+		return err
+	}
+	return c.JSON(files)
+}
+
 func getFileByID(c *fiber.Ctx) error {
 	form := new(model.FileIdForm)
 	if err := parseValidate(form, c); err != nil {

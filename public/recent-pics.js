@@ -1,5 +1,43 @@
 $("title").text("Recent pics (最近圖片) - Local Buckets");
 
+const SearchInput = MJBS.createInput("search", "required");
+const SearchBtn = MJBS.createButton("search", "primary", "submit");
+const SearchInputGroup = cc("form", {
+  classes: "input-group",
+  children: [
+    m(SearchInput).attr({accesskey: "s"}),
+    m(SearchBtn).on("click", event => {
+      event.preventDefault();
+      const pattern = SearchInput.val();
+      if (!pattern) {
+	MJBS.focus(SearchInput);
+	return;
+      }
+      PageAlert.insert("info", `正在尋找 ${pattern} ...`);
+      MJBS.disable(SearchBtn);
+      axiosPost({
+	url: "/api/search-pics",
+	body: {text: pattern},
+	alert: PageAlert,
+	onSuccess: resp => {
+	  const files = resp.data;
+	  if (files && files.length > 0) {
+	    PageAlert.clear().insert("success", `找到 ${files.length} 個檔案`);
+	    FileList.elem().html('');
+	    MJBS.appendToList(FileList, files.map(FileItem));
+	  } else {
+	    PageAlert.insert("warning", "未找到任何檔案");
+	  }
+	},
+	onAlways: () => {
+	  MJBS.focus(SearchInput);
+	  MJBS.enable(SearchBtn);
+	}
+      });
+    })
+  ]
+});
+
 const navBar = m("div")
   .addClass("row")
   .append(
@@ -15,8 +53,18 @@ const navBar = m("div")
         MJBS.createLinkElem("#", { text: "Files" }).addClass("FilesBtn"),
         " | ",
         MJBS.createLinkElem("/buckets.html", { text: "Buckets" }),
-        " | ",
-        MJBS.createLinkElem("#", { text: "help" }).addClass("HelpBtn")
+	m('div').addClass("ShowSearchBtnArea").css({display: "inline"}).append(
+	  " | ",
+	  MJBS.createLinkElem("#", { text: "Search"})
+	    .addClass("ShowSearchBtn")
+	    .on("click", event => {
+	      event.preventDefault();
+	      MJBS.disable(".ShowSearchBtn");
+	      $(".ShowSearchBtnArea").fadeOut(2000);
+	      SearchInputGroup.show();
+	      MJBS.focus(SearchInput);
+	    })
+	)
       )
   );
 
@@ -68,12 +116,13 @@ function FileItem(file) {
 $("#root")
   .css(RootCssWide)
   .append(
-    navBar.addClass("my-3"),
-    m(PageAlert).addClass("my-5"),
+    navBar.addClass("mt-3 mb-5"),
     m(PageLoading).addClass("my-5"),
+    m(SearchInputGroup).addClass("my-3").hide(),
+    m(PageAlert).addClass("my-3"),
+    m(FileList).addClass("my-3"),
     m(FileEditCanvas),
-    m(FileList).addClass("my-5"),
-    m("div").text(".").addClass("my-5 text-light")
+    bottomDot
   );
 
 init();
