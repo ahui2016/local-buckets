@@ -312,7 +312,7 @@ func overwriteFile(c *fiber.Ctx) error {
 
 func overwritePrivate(waitingFile, tempFile *MovedFile, file *File) error {
 	// 加密文档, 如果出错, 必须把旧文档移回原位.
-	if err := db.EncryptFile(waitingFile.Src, waitingFile.Dst); err != nil {
+	if err := db.EncryptFile(waitingFile.Src, waitingFile.Dst, util.ReadonlyFilePerm); err != nil {
 		err2 := tempFile.Rollback()
 		return util.WrapErrors(err, err2)
 	}
@@ -371,7 +371,7 @@ func downloadFile(c *fiber.Ctx) error {
 		return fmt.Errorf("file exists: %s", dstPath)
 	}
 	if file.Encrypted {
-		err = db.DecryptSaveFile(srcPath, dstPath)
+		err = db.DecryptSaveFile(srcPath, dstPath, util.NormalFilePerm)
 	} else {
 		err = util.CopyAndUnlockFile(dstPath, srcPath)
 	}
@@ -531,7 +531,7 @@ func encryptWaitingFileToBucket(file *File) error {
 	// dstPath 是加密后保存到加密仓库中的文档
 	dstPath := filepath.Join(BucketsFolder, file.BucketName, file.Name)
 	// EncryptFile 读取 srcPath 的文件, 加密后保存到 dstPath.
-	if err := db.EncryptFile(srcPath, dstPath); err != nil {
+	if err := db.EncryptFile(srcPath, dstPath, util.ReadonlyFilePerm); err != nil {
 		return err
 	}
 	// 获取加密后的 checksum
@@ -768,8 +768,6 @@ func copyToTemp(srcPath, srcChecksum string, fileID int64) (dstPath string, err 
 	return
 }
 
-// TODO: move thumbs
-// TODO: 如果是加密文档，要求管理员权限
 func moveFileToBucket(c *fiber.Ctx) (err error) {
 	form := new(model.MoveFileToBucketForm)
 	if err := parseValidate(form, c); err != nil {
@@ -821,9 +819,11 @@ func moveFileBetweenPubAndPri(file FilePlus, newBucketName, direction string) (e
 	dstPath := filepath.Join(BucketsFolder, newBucketName, file.Name)
 
 	if direction == "Pub->Pri" {
-		err = db.EncryptFile(srcPath, dstPath)
+		err = db.EncryptFile(srcPath, dstPath, util.ReadonlyFilePerm)
+		// 从公开转到加密, 还要删除临时文档
+		os.Remove(tempFilePath(file.ID))
 	} else {
-		err = db.DecryptSaveFile(srcPath, dstPath)
+		err = db.DecryptSaveFile(srcPath, dstPath, util.ReadonlyFilePerm)
 	}
 	if err != nil {
 		return err
@@ -841,8 +841,6 @@ func moveFileBetweenPubAndPri(file FilePlus, newBucketName, direction string) (e
 	return os.Remove(srcPath)
 }
 
-// TODO: update thumbs filename
-// TODO: 如果是加密文档，要求管理员权限
 func updateFileInfo(c *fiber.Ctx) error {
 	form := new(model.UpdateFileInfoForm)
 	if err := parseValidate(form, c); err != nil {
@@ -851,8 +849,11 @@ func updateFileInfo(c *fiber.Ctx) error {
 	if err := checkFileName(form.Name); err != nil {
 		return err
 	}
-	file, err := db.GetFileByID(form.ID)
+	file, err := db.GetFilePlus(form.ID)
 	if err != nil {
+		return err
+	}
+	if err := checkRequireAdmin(file.Encrypted); err != nil {
 		return err
 	}
 	if form.Name == file.Name &&
@@ -892,7 +893,7 @@ func updateFileInfo(c *fiber.Ctx) error {
 	file.CTime = form.CTime
 	file.UTime = form.UTime
 
-	if err := db.UpdateFileInfo(&file); err != nil {
+	if err := db.UpdateFileInfo(&file.File); err != nil {
 		err2 := moved.Rollback()
 		return util.WrapErrors(err, err2)
 	}

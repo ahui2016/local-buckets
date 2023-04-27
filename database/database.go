@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"time"
@@ -426,7 +427,7 @@ func (db *DB) UpdateBucketTitle(bucket *Bucket) error {
 }
 
 // EncryptFile 读取 srcPath 的文件, 加密后保存到 dstPath.
-func (db *DB) EncryptFile(srcPath, dstPath string) error {
+func (db *DB) EncryptFile(srcPath, dstPath string, perm fs.FileMode) error {
 	if util.PathExists(dstPath) {
 		return fmt.Errorf("file exists: %s", dstPath)
 	}
@@ -438,16 +439,16 @@ func (db *DB) EncryptFile(srcPath, dstPath string) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(dstPath, encrypted, 0666)
+	return os.WriteFile(dstPath, encrypted, perm)
 }
 
 // DecryptSaveFile 读取 srcPath 的文件, 解密后保存到 dstPath.
-func (db *DB) DecryptSaveFile(srcPath, dstPath string) error {
+func (db *DB) DecryptSaveFile(srcPath, dstPath string, perm fs.FileMode) error {
 	content, err := db.DecryptFile(srcPath)
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(dstPath, content, 0666)
+	return os.WriteFile(dstPath, content, perm)
 }
 
 func (db *DB) DecryptFile(filePath string) ([]byte, error) {
@@ -486,7 +487,6 @@ func (db *DB) SearchFiles(pattern, fileType string, limit int64) (files []*FileP
 		query = stmt.SearchPublicPics
 	}
 
-	pattern = "%"+pattern+"%"
+	pattern = "%" + pattern + "%"
 	return getFilesPlus(db.DB, query, pattern, pattern, pattern, limit)
 }
-
