@@ -1552,7 +1552,6 @@ func checkBackupDiskUsage(bkProjRoot string, bkStat, projStat *ProjectStatus) er
 	return nil
 }
 
-// TODO: delete the thumb
 func deleteFile(c *fiber.Ctx) error {
 	form := new(model.FileIdForm)
 	err1 := parseValidate(form, c)
