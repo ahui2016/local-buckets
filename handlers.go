@@ -716,7 +716,7 @@ func previewFile(c *fiber.Ctx) error {
 	if err := paramParseValidate(form, c); err != nil {
 		return err
 	}
-	file, err := db.GetFilePlusWithChecksum(form.ID)
+	file, err := db.GetFilePlus(form.ID)
 	if err != nil {
 		return err
 	}
@@ -1252,18 +1252,26 @@ func (files ChangedFiles) getFilePair(id int64) (bkFile, dbFile FilePlus, err er
 func (files ChangedFiles) Sync() (err error) {
 	// 这里几种操作的顺序不能错, 比如最好是最后才添加文档.
 	if err = files.syncDelete(); err != nil {
-		return
-	}
-	if err = files.syncUpdate(); err != nil {
-		return
-	}
-	if err = files.syncMove(); err != nil {
+		fmt.Println("delete", err)
 		return
 	}
 	if err = files.syncOverwrite(); err != nil {
+		fmt.Println("overwrite", err)
 		return
 	}
-	return files.syncInsert()
+	if err = files.syncMove(); err != nil {
+		fmt.Println("move", err)
+		return
+	}
+	if err = files.syncUpdate(); err != nil {
+		fmt.Println("upddate", err)
+		return
+	}
+	if err = files.syncInsert(); err != nil {
+		fmt.Println("insert", err)
+		return
+	}
+	return nil
 }
 
 func (files ChangedFiles) syncDelete() error {
@@ -1510,7 +1518,8 @@ func insertBKFile(bkBuckets string, file *File, bk *database.DB) error {
 	return nil
 }
 
-func overwriteBKFile(bkBucketsDir, bkTemp string, file, bkFile *FilePlus, bk *database.DB) error {
+// 仅覆盖文档内容, 不改变其他任何信息.
+func overwriteBKFile(bkBucketsDir, bkTemp string, dbFile, bkFile *FilePlus, bk *database.DB) error {
 	// tempFile 把旧文档临时移动到安全的地方
 	tempFile := MovedFile{
 		Src: filepath.Join(bkBucketsDir, bkFile.BucketName, bkFile.Name),
@@ -1521,15 +1530,15 @@ func overwriteBKFile(bkBucketsDir, bkTemp string, file, bkFile *FilePlus, bk *da
 	}
 
 	// 复制新文档到备份仓库, 如果出错, 必须把旧文档移回原位.
-	newFileDst := filepath.Join(bkBucketsDir, file.BucketName, file.Name)
-	newFileSrc := filepath.Join(BucketsFolder, file.BucketName, file.Name)
+	newFileDst := tempFile.Src
+	newFileSrc := filepath.Join(BucketsFolder, dbFile.BucketName, dbFile.Name)
 	if err := util.CopyAndLockFile(newFileDst, newFileSrc); err != nil {
 		err2 := tempFile.Rollback()
 		return util.WrapErrors(err, err2)
 	}
 
 	// 更新数据库信息, 如果出错, 要删除 newFile 并把 tempFile 都移回原位.
-	if err := bk.UpdateBackupFileInfo(&file.File); err != nil {
+	if err := bk.UpdateFileContent(&dbFile.File); err != nil {
 		err2 := os.Remove(newFileDst)
 		err3 := tempFile.Rollback()
 		return util.WrapErrors(err, err2, err3)

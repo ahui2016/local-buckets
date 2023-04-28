@@ -178,7 +178,7 @@ const CountFilesNeedCheck = `SELECT count(*) FROM file WHERE checked<?;`
 const GetFilesNeedCheck = `SELECT * FROM file WHERE checked<?;`
 const CountDamagedFiles = `SELECT count(*) FROM file WHERE damaged=TRUE;`
 
-const GetDamagedFiles =  `SELECT file.id, file.checksum, file.bucket_name,
+const GetDamagedFiles = `SELECT file.id, file.checksum, file.bucket_name,
 	file.name,    file.notes,   file.keywords, file.size,
 	file.type,    file.like,    file.ctime,    file.utime,
 	file.checked, file.damaged, file.deleted,  bucket.encrypted
@@ -234,4 +234,3 @@ FROM file
 	WHERE bucket.encrypted=FALSE AND file.type LIKE "image/%" AND (
 		file.name LIKE ? OR file.notes LIKE ? OR file.keywords LIKE ?)
 	ORDER BY file.utime DESC LIMIT ?;`
-

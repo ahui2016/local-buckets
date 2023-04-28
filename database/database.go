@@ -211,6 +211,7 @@ func (db *DB) MoveFileToBucket(fileID int64, bucketName string) error {
 	return db.Exec(stmt.MoveFileToBucket, bucketName, fileID)
 }
 
+// 主要用于仓库之间移动文档, 因加密解密而使 checksum 发生变化.
 func (db *DB) UpdateChecksumAndBucket(fileID int64, checksum, bucketName string) error {
 	return db.Exec(stmt.UpdateChecksumAndBucket, checksum, bucketName, fileID)
 }
@@ -270,6 +271,14 @@ func (db *DB) GetFileByChecksum(checksum string) (File, error) {
 	return ScanFile(row)
 }
 
+func (db *DB) getFilesByChecksum(checksum string) (files []*File, err error) {
+	rows, err := db.Query(stmt.GetFileByChecksum, checksum)
+	if err != nil {
+		return
+	}
+	return scanFiles(rows)
+}
+
 func (db *DB) GetFileByName(name string) (File, error) {
 	row := db.QueryRow(stmt.GetFileByName, name)
 	return ScanFile(row)
@@ -280,17 +289,11 @@ func (db *DB) GetFileByID(id int64) (File, error) {
 	return ScanFile(row)
 }
 
-func (db *DB) GetFilePlusWithChecksum(id int64) (file FilePlus, err error) {
+func (db *DB) GetFilePlus(id int64) (file FilePlus, err error) {
 	row := db.QueryRow(stmt.GetFilePlus, id)
 	if file, err = scanFilePlus(row); err != nil {
 		return
 	}
-	return
-}
-
-func (db *DB) GetFilePlus(id int64) (file FilePlus, err error) {
-	file, err = db.GetFilePlusWithChecksum(id)
-	file.Checksum = ""
 	return
 }
 
