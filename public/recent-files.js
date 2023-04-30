@@ -266,6 +266,10 @@ async function init() {
   } else {
     getRecentFiles(bucketID);
   }
+
+  NotesInput.elem().attr({accesskey: "n"});
+  KeywordsInput.elem().attr({accesskey: "k"});
+  SubmitBtn.elem().attr({accesskey: "e"});
 }
 
 function initNavButtons(bucketID) {

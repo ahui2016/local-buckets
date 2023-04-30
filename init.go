@@ -144,3 +144,11 @@ func tempFilePath(fileID int64) string {
 	filename := strconv.FormatInt(fileID, 10)
 	return filepath.Join(TempFolder, filename)
 }
+
+func removeTempFile(fileID int64) {
+	filePath := tempFilePath(fileID)
+	if err := os.Remove(filePath); err != nil {
+		fmt.Println("remove", filePath)
+		fmt.Println(err)
+	}
+}

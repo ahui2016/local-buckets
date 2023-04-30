@@ -413,7 +413,9 @@ func (db *DB) DeleteFile(bucketsDir, tempDir, thumbPath string, file *File) erro
 		err2 := tempFile.Rollback()
 		return util.WrapErrors(err, err2)
 	}
-	_ = os.Remove(thumbPath)
+	if err := os.Remove(thumbPath); err != nil {
+		fmt.Println(err)
+	}
 	return os.Remove(tempFile.Dst)
 }
 

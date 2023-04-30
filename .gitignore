@@ -1,6 +1,4 @@
 
 local-buckets.exe
 temp-project.WinMerge
-sync-public.toml
-sync-alien.toml
-sync-buckets-01.toml
+*.toml

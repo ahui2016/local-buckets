@@ -821,7 +821,7 @@ func moveFileBetweenPubAndPri(file FilePlus, newBucketName, direction string) (e
 	if direction == "Pub->Pri" {
 		err = db.EncryptFile(srcPath, dstPath, util.ReadonlyFilePerm)
 		// 从公开转到加密, 还要删除临时文档
-		os.Remove(tempFilePath(file.ID))
+		removeTempFile(file.ID)
 	} else {
 		err = db.DecryptSaveFile(srcPath, dstPath, util.ReadonlyFilePerm)
 	}
@@ -1571,8 +1571,8 @@ func deleteFile(c *fiber.Ctx) error {
 	if err := checkRequireAdmin(file.Encrypted); err != nil {
 		return err
 	}
-	return db.DeleteFile(
-		BucketsFolder, TempFolder, thumbFilePath(file.ID), &file.File)
+	removeTempFile(file.ID)
+	return db.DeleteFile(BucketsFolder, TempFolder, thumbFilePath(file.ID), &file.File)
 }
 
 func createNewNote(c *fiber.Ctx) error {
