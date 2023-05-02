@@ -481,15 +481,15 @@ func (db *DB) SetFileCheckedDamaged(file *File) error {
 }
 
 func (db *DB) SearchFiles(pattern, fileType string, limit int64) (files []*FilePlus, err error) {
-	query := stmt.SearchAllFiles
+	query := stmt.SearchPublicFiles
 	if db.IsLoggedIn() && fileType == "" {
-		query = stmt.SearchPublicFiles
+		query = stmt.SearchAllFiles
 	}
 	if fileType == "image" {
-		query = stmt.SearchAllPics
+		query = stmt.SearchPublicPics
 	}
 	if fileType == "image" && db.IsLoggedIn() {
-		query = stmt.SearchPublicPics
+		query = stmt.SearchAllPics
 	}
 
 	pattern = "%" + pattern + "%"

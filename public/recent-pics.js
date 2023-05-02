@@ -118,6 +118,7 @@ $("#root")
   .append(
     navBar.addClass("mt-3 mb-5"),
     m(PageLoading).addClass("my-5"),
+    m(CurrentBucketAlert).addClass("my-3").hide(),
     m(SearchInputGroup).addClass("my-3").hide(),
     m(PageAlert).addClass("my-3"),
     m(FileList).addClass("my-3"),

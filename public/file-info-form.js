@@ -317,6 +317,11 @@ function BucketItem(bucket) {
   });
 }
 
+const CurrentBucketAlert = cc("div", {
+  classes: "alert alert-info",
+  attr: { role: "alert" },
+});
+
 function getBuckets(alert) {
   return new Promise((resolve) => {
     axiosGet({
@@ -338,7 +343,8 @@ function getBuckets(alert) {
               bucket.name != bucket.title
                 ? `bucket.name(${bucket.title})`
                 : bucket.name;
-            alert.insert("info", `正在瀏覽倉庫: ${name}`);
+            CurrentBucketAlert.show();
+            CurrentBucketAlert.elem().text(`正在瀏覽倉庫: ${name}`);
           }
         }
         if (!hasID) {
@@ -427,15 +433,14 @@ function getWaitingFolder() {
 function setExport(b) {
   axiosPost({
     url: "/api/set-export",
-    body: {text: ""+b},
+    body: { text: "" + b },
     alert: PageAlert,
-    onSuccess: resp => {
+    onSuccess: (resp) => {
       if (resp.data) {
-	console.log("OK, 已設定為: 下載同時導出.")
+        console.log("OK, 已設定為: 下載同時導出.");
       } else {
-	console.log("OK, 已設定為: 只下載, 不導出.");
+        console.log("OK, 已設定為: 只下載, 不導出.");
       }
-    }
+    },
   });
 }
-
