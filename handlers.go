@@ -144,6 +144,18 @@ func autoGetBuckets(c *fiber.Ctx) error {
 	return c.JSON(buckets)
 }
 
+func getBucketHandler(c *fiber.Ctx) error {
+	form := new(model.BucketIdForm)
+	if err := parseValidate(form, c); err != nil {
+		return err
+	}
+	bucket, err := db.GetBucket(form.ID)
+	if err != nil {
+		return err
+	}
+	return c.JSON(bucket)
+}
+
 func createBucket(c *fiber.Ctx) error {
 	form := new(model.CreateBucketForm)
 	if err := parseValidate(form, c); err != nil {

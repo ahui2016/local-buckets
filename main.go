@@ -51,6 +51,7 @@ func main() {
 
 	api.Get("/waiting-folder", getWaitingFolder) // resp.data: TextMsg
 	api.Get("/auto-get-buckets", autoGetBuckets) // resp.data: null | BucketStatus[]
+	api.Post("/get-bucket", getBucketHandler)
 	api.Post("/download-file", downloadFile)
 	api.Post("/set-export", setExportHandler)
 	api.Post("/file-info", getFileByID)       // resp.data: FilePlus
