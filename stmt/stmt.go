@@ -54,6 +54,9 @@ const GetBucket = `SELECT * FROM bucket WHERE id=?;`
 const GetBucketByName = `SELECT * FROM bucket WHERE name=?;`
 const CountFilesInBucket = `SELECT count(*) FROM file WHERE bucket_name=?;`
 
+const UpdateBucketInfo = `UPDATE bucket SET name=?, title=?, subtitle=?
+	WHERE id=?;`
+
 const InsertFile = `INSERT INTO file (
 	checksum, bucket_name, name,  notes,   keywords, size,   type,
 	like,     ctime,       utime, checked, damaged,  deleted

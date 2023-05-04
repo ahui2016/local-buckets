@@ -165,6 +165,10 @@ func (db *DB) InsertBucketWithID(bucket *Bucket) error {
 	return insertBucketWithID(db.DB, bucket)
 }
 
+func (db *DB) UpdateBucketInfo(bucket *Bucket) error {
+	return db.Exec(stmt.UpdateBucketInfo, bucket.Name, bucket.Title, bucket.Subtitle, bucket.ID)
+}
+
 func (db *DB) InsertFile(file *File) error {
 	return insertFile(db.DB, file)
 }

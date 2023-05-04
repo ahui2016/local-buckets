@@ -153,7 +153,49 @@ func getBucketHandler(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
+	if err = checkRequireAdmin(bucket.Encrypted); err != nil {
+		return err
+	}
 	return c.JSON(bucket)
+}
+
+func updateBucketHandler(c *fiber.Ctx) error {
+	form := new(Bucket)
+	if err := c.BodyParser(form); err != nil {
+		return err
+	}
+	bucket, err := db.GetBucket(form.ID)
+	if err != nil {
+		return err
+	}
+	if err = checkRequireAdmin(bucket.Encrypted); err != nil {
+		return err
+	}
+	if form.Name == "" {
+		return fmt.Errorf(`require "Name"`)
+	}
+	if form.Title == "" {
+		form.Title = form.Name
+	}
+	if strings.EqualFold(form.Name, bucket.Name) &&
+		strings.EqualFold(form.Title, bucket.Title) &&
+		strings.EqualFold(form.Subtitle, bucket.Subtitle) {
+		return fmt.Errorf("nothing changes (沒有變更)")
+	}
+	oldBucketPath := filepath.Join(BucketsFolder, bucket.Name)
+	newBucketPath := filepath.Join(BucketsFolder, form.Name)
+	bucketNameChanged := !strings.EqualFold(form.Name, bucket.Name)
+	if bucketNameChanged {
+		if err = os.Rename(oldBucketPath, newBucketPath); err != nil {
+			return err
+		}
+	}
+	err = db.UpdateBucketInfo(form)
+	if err != nil && bucketNameChanged {
+		err2 := os.Rename(newBucketPath, oldBucketPath)
+		err = util.WrapErrors(err, err2)
+	}
+	return err
 }
 
 func createBucket(c *fiber.Ctx) error {

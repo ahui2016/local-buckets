@@ -43,11 +43,12 @@ const EditBucketForm = cc("form", {
     ),
     MJBS.createFormControl(TitleInput, "Title"),
     MJBS.createFormControl(SubtitleInput, "Subtitle"),
-    MJBS.createFormControl(EncryptedInput, "Encrypted"),
+    MJBS.createFormControl(EncryptedInput, "Encrypted",
+    "是否加密 (在創建時決定, 不可更改)"),
 
     m(SubmitBtnAlert).addClass("my-3"),
     m("div")
-      .addClass("text-center my-3")
+      .addClass("my-3")
       .append(
         m(SubmitBtn).on("click", (event) => {
           event.preventDefault();
