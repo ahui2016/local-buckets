@@ -113,8 +113,10 @@ MJBS.createLoading = function (classes = null, size = null) {
 /**
  * msgType: primary/secondary/success/danger/warning/info/light/dark
  */
-MJBS.createAlert = function () {
-  const alert = cc("div");
+MJBS.createAlert = function (id) {
+  let options = null;
+  if (id) options = {id: id};
+  const alert = cc("div", options);
 
   alert.insertElem = (elem) => {
     alert.elem().prepend(elem);

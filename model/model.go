@@ -103,6 +103,10 @@ func NewBucket(form *CreateBucketForm) (*Bucket, error) {
 	return b, nil
 }
 
+func (bucket *Bucket) CheckName() error {
+	return checkFilename(bucket.Name)
+}
+
 type FileExportImport struct {
 	BucketName string
 	Notes      string

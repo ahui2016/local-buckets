@@ -423,8 +423,15 @@ func (db *DB) DeleteFile(bucketsDir, tempDir, thumbPath string, file *File) erro
 	return os.Remove(tempFile.Dst)
 }
 
-func (db *DB) DeleteBucket(bucketid int64) error {
-	return db.Exec(stmt.DeleteBucket, bucketid)
+func (db *DB) DeleteBucket(bucketID int64) error {
+	count, err := getInt1(db.DB, stmt.BucketCountFiles, bucketID)
+	if err != nil {
+		return err
+	}
+	if count > 0 {
+		return fmt.Errorf("該倉庫內仍有檔案, 不可刪除. 只能刪除空倉庫.")
+	}
+	return db.Exec(stmt.DeleteBucket, bucketID)
 }
 
 func (db *DB) UpdateBucketName(newName string, bucketid int64) error {

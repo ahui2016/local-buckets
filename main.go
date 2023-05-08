@@ -21,6 +21,7 @@ func main() {
 	api := app.Group("/api", sleep)
 
 	api.Use("/update-bucket-info", notAllowInBackup)
+	api.Use("/delete-bucket", deleteBucket)
 	api.Use("/create-bucket", notAllowInBackup)
 	api.Use("/imported-files", notAllowInBackup)
 	api.Use("/waiting-files", notAllowInBackup)
@@ -35,6 +36,7 @@ func main() {
 	api.Use("/change-password", notAllowInBackup)
 
 	api.Post("/update-bucket-info", updateBucketHandler)
+	api.Post("/delete-bucket", deleteBucket)
 	api.Post("/create-bucket", createBucket)            // resp.data: Bucket
 	api.Get("/imported-files", getImportedFilesHandler) // resp.data: File[]
 	api.Get("/waiting-files", getWaitingFiles)          // resp.data: File[] | ErrSameNameFiles

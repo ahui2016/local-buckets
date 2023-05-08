@@ -84,7 +84,7 @@ function FileItem(file) {
   const delBtnID = `#${fileItemID} .FileInfoDelBtn`;
   const dangerDelBtnID = `#${fileItemID} .FileInfoDangerDelBtn`;
 
-  const ItemAlert = MJBS.createAlert();
+  const ItemAlert = MJBS.createAlert(`${fileItemID}-alert`);
 
   const bodyRowOne = m("div").addClass("mb-2 FileItemBodyRowOne");
 

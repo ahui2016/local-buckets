@@ -174,6 +174,9 @@ func updateBucketHandler(c *fiber.Ctx) error {
 	if form.Name == "" {
 		return fmt.Errorf(`require "Name"`)
 	}
+	if err = form.CheckName(); err != nil {
+		return err
+	}
 	if form.Title == "" {
 		form.Title = form.Name
 	}
@@ -209,6 +212,21 @@ func createBucket(c *fiber.Ctx) error {
 	}
 	createBucketFolder(form.Name)
 	return c.JSON(bucket)
+}
+
+func deleteBucket(c *fiber.Ctx) error {
+	form := new(model.FileIdForm)
+	if err := parseValidate(form, c); err != nil {
+		return err
+	}
+	bucket, err := db.GetBucket(form.ID)
+	if err != nil {
+		return err
+	}
+	if err := db.DeleteBucket(bucket.ID); err != nil {
+		return err
+	}
+	return os.Remove(filepath.Join(BucketsFolder, bucket.Name))
 }
 
 func getWaitingFolder(c *fiber.Ctx) error {
