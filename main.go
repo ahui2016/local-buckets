@@ -30,7 +30,7 @@ func main() {
 	api.Use("/rename-waiting-file", notAllowInBackup)
 	api.Use("/overwrite-file", notAllowInBackup)
 	api.Use("/delete-file", notAllowInBackup)
-	api.Use("/create-new-note", notAllowInBackup)
+	// api.Use("/create-new-note", notAllowInBackup)
 	api.Use("/update-file-info", notAllowInBackup)
 	api.Use("/move-file-to-bucket", notAllowInBackup)
 	api.Use("/change-password", notAllowInBackup)
