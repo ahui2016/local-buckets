@@ -427,14 +427,36 @@ func overwritePublic(waitingFile, tempFile *MovedFile, file *File) error {
 	return os.Remove(tempFile.Dst)
 }
 
-func downloadFile(c *fiber.Ctx) error {
-	form := new(model.FileIdForm)
-	err := parseValidate(form, c)
-	file, err2 := db.GetFilePlus(form.ID)
-	if err := util.WrapErrors(err, err2); err != nil {
+func downloadSmallPic(c *fiber.Ctx) error {
+	file, err := checkAndGetFilePlus(c)
+	if err != nil {
 		return err
 	}
-	if err := checkRequireAdmin(file.Encrypted); err != nil {
+	if !file.IsImage() {
+		return fmt.Errorf("not an image (不是圖片)")
+	}
+	img, err := readImage(file)
+	if err != nil {
+		return err
+	}
+	dst := filepath.Join(WaitingFolder, file.Name)
+	return thumb.ResizeToFile(dst, img, 0, 0)
+}
+
+func checkAndGetFilePlus(c *fiber.Ctx) (file FilePlus, err error) {
+	form := new(model.FileIdForm)
+	err1 := parseValidate(form, c)
+	file, err2 := db.GetFilePlus(form.ID)
+	if err = util.WrapErrors(err1, err2); err != nil {
+		return
+	}
+	err = checkRequireAdmin(file.Encrypted)
+	return
+}
+
+func downloadFile(c *fiber.Ctx) error {
+	file, err := checkAndGetFilePlus(c)
+	if err != nil {
 		return err
 	}
 	srcPath := filepath.Join(BucketsFolder, file.BucketName, file.Name)
@@ -578,13 +600,7 @@ func rebuildThumbs(start, end int64) error {
 		if !file.IsImage() {
 			continue
 		}
-		filePath := filepath.Join(BucketsFolder, file.BucketName, file.Name)
-		var img []byte
-		if file.Encrypted {
-			img, err = db.DecryptFile(filePath)
-		} else {
-			img, err = os.ReadFile(filePath)
-		}
+		img, err := readImage(file)
 		if err != nil {
 			return err
 		}
@@ -595,6 +611,14 @@ func rebuildThumbs(start, end int64) error {
 		}
 	}
 	return nil
+}
+
+func readImage(file FilePlus) ([]byte, error) {
+	filePath := filepath.Join(BucketsFolder, file.BucketName, file.Name)
+	if file.Encrypted {
+		return db.DecryptFile(filePath)
+	}
+	return os.ReadFile(filePath)
 }
 
 func encryptWaitingFileToBucket(file *File) error {

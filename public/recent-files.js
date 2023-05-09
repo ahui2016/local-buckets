@@ -98,7 +98,8 @@ function FileItem(file) {
       span(file.utime.substr(0, 10))
         .attr({ title: file.utime })
         .addClass("me-1"),
-      MJBS.createLinkElem("#", { text: "down" })
+
+      MJBS.createLinkElem("#", { text: "DL" })
         .addClass("FileInfoBtn FileInfoDownloadBtn me-1")
         .attr({ title: "download" })
         .on("click", (event) => {
@@ -119,11 +120,35 @@ function FileItem(file) {
             },
           });
         }),
+
+      MJBS.createLinkElem("#", { text: "small" })
+        .addClass("FileInfoBtn FileInfoSamllBtn me-1")
+        .attr({ title: "下載小圖" })
+        .hide()
+        .on("click", (event) => {
+          event.preventDefault();
+          event.currentTarget.style.pointerEvents = "none";
+          axiosPost({
+            url: "/api/download-small-pic",
+            alert: ItemAlert,
+            body: { id: file.id },
+            onSuccess: () => {
+              ItemAlert.insert(
+                "success",
+                `成功下載到 waiting 資料夾 ${PageConfig.waitingFolder}`
+              );
+            },
+            onAlways: () => {
+              event.currentTarget.style.pointerEvents = "auto";
+            },
+          });
+        }),
+
       MJBS.createLinkElem("#", { text: "view", blank: true })
         .addClass("FileInfoBtn FilePreviewBtn me-1")
         .attr({ title: "preview" })
         .hide(),
-      // MJBS.createLinkElem("edit-file.html?id=" + file.id, { text: "info" })
+
       MJBS.createLinkElem("#", { text: "info" })
         .addClass("FileInfoBtn FileInfoEditBtn me-1")
         .on("click", (event) => {
@@ -136,6 +161,7 @@ function FileItem(file) {
             false
           );
         }),
+
       MJBS.createLinkElem("#", { text: "del" })
         .addClass("FileInfoBtn FileInfoDelBtn HideIfBackup me-1")
         .attr({ title: "delete" })
@@ -152,6 +178,7 @@ function FileItem(file) {
             $(dangerDelBtnID).show();
           }, 2000);
         }),
+
       MJBS.createLinkElem("#", { text: "DELETE" })
         .addClass("FileInfoBtn FileInfoDangerDelBtn")
         .hide()
@@ -343,4 +370,8 @@ function canBePreviewed(fileType) {
     fileType.startsWith("text") ||
     fileType.endsWith("pdf")
   );
+}
+
+function downloadSmall() {
+  $(".FileInfoSamllBtn").show();
 }

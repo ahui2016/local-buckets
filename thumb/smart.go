@@ -64,6 +64,19 @@ func smartCropResize(img image.Image) (image.Image, error) {
 	return img, nil
 }
 
+// ResizeToFile resizes the image if it's long side bigger than limit.
+// Use default limit 900 if limit is set to zero.
+// Use default quality 85 if quality is set to zero.
+func ResizeToFile(dst string, src []byte, limit float64, quality int) error {
+	img, err := ReadImage(src)
+	if err != nil {
+		return err
+	}
+	w, h := limitWidthHeight(img.Bounds(), limit)
+	small := imaging.Resize(img, w, h, imaging.Lanczos)
+	return jpegEncodeToFile(dst, small, quality)
+}
+
 // Use default quality(85) if quality is set to zero.
 // dst is the output file path.
 func jpegEncodeToFile(dst string, src image.Image, quality int) error {

@@ -57,6 +57,7 @@ func main() {
 	api.Get("/auto-get-buckets", autoGetBuckets) // resp.data: null | BucketStatus[]
 	api.Post("/get-bucket", getBucketHandler)
 	api.Post("/download-file", downloadFile)
+	api.Post("/download-small-pic", downloadSmallPic)
 	api.Post("/set-export", setExportHandler)
 	api.Post("/file-info", getFileByID)       // resp.data: FilePlus
 	api.Post("/recent-files", getRecentFiles) // resp.data: FilePlus[]
