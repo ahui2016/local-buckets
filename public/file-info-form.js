@@ -73,9 +73,12 @@ const FileFormBadgesArea = cc("div", {
 const FileFormButtonsArea = cc("div", {
   classes: "text-end",
   children: [
-    MJBS.createLinkElem("#", { text: "down" })
+    MJBS.createLinkElem("#", { text: "DL" })
       .attr({ title: "download" })
       .addClass("ImageDownloadBtn btn btn-sm btn-light text-muted me-2"),
+    MJBS.createLinkElem("#", { text: "small" })
+      .attr({ title: "下載小圖" })
+      .addClass("ImageDownloadSmallBtn btn btn-sm btn-light text-muted me-2"),
     MJBS.createLinkElem("#", { text: "view", blank: true })
       .attr({ title: "preview" })
       .addClass("ImagePreviewBtn btn btn-sm btn-light text-muted me-2"),
@@ -175,6 +178,7 @@ const EditFileForm = cc("form", {
 
 function initFileFormButtons(fileID) {
   const downladBtnID = ".ImageDownloadBtn";
+  const smallBtnID = ".ImageDownloadSmallBtn";
   const previewBtnID = ".ImagePreviewBtn";
   const delBtnID = ".ImageDelBtn";
   const dangerDelBtnID = `.ImageDangerDelBtn`;
@@ -204,6 +208,34 @@ function initFileFormButtons(fileID) {
         },
       });
     });
+
+  $(smallBtnID)
+    .off()
+    .on("click", (event) => {
+      event.preventDefault();
+      MJBS.disable(smallBtnID);
+      event.currentTarget.style.pointerEvents = "none";
+      axiosPost({
+        url: "/api/download-small-pic",
+        alert: FileFormButtonsAlert,
+        body: { id: fileID },
+        onSuccess: () => {
+          FileFormButtonsAlert.insert(
+            "success",
+            `成功下載到 waiting 資料夾 ${PageConfig.waitingFolder}`
+          );
+        },
+        onAlways: () => {
+          MJBS.enable(smallBtnID);
+        },
+      });
+    });
+
+  if (PageConfig.showSmallBtn) {
+    $(smallBtnID).show();
+  } else {
+    $(smallBtnID).hide();
+  }
 
   $(previewBtnID).attr({ href: "/file/" + fileID });
 

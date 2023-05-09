@@ -68,7 +68,7 @@ const navBar = m("div")
       )
   );
 
-const PageConfig = {};
+const PageConfig = { showSmallBtn: false };
 
 const PageAlert = MJBS.createAlert();
 const PageLoading = MJBS.createLoading(null, "large");
@@ -204,4 +204,9 @@ function initProjectInfo() {
       initBackupProject(PageConfig.projectInfo, PageAlert)
     },
   });
+}
+
+function showMoreButtons() {
+  $(".ImageDownloadSmallBtn").show();
+  PageConfig.showSmallBtn = true;
 }

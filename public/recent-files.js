@@ -372,6 +372,6 @@ function canBePreviewed(fileType) {
   );
 }
 
-function downloadSmall() {
+function showMoreButtons() {
   $(".FileInfoSamllBtn").show();
 }
