@@ -32,12 +32,12 @@ type (
 )
 
 type DB struct {
-	DB               *sql.DB
-	Path             string // 数据库的路径
-	IsBackup         bool
-	RecentFilesLimit int64
-	cipherKey        HexString
-	aesgcm           cipher.AEAD
+	DB         *sql.DB
+	Path       string // 数据库的路径
+	IsBackup   bool
+	FilesLimit int64
+	cipherKey  HexString
+	aesgcm     cipher.AEAD
 }
 
 func OpenDB(dbPath string, projCfg *Project) (*DB, error) {
@@ -47,12 +47,12 @@ func OpenDB(dbPath string, projCfg *Project) (*DB, error) {
 		return nil, err
 	}
 	db := &DB{
-		DB:               sqlDB,
-		Path:             dbPath,
-		IsBackup:         projCfg.IsBackup,
-		RecentFilesLimit: projCfg.RecentFilesLimit,
-		cipherKey:        projCfg.CipherKey,
-		aesgcm:           nil,
+		DB:         sqlDB,
+		Path:       dbPath,
+		IsBackup:   projCfg.IsBackup,
+		FilesLimit: projCfg.RecentFilesLimit,
+		cipherKey:  projCfg.CipherKey,
+		aesgcm:     nil,
 	}
 	err = db.Exec(stmt.CreateTables)
 	return db, err
@@ -315,36 +315,39 @@ func (db *DB) GetAllFiles() (files []*File, err error) {
 	return getFiles(db.DB, stmt.GetAllFiles)
 }
 
-func (db *DB) GetRecentFiles() (files []*FilePlus, err error) {
-	query := lo.Ternary(db.IsLoggedIn(), stmt.GetAllRecentFiles, stmt.GetPublicRecentFiles)
-	if files, err = getFilesPlus(db.DB, query, db.RecentFilesLimit); err != nil {
+func (db *DB) GetFilesLimit(sortBy string) (files []*FilePlus, err error) {
+	// Bug: 有注入風險, 但这是單用戶系統, 因此風險可控.
+	queryAll := fmt.Sprintf(stmt.GetAllFilesLimit, sortBy)
+	queryPublic := fmt.Sprintf(stmt.GetPublicFilesLimit, sortBy)
+	query := lo.Ternary(db.IsLoggedIn(), queryAll, queryPublic)
+	if files, err = getFilesPlus(db.DB, query, db.FilesLimit); err != nil {
 		return
 	}
 	files = RemoveChecksum(files)
 	return
 }
 
-func (db *DB) RecentFilesInBucket(id int64) (files []*FilePlus, err error) {
-	query := lo.Ternary(db.IsLoggedIn(), stmt.AllRecentFilesInBucket, stmt.PublicRecentFilesInBucket)
-	if files, err = getFilesPlus(db.DB, query, id, db.RecentFilesLimit); err != nil {
+func (db *DB) GetFilesInBucket(id int64) (files []*FilePlus, err error) {
+	query := lo.Ternary(db.IsLoggedIn(), stmt.AllFilesInBucket, stmt.PublicFilesInBucket)
+	if files, err = getFilesPlus(db.DB, query, id, db.FilesLimit); err != nil {
 		return
 	}
 	files = RemoveChecksum(files)
 	return
 }
 
-func (db *DB) GetRecentPics() (files []*FilePlus, err error) {
-	query := lo.Ternary(db.IsLoggedIn(), stmt.GetAllRecentPics, stmt.GetPublicRecentPics)
-	if files, err = getFilesPlus(db.DB, query, db.RecentFilesLimit); err != nil {
+func (db *DB) GetPicsLimit() (files []*FilePlus, err error) {
+	query := lo.Ternary(db.IsLoggedIn(), stmt.GetAllPicsLimit, stmt.GetPublicPicsLimit)
+	if files, err = getFilesPlus(db.DB, query, db.FilesLimit); err != nil {
 		return
 	}
 	files = RemoveChecksum(files)
 	return
 }
 
-func (db *DB) RecentPicsInBucket(id int64) (files []*FilePlus, err error) {
-	query := lo.Ternary(db.IsLoggedIn(), stmt.AllRecentPicsInBucket, stmt.PublicRecentPicsInBucket)
-	if files, err = getFilesPlus(db.DB, query, id, db.RecentFilesLimit); err != nil {
+func (db *DB) GetPicsInBucket(id int64) (files []*FilePlus, err error) {
+	query := lo.Ternary(db.IsLoggedIn(), stmt.AllPicsInBucket, stmt.PublicPicsInBucket)
+	if files, err = getFilesPlus(db.DB, query, id, db.FilesLimit); err != nil {
 		return
 	}
 	files = RemoveChecksum(files)

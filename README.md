@@ -268,8 +268,9 @@
 
 ## 隱藏功能
 
-- `/recent-files.html?damaged=1` 查看損毀檔案
-- 在 "最近檔案" 或 "最近圖片" 界面按 F12 進入控制台, 輸入 `showMoreButtons()` 回車,
+- `/files.html?damaged=1` 查看損毀檔案
+- `/files.html?sort=size` 找出大體積檔案 (注意: 有注入風險)
+- 在 "檔案清單" 或 "圖片清單" 界面按 F12 進入控制台, 輸入 `showMoreButtons()` 回車,
   界面上會出現 **small** 按鈕, 用來下載小圖.
 
 ## 已知小问题

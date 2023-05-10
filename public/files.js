@@ -1,5 +1,7 @@
 $("title").text("Recent files (最近檔案) - Local Buckets");
 
+const SortBy = getUrlParam("sort");
+
 const SearchInput = MJBS.createInput("search", "required");
 const SearchBtn = MJBS.createButton("search", "primary", "submit");
 const SearchInputGroup = cc("form", {
@@ -295,7 +297,7 @@ async function init() {
   if (getUrlParam("damaged")) {
     getDamagedFiles();
   } else {
-    getRecentFiles(bucketID);
+    getFilesLimit(bucketID);
   }
 
   NotesInput.elem().attr({ accesskey: "n" });
@@ -304,15 +306,15 @@ async function init() {
 }
 
 function initNavButtons(bucketID) {
-  let href = "/recent-pics.html";
+  let href = "/pics.html";
   if (bucketID) href += `?bucket=${bucketID}`;
   $(".PicsBtn").attr({ href: href });
 }
 
-function getRecentFiles(bucketID) {
+function getFilesLimit(bucketID) {
   axiosPost({
-    url: "/api/recent-files",
-    body: { id: parseInt(bucketID) },
+    url: "/api/files",
+    body: { id: parseInt(bucketID), sort: SortBy },
     alert: PageAlert,
     onSuccess: (resp) => {
       const files = resp.data;

@@ -12,9 +12,9 @@ const navBar = m("div")
     m("div")
       .addClass("col text-end")
       .append(
-        MJBS.createLinkElem("/recent-files.html", { text: "Files" }),
+        MJBS.createLinkElem("/files.html", { text: "Files" }),
         " | ",
-        MJBS.createLinkElem("/recent-pics.html", { text: "Pics" }),
+        MJBS.createLinkElem("/pics.html", { text: "Pics" }),
         " | ",
         MJBS.createLinkElem("/create-bucket.html", { text: "New" }).addClass(
           "HideIfBackup"
@@ -87,11 +87,11 @@ function BucketItem(bucket) {
           m("div")
             .addClass("text-end")
             .append(
-              MJBS.createLinkElem("recent-files.html?bucket=" + bucket.id, {
+              MJBS.createLinkElem("files.html?bucket=" + bucket.id, {
                 text: "files",
               }).addClass(`btn btn-sm ${btnColor} me-2`),
 
-              MJBS.createLinkElem("recent-pics.html?bucket=" + bucket.id, {
+              MJBS.createLinkElem("pics.html?bucket=" + bucket.id, {
                 text: "pics",
               }).addClass(`btn btn-sm ${btnColor} me-2`),
 

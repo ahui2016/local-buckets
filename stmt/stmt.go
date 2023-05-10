@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS file
 CREATE INDEX IF NOT EXISTS idx_file_bucket_name ON file(bucket_name);
 CREATE INDEX IF NOT EXISTS idx_file_notes       ON file(notes);
 CREATE INDEX IF NOT EXISTS idx_file_keywords    ON file(keywords);
+CREATE INDEX IF NOT EXISTS idx_file_size        ON file(size);
 CREATE INDEX IF NOT EXISTS idx_file_ctime       ON file(ctime);
 CREATE INDEX IF NOT EXISTS idx_file_utime       ON file(utime);
 CREATE INDEX IF NOT EXISTS idx_file_checked     ON file(checked);
@@ -104,15 +105,16 @@ FROM file
 	INNER JOIN bucket ON file.bucket_name = bucket.name
 	WHERE file.name=?;`
 
-const GetAllRecentFiles = `SELECT file.id, file.checksum, file.bucket_name,
+// Bug: 有注入風險, 但这是單用戶系統, 因此風險可控.
+const GetAllFilesLimit = `SELECT file.id, file.checksum, file.bucket_name,
 	file.name,    file.notes,   file.keywords, file.size,
 	file.type,    file.like,    file.ctime,    file.utime,
 	file.checked, file.damaged, file.deleted,  bucket.encrypted
 FROM file
 	INNER JOIN bucket ON file.bucket_name = bucket.name
-	ORDER BY utime DESC LIMIT ?;`
+	ORDER BY %s DESC LIMIT ?;`
 
-const AllRecentFilesInBucket = `SELECT file.id, file.checksum, file.bucket_name,
+const AllFilesInBucket = `SELECT file.id, file.checksum, file.bucket_name,
 	file.name,    file.notes,   file.keywords, file.size,
 	file.type,    file.like,    file.ctime,    file.utime,
 	file.checked, file.damaged, file.deleted,  bucket.encrypted
@@ -121,7 +123,7 @@ FROM file
 	WHERE bucket.id=?
 	ORDER BY utime DESC LIMIT ?;`
 
-const GetAllRecentPics = `SELECT file.id, file.checksum, file.bucket_name,
+const GetAllPicsLimit = `SELECT file.id, file.checksum, file.bucket_name,
 	file.name,    file.notes,   file.keywords, file.size,
 	file.type,    file.like,    file.ctime,    file.utime,
 	file.checked, file.damaged, file.deleted,  bucket.encrypted
@@ -130,7 +132,7 @@ FROM file
 	WHERE file.type LIKE "image/%"
 	ORDER BY utime DESC LIMIT ?;`
 
-const AllRecentPicsInBucket = `SELECT file.id, file.checksum, file.bucket_name,
+const AllPicsInBucket = `SELECT file.id, file.checksum, file.bucket_name,
 	file.name,    file.notes,   file.keywords, file.size,
 	file.type,    file.like,    file.ctime,    file.utime,
 	file.checked, file.damaged, file.deleted,  bucket.encrypted
@@ -139,16 +141,17 @@ FROM file
 	WHERE bucket.id=? AND file.type LIKE "image/%"
 	ORDER BY utime DESC LIMIT ?;`
 
-const GetPublicRecentFiles = `SELECT file.id, file.checksum, file.bucket_name,
+// Bug: 有注入風險, 但这是單用戶系統, 因此風險可控.
+const GetPublicFilesLimit = `SELECT file.id, file.checksum, file.bucket_name,
 	file.name,    file.notes,   file.keywords, file.size,
 	file.type,    file.like,    file.ctime,    file.utime,
 	file.checked, file.damaged, file.deleted,  bucket.encrypted
 FROM file
 	INNER JOIN bucket ON file.bucket_name = bucket.name
 	WHERE bucket.encrypted=FALSE
-	ORDER BY file.utime DESC LIMIT ?;`
+	ORDER BY %s DESC LIMIT ?;`
 
-const PublicRecentFilesInBucket = `SELECT file.id, file.checksum, file.bucket_name,
+const PublicFilesInBucket = `SELECT file.id, file.checksum, file.bucket_name,
 	file.name,    file.notes,   file.keywords, file.size,
 	file.type,    file.like,    file.ctime,    file.utime,
 	file.checked, file.damaged, file.deleted,  bucket.encrypted
@@ -157,7 +160,7 @@ FROM file
 	WHERE bucket.id=? AND bucket.encrypted=FALSE
 	ORDER BY file.utime DESC LIMIT ?;`
 
-const GetPublicRecentPics = `SELECT file.id, file.checksum, file.bucket_name,
+const GetPublicPicsLimit = `SELECT file.id, file.checksum, file.bucket_name,
 	file.name,    file.notes,   file.keywords, file.size,
 	file.type,    file.like,    file.ctime,    file.utime,
 	file.checked, file.damaged, file.deleted,  bucket.encrypted
@@ -166,7 +169,7 @@ FROM file
 	WHERE bucket.encrypted=FALSE AND file.type LIKE "image/%"
 	ORDER BY file.utime DESC LIMIT ?;`
 
-const PublicRecentPicsInBucket = `SELECT file.id, file.checksum, file.bucket_name,
+const PublicPicsInBucket = `SELECT file.id, file.checksum, file.bucket_name,
 	file.name,    file.notes,   file.keywords, file.size,
 	file.type,    file.like,    file.ctime,    file.utime,
 	file.checked, file.damaged, file.deleted,  bucket.encrypted

@@ -88,7 +88,7 @@ type BucketStatus struct {
 
 // CreateBucketForm 用於新建倉庫, 由前端傳給后端.
 type CreateBucketForm struct {
-	Name      string `json:"name" validate:"required"`
+	Name      string `json:"name"      validate:"required"`
 	Encrypted bool   `json:"encrypted"`
 }
 
@@ -269,21 +269,23 @@ func checkFilename(name string) error {
 	return nil
 }
 
-type BucketIdForm struct {
-	ID int64 `json:"id" params:"id"`
+type FilesOptions struct {
+	ID   int64  `json:"id"   params:"id"`
+	Sort string `json:"sort" params:"sort"`
 }
 
 type OneTextForm struct {
 	Text string `json:"text" validate:"required"`
 }
 
+// FileIdForm 同時也用於 bucket id.
 type FileIdForm struct {
 	ID int64 `json:"id" params:"id" validate:"required,gt=0"`
 }
 
 type FileIdRangeForm struct {
 	Start int64 `json:"start" params:"start" validate:"required,gt=0"`
-	End   int64 `json:"end" params:"end" validate:"required,gt=0"`
+	End   int64 `json:"end"   params:"end"   validate:"required,gt=0"`
 }
 
 type ChangePwdForm struct {
@@ -297,17 +299,17 @@ type RenameWaitingFileForm struct {
 }
 
 type UpdateFileInfoForm struct {
-	ID       int64  `json:"id" validate:"required,gt=0"`
-	Name     string `json:"name" validate:"required"`
+	ID       int64  `json:"id"       validate:"required,gt=0"`
+	Name     string `json:"name"     validate:"required"`
 	Notes    string `json:"notes"`
 	Keywords string `json:"keywords"`
 	Like     int64  `json:"like"`
-	CTime    string `json:"ctime" validate:"required"`
+	CTime    string `json:"ctime"    validate:"required"`
 	UTime    string `json:"utime"`
 }
 
 type MoveFileToBucketForm struct {
-	FileID     int64  `json:"file_id" validate:"required,gt=0"`
+	FileID     int64  `json:"file_id"     validate:"required,gt=0"`
 	BucketName string `json:"bucket_name" validate:"required"`
 }
 

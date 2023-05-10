@@ -149,7 +149,7 @@ async function init() {
 }
 
 function initNavButtons(bucketID) {
-  let href = "/recent-files.html";
+  let href = "/files.html";
   if (bucketID) href += `?bucket=${bucketID}`;
   $(".FilesBtn").attr({ href: href });
 }
@@ -161,7 +161,7 @@ function getRecentPics(bucketID) {
   }
 
   axiosPost({
-    url: "/api/recent-pics",
+    url: "/api/pics",
     body: { id: bucketID },
     alert: PageAlert,
     onSuccess: (resp) => {

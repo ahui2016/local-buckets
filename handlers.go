@@ -145,7 +145,7 @@ func autoGetBuckets(c *fiber.Ctx) error {
 }
 
 func getBucketHandler(c *fiber.Ctx) error {
-	form := new(model.BucketIdForm)
+	form := new(model.FileIdForm)
 	if err := parseValidate(form, c); err != nil {
 		return err
 	}
@@ -722,15 +722,18 @@ func toWaitingFiles(files []string) (map[string]*File, error) {
 	return waitingFiles, nil
 }
 
-func getRecentFiles(c *fiber.Ctx) error {
-	form, files, err := parseBucketIdForm(c)
+func getFilesHandler(c *fiber.Ctx) error {
+	form, files, err := parseFilesOptions(c)
 	if err != nil {
 		return err
 	}
+	if form.Sort == "" {
+		form.Sort = "utime"
+	}
 	if form.ID > 0 {
-		files, err = db.RecentFilesInBucket(form.ID)
+		files, err = db.GetFilesInBucket(form.ID)
 	} else {
-		files, err = db.GetRecentFiles()
+		files, err = db.GetFilesLimit(form.Sort)
 	}
 	if err != nil {
 		return err
@@ -738,15 +741,15 @@ func getRecentFiles(c *fiber.Ctx) error {
 	return c.JSON(files)
 }
 
-func getRecentPics(c *fiber.Ctx) error {
-	form, files, err := parseBucketIdForm(c)
+func getPicsHandler(c *fiber.Ctx) error {
+	form, files, err := parseFilesOptions(c)
 	if err != nil {
 		return err
 	}
 	if form.ID > 0 {
-		files, err = db.RecentPicsInBucket(form.ID)
+		files, err = db.GetPicsInBucket(form.ID)
 	} else {
-		files, err = db.GetRecentPics()
+		files, err = db.GetPicsLimit()
 	}
 	if err != nil {
 		return err
@@ -754,10 +757,10 @@ func getRecentPics(c *fiber.Ctx) error {
 	return c.JSON(files)
 }
 
-func parseBucketIdForm(c *fiber.Ctx) (
-	form *model.BucketIdForm, files []*FilePlus, err error,
+func parseFilesOptions(c *fiber.Ctx) (
+	form *model.FilesOptions, files []*FilePlus, err error,
 ) {
-	form = new(model.BucketIdForm)
+	form = new(model.FilesOptions)
 	e1 := parseValidate(form, c)
 	if form.ID == 0 {
 		return form, files, nil

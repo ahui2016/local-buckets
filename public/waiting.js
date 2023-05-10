@@ -16,7 +16,7 @@ const navBar = m("div")
         " | ",
         MJBS.createLinkElem("/buckets.html", { text: "Buckets" }),
         " | ",
-        MJBS.createLinkElem("/recent-files.html", { text: "Files" }),
+        MJBS.createLinkElem("/files.html", { text: "Files" }),
       )
   );
 
