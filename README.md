@@ -272,6 +272,10 @@
 - `/files.html?sort=size` 找出大體積檔案 (注意: 有注入風險)
 - 在 "檔案清單" 或 "圖片清單" 界面按 F12 進入控制台, 輸入 `showMoreButtons()` 回車,
   界面上會出現 **small** 按鈕, 用來下載小圖.
+- 點擊檔案的 info 按鈕顯示編輯檔案屬性的側邊欄
+  - 按 Alt+Shift+N 可聚焦 Notes 文字輸入欄位
+  - 按 Alt+Shift+K 聚焦 Keywords 輸入欄位
+  - 按 Alt+Shift+E 執行修改 (相當於點擊 Submit 按鈕).
 
 ## 已知小问题
 

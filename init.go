@@ -147,5 +147,8 @@ func tempFilePath(fileID int64) string {
 
 func removeTempFile(fileID int64) error {
 	filePath := tempFilePath(fileID)
+	if util.PathNotExists(filePath) {
+		return nil
+	}
 	return os.Remove(filePath)
 }
