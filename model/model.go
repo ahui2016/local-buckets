@@ -271,6 +271,7 @@ func checkFilename(name string) error {
 
 type FilesOptions struct {
 	ID   int64  `json:"id"   params:"id"`
+	Name string `json:"name" params:"name"`
 	Sort string `json:"sort" params:"sort"`
 }
 

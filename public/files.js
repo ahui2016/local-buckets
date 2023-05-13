@@ -1,4 +1,4 @@
-$("title").text("Recent files (最近檔案) - Local Buckets");
+$("title").text("Files (檔案清單) - Local Buckets");
 
 const SortBy = getUrlParam("sort");
 
@@ -47,7 +47,7 @@ const navBar = m("div")
       .addClass("col text-start")
       .append(
         MJBS.createLinkElem("index.html", { text: "Home" }),
-        span(" .. Recent files (最近檔案)")
+        span(" .. Files (檔案清單)")
       ),
     m("div")
       .addClass("col text-end")
@@ -202,8 +202,12 @@ function FileItem(file) {
         })
     );
 
-  let headerText = `${file.bucket_name}/${file.name}`;
-  if (file.encrypted) headerText = "🔒" + headerText;
+  let bucketName = file.bucket_name;
+  if (file.encrypted) bucketName = "🔒" + bucketName;
+  const bucketLink = MJBS.createLinkElem("?bucketname=" + file.bucket_name, {
+    text: bucketName + "/",
+  }).addClass("link-dark fw-bold text-decoration-none");
+  const cardHeader = m("div").append(bucketLink, span(file.name));
 
   const self = cc("div", {
     id: fileItemID,
@@ -215,7 +219,7 @@ function FileItem(file) {
           span("DAMAGED")
             .addClass("badge text-bg-danger DamagedBadge me-1")
             .hide(),
-          span(headerText)
+          cardHeader
         ),
       m("div")
         .addClass("card-body")
@@ -282,6 +286,7 @@ init();
 
 async function init() {
   const bucketID = getUrlParam("bucket");
+  const bucketName = getUrlParam("bucketname");
 
   PageConfig.bsFileEditCanvas = new bootstrap.Offcanvas(FileEditCanvas.id);
 
@@ -289,7 +294,7 @@ async function init() {
     $("#root").css({ marginLeft: "" });
   });
 
-  initNavButtons(bucketID);
+  initNavButtons(bucketID, bucketName);
   getWaitingFolder();
   FileInfoPageCfg.buckets = await getBuckets(PageAlert);
   PageConfig.projectInfo = await getProjectInfo();
@@ -297,7 +302,7 @@ async function init() {
   if (getUrlParam("damaged")) {
     getDamagedFiles();
   } else {
-    getFilesLimit(bucketID);
+    getFilesLimit(bucketID, bucketName);
   }
 
   NotesInput.elem().attr({ accesskey: "n" });
@@ -305,16 +310,20 @@ async function init() {
   SubmitBtn.elem().attr({ accesskey: "e" });
 }
 
-function initNavButtons(bucketID) {
+function initNavButtons(bucketID, bucketName) {
   let href = "/pics.html";
-  if (bucketID) href += `?bucket=${bucketID}`;
+  if (bucketID) {
+    href += `?bucket=${bucketID}`;
+  } else if (bucketName) {
+    href += `?bucketname=${bucketName}`;
+  }
   $(".PicsBtn").attr({ href: href });
 }
 
-function getFilesLimit(bucketID) {
+function getFilesLimit(bucketID, bucketName) {
   axiosPost({
     url: "/api/files",
-    body: { id: parseInt(bucketID), sort: SortBy },
+    body: { id: parseInt(bucketID), name: bucketName, sort: SortBy },
     alert: PageAlert,
     onSuccess: (resp) => {
       const files = resp.data;

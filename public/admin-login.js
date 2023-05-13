@@ -12,7 +12,7 @@ const navBar = m("div")
     m("div")
       .addClass("col text-end")
       .append(
-        MJBS.createLinkElem("/recent-files.html", { text: "Files" }),
+        MJBS.createLinkElem("/files.html", { text: "Files" }),
         " | ",
         MJBS.createLinkElem("#", { text: "Link2" }).addClass("Link2")
       )

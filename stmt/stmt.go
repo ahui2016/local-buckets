@@ -49,7 +49,7 @@ const DeleteBucket = `DELETE FROM bucket WHERE id=?;`
 const UpdateBucketName = `UPDATE bucket SET name=? WHERE id=?;`
 const UpdateBucketTitle = `UPDATE bucket SET title=?, subtitle=? WHERE id=?;`
 
-const GetAllBuckets = `SELECT * FROM bucket;`
+const GetAllBuckets = `SELECT * FROM bucket ORDER BY encrypted;`
 const GetPublicBuckets = `SELECT * FROM bucket WHERE encrypted=FALSE;`
 const GetBucket = `SELECT * FROM bucket WHERE id=?;`
 const GetBucketByName = `SELECT * FROM bucket WHERE name=?;`

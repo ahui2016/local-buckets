@@ -1,4 +1,4 @@
-$("title").text("Recent pics (最近圖片) - Local Buckets");
+$("title").text("Pics (圖片清單) - Local Buckets");
 
 const SearchInput = MJBS.createInput("search", "required");
 const SearchBtn = MJBS.createButton("search", "primary", "submit");
@@ -45,7 +45,7 @@ const navBar = m("div")
       .addClass("col text-start")
       .append(
         MJBS.createLinkElem("index.html", { text: "Home" }),
-        span(" .. Recent pics (最近圖片)")
+        span(" .. Pics (圖片清單)")
       ),
     m("div")
       .addClass("col text-end")
@@ -129,7 +129,8 @@ $("#root")
 init();
 
 async function init() {
-  let bucketID = getUrlParam("bucket");
+  const bucketID = getUrlParam("bucket");
+  const bucketName = getUrlParam("bucketname");
 
   PageConfig.bsFileEditCanvas = new bootstrap.Offcanvas(FileEditCanvas.id);
 
@@ -138,9 +139,9 @@ async function init() {
   });
   FileInfoPageCfg.buckets = await getBuckets(PageAlert);
   getWaitingFolder();
-  getRecentPics(bucketID);
+  getPicsLimit(bucketID, bucketName);
 
-  initNavButtons(bucketID);
+  initNavButtons(bucketID, bucketName);
   initProjectInfo();
 
   NotesInput.elem().attr({accesskey: "n"});
@@ -148,13 +149,17 @@ async function init() {
   SubmitBtn.elem().attr({accesskey: "e"});
 }
 
-function initNavButtons(bucketID) {
+function initNavButtons(bucketID, bucketName) {
   let href = "/files.html";
-  if (bucketID) href += `?bucket=${bucketID}`;
+  if (bucketID) {
+    href += `?bucket=${bucketID}`;
+  } else if (bucketName) {
+    href += `?bucketname=${bucketName}`;
+  }
   $(".FilesBtn").attr({ href: href });
 }
 
-function getRecentPics(bucketID) {
+function getPicsLimit(bucketID, bucketName) {
   bucketID = parseInt(bucketID);
   if (bucketID > 0) {
     PageConfig.picsInBucket = true;
@@ -162,7 +167,7 @@ function getRecentPics(bucketID) {
 
   axiosPost({
     url: "/api/pics",
-    body: { id: bucketID },
+    body: { id: bucketID, name: bucketName },
     alert: PageAlert,
     onSuccess: (resp) => {
       const files = resp.data;

@@ -362,15 +362,21 @@ function getBuckets(alert) {
       onSuccess: (resp) => {
         const buckets = resp.data;
         const currentID = getUrlParam("bucket");
-        if (!currentID) {
+        let currentName = getUrlParam("bucketname");
+        if (!currentName) currentName = "";
+
+        if (!currentID && !currentName) {
           resolve(buckets);
           return;
         }
 
-        let hasID = false;
+        let hasBucket = false;
         for (const bucket of buckets) {
-          if (currentID == bucket.id) {
-            hasID = true;
+          if (
+            currentID == bucket.id ||
+            currentName.toLowerCase() == bucket.name.toLowerCase()
+          ) {
+            hasBucket = true;
             const name =
               bucket.name != bucket.title
                 ? `bucket.name(${bucket.title})`
@@ -379,8 +385,8 @@ function getBuckets(alert) {
             CurrentBucketAlert.elem().text(`正在瀏覽倉庫: ${name}`);
           }
         }
-        if (!hasID) {
-          alert.insert("danger", `找不到倉庫ID: ${currentID}`);
+        if (!hasBucket) {
+          alert.insert("danger", `找不到倉庫: ${currentID} ${currentName}`);
         }
         resolve(buckets);
       },

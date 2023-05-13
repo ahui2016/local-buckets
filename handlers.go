@@ -592,6 +592,9 @@ func rebuildThumbsHandler(c *fiber.Ctx) error {
 // 对从 id=1 到 id=100 之间的文档尝试生成缩略图, 包括 1 和 100.
 // 自动跳过不存在的文档 或 非图片文档.
 func rebuildThumbs(start, end int64) error {
+	if end < start {
+		end = start
+	}
 	for i := start; i <= end; i++ {
 		file, err := db.GetFilePlus(i)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -761,12 +764,21 @@ func parseFilesOptions(c *fiber.Ctx) (
 	form *model.FilesOptions, files []*FilePlus, err error,
 ) {
 	form = new(model.FilesOptions)
-	e1 := parseValidate(form, c)
-	if form.ID == 0 {
-		return form, files, nil
+	if err = parseValidate(form, c); err != nil {
+		return
 	}
-	e2 := checkBucketRequireAdmin(form.ID)
-	err = util.WrapErrors(e1, e2)
+	var bucket Bucket
+	if form.Name != "" {
+		bucket, err = db.GetBucketByName(form.Name)
+		if err != nil {
+			return
+		}
+		form.ID = bucket.ID
+	}
+	if form.ID <= 0 {
+		return
+	}
+	err = checkBucketRequireAdmin(form.ID)
 	return
 }
 
