@@ -379,7 +379,7 @@ function getBuckets(alert) {
             hasBucket = true;
             const name =
               bucket.name != bucket.title
-                ? `bucket.name(${bucket.title})`
+                ? `${bucket.name} (${bucket.title})`
                 : bucket.name;
             CurrentBucketAlert.show();
             CurrentBucketAlert.elem().text(`正在瀏覽倉庫: ${name}`);
