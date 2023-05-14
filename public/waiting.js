@@ -27,6 +27,7 @@ const PageLoading = MJBS.createLoading(null, "large");
 
 const BucketSelect = cc("select", {
   classes: "form-select",
+  attr: {accessKey: "s"},
   children: [
     m("option")
       .prop("selected", true)

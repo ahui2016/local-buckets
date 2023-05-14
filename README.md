@@ -276,6 +276,8 @@
   - 按 Alt+Shift+N 可聚焦 Notes 文字輸入欄位
   - 按 Alt+Shift+K 聚焦 Keywords 輸入欄位
   - 按 Alt+Shift+E 執行修改 (相當於點擊 Submit 按鈕).
+  - 按 Alt+Shift+S 聚焦 "選擇倉庫", 然後按上下箭頭, 或按回車, 或按倉庫的第一個字母  
+    最後按 Tab 跳到 Move 按鈕, 按回車點擊按鈕.
 
 ## 已知小问题
 

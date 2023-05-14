@@ -255,11 +255,13 @@ function FileItem(file) {
     }
 
     if (canBePreviewed(file.type)) {
+      const css = PageConfig.projectInfo.markdown_style;
       const previewBtn = self.find(".FilePreviewBtn");
       previewBtn.show();
       if (file.type == "text/md") {
-        const css = PageConfig.projectInfo.markdown_style;
         previewBtn.attr({ href: `/md.html?id=${file.id}&css=${css}` });
+      } else if (file.type == "text/plain") {
+        previewBtn.attr({ href: `/txt.html?id=${file.id}&css=${css}`})
       } else {
         previewBtn.attr({ href: "/file/" + file.id });
       }
@@ -305,6 +307,7 @@ async function init() {
     getFilesLimit(bucketID, bucketName);
   }
 
+  BucketSelect.elem().attr({ accesskey: "s" })
   NotesInput.elem().attr({ accesskey: "n" });
   KeywordsInput.elem().attr({ accesskey: "k" });
   SubmitBtn.elem().attr({ accesskey: "e" });
