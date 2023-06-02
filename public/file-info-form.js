@@ -90,6 +90,7 @@ const FileFormButtonsArea = cc("div", {
     MJBS.createLinkElem("#", { text: "DELETE" })
       .addClass("ImageDangerDelBtn btn btn-sm btn-danger")
       .hide(),
+    span("").addClass("ImageLikeCount").hide()
   ],
 });
 
@@ -273,7 +274,7 @@ function initFileFormButtons(fileID) {
           MJBS.enable(FileFormButtonsArea);
         },
       });
-    });
+    });  
 }
 
 function initEditFileForm(fileID, selfButton, onlyImages) {
@@ -324,6 +325,16 @@ function initEditFileForm(fileID, selfButton, onlyImages) {
       MJBS.disable(CheckedInput);
       MJBS.disable(DamagedInput);
       // MJBS.disable(DeletedInput);
+
+      if (file.like < 1) {
+        $(".ImageLikeCount").text("").hide();
+      }
+      if (file.like == 1) {
+        $(".ImageLikeCount").show().text("❤");
+      }
+      if (file.like > 1) {
+        $(".ImageLikeCount").show().text(`❤${file.like}`);
+      }
 
       EditFileForm.show();
       initBucketSelect(file.bucket_name);

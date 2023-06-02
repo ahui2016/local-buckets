@@ -90,9 +90,8 @@ function FileItem(file) {
 
   const bodyRowOne = m("div").addClass("mb-2 FileItemBodyRowOne");
 
-  const bodyRowTwoLeft = m("div")
-    .addClass("col-2 text-start")
-    .append(span("❤").hide());
+  const bodyRowTwoLeft = m("div").addClass("col-2 text-start FileItemLike");
+
   const bodyRowTwoRight = m("div")
     .addClass("col-10 text-end")
     .append(
@@ -234,6 +233,7 @@ function FileItem(file) {
   self.init = () => {
     const rowOne = self.find(".FileItemBodyRowOne");
     const damagedBadge = self.find(".DamagedBadge");
+    const fileItemLike = self.find(".FileItemLike");
 
     self.find(".FileInfoBtn").addClass("btn btn-sm btn-light text-muted");
 
@@ -242,6 +242,12 @@ function FileItem(file) {
       .removeClass("btn-light text-muted")
       .addClass("btn-danger");
 
+    if (file.like == 1) {
+      fileItemLike.text("❤");
+    }
+    if (file.like > 1) {
+      fileItemLike.text(`❤${file.like}`);
+    }
     if (file.damaged) {
       damagedBadge.show();
     }
