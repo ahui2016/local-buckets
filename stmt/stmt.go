@@ -29,9 +29,11 @@ CREATE TABLE IF NOT EXISTS file
 );
 
 CREATE INDEX IF NOT EXISTS idx_file_bucket_name ON file(bucket_name);
+CREATE INDEX IF NOT EXISTS idx_file_name        ON file(name);
 CREATE INDEX IF NOT EXISTS idx_file_notes       ON file(notes);
 CREATE INDEX IF NOT EXISTS idx_file_keywords    ON file(keywords);
 CREATE INDEX IF NOT EXISTS idx_file_size        ON file(size);
+CREATE INDEX IF NOT EXISTS idx_file_like        ON file(like);
 CREATE INDEX IF NOT EXISTS idx_file_ctime       ON file(ctime);
 CREATE INDEX IF NOT EXISTS idx_file_utime       ON file(utime);
 CREATE INDEX IF NOT EXISTS idx_file_checked     ON file(checked);

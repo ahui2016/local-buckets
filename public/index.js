@@ -107,6 +107,7 @@ const LinkList = cc("div", {
     ).addClass("HideIfBackup"),
     createIndexItem("Backup", "backup.html", "備份專案"),
     createIndexItem("Admin Login", "admin-login.html", "管理登入"),
+    createIndexItem("README", "https://github.com/ahui2016/local-buckets", "使用說明"),
   ],
 });
 

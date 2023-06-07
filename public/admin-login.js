@@ -14,7 +14,7 @@ const navBar = m("div")
       .append(
         MJBS.createLinkElem("/files.html", { text: "Files" }),
         " | ",
-        MJBS.createLinkElem("#", { text: "Link2" }).addClass("Link2")
+        MJBS.createLinkElem("/buckets.html", { text: "Buckets" })
       )
   );
 
