@@ -34,50 +34,50 @@ const RenameRadioArea = cc("div", {
   ],
 });
 
-const SameNameFile = cc('dl', {classes: 'row'});
+const SameNameFile = cc("dl", { classes: "row" });
 
 SameNameFile.init = (file) => {
   SameNameFile.elem().append(
-    m('dt').addClass('col-sm-2').text("Bucket: "),
-    m('dt').addClass('col-sm-10 text-muted').text(file.bucket_name),
+    m("dt").addClass("col-sm-2").text("Bucket: "),
+    m("dt").addClass("col-sm-10 text-muted").text(file.bucket_name),
 
-    m('dt').addClass('col-sm-2').text("File Name: "),
-    m('dt').addClass('col-sm-10 text-muted').text(file.name)
+    m("dt").addClass("col-sm-2").text("File Name: "),
+    m("dt").addClass("col-sm-10 text-muted").text(file.name)
   );
   if (file.notes) {
     SameNameFile.elem().append(
-      m('dt').addClass('col-sm-2').text("Notes: "),
-      m('dt').addClass('col-sm-10 text-muted').text(file.notes)
+      m("dt").addClass("col-sm-2").text("Notes: "),
+      m("dt").addClass("col-sm-10 text-muted").text(file.notes)
     );
   }
   if (file.keywords) {
     SameNameFile.elem().append(
-      m('dt').addClass('col-sm-2').text("Keywords: "),
-      m('dt').addClass('col-sm-10 text-muted').text(file.keywords)
+      m("dt").addClass("col-sm-2").text("Keywords: "),
+      m("dt").addClass("col-sm-10 text-muted").text(file.keywords)
     );
   }
   SameNameFile.elem().append(
-    m('dt').addClass('col-sm-2').text("Size: "),
-    m('dt').addClass('col-sm-10 text-muted').text(fileSizeToString(file.size))
+    m("dt").addClass("col-sm-2").text("Size: "),
+    m("dt").addClass("col-sm-10 text-muted").text(fileSizeToString(file.size))
   );
 };
 
 const RenameInput = MJBS.createInput();
-const RenameBtn = MJBS.createButton('Rename');
+const RenameBtn = MJBS.createButton("Rename");
 const RenameAlert = MJBS.createAlert();
-const RenameForm = cc('div', {
-  classes: 'input-group',
+const RenameForm = cc("div", {
+  classes: "input-group",
   children: [
     m(RenameInput),
-    m(RenameBtn).on('click', (event) => {
+    m(RenameBtn).on("click", (event) => {
       event.preventDefault();
-      const new_name = MJBS.valOf(RenameInput, 'trim');
+      const new_name = MJBS.valOf(RenameInput, "trim");
       if (new_name == RenameInput.old_name) {
-        RenameAlert.insert('warning', '檔案名稱未變更.');
+        RenameAlert.insert("warning", "檔案名稱未變更.");
         MJBS.focus(RenameInput);
         return;
       }
-      MJBS.disable(RenameBtn);  // ------------------------ disable
+      MJBS.disable(RenameBtn); // ------------------------ disable
       axiosPost({
         url: "/api/rename-waiting-file",
         alert: RenameAlert,
@@ -87,35 +87,40 @@ const RenameForm = cc('div', {
         },
         onSuccess: () => {
           RenameForm.hide();
-          RenameAlert.clear().insert('success', 'Rename Success! 三秒後自動刷新.');
+          RenameAlert.clear().insert(
+            "success",
+            "Rename Success! 三秒後自動刷新."
+          );
           setTimeout(() => {
             window.location.reload();
           }, 5000);
         },
         onAlways: () => {
-          MJBS.enable(RenameBtn);  // ------------------------ enable
-        }
+          MJBS.enable(RenameBtn); // ------------------------ enable
+        },
       });
-    })
-  ]
+    }),
+  ],
 });
 const RenameArea = cc("div", {
   children: [
-    m('div').text('在此更改待上傳檔案的名稱, 注意保留副檔名(擴展名)').addClass('mb-1'),
-    m(RenameForm).addClass('mb-2'),
-    m(RenameAlert)
-  ]
-})
+    m("div")
+      .text("在此更改待上傳檔案的名稱, 注意保留副檔名(擴展名)")
+      .addClass("mb-1"),
+    m(RenameForm).addClass("mb-2"),
+    m(RenameAlert),
+  ],
+});
 
-const OverwriteBtn = MJBS.createButton('Overwrite');
+const OverwriteBtn = MJBS.createButton("Overwrite");
 const OverwriteAlert = MJBS.createAlert();
 const OverwriteBtnArea = cc("div", {
   children: [
-    m(OverwriteAlert).addClass('mb-2'),
-    span('點擊此按鈕執行覆蓋: '),
-    m(OverwriteBtn).on('click', (event) => {
+    m(OverwriteAlert).addClass("mb-2"),
+    span("點擊此按鈕執行覆蓋: ").addClass("OverwriteMessage"),
+    m(OverwriteBtn).on("click", (event) => {
       event.preventDefault();
-      MJBS.disable(OverwriteBtn);  // ------------------------ disable
+      MJBS.disable(OverwriteBtn); // ------------------------ disable
       axiosPost({
         url: "/api/overwrite-file",
         alert: OverwriteAlert,
@@ -123,18 +128,22 @@ const OverwriteBtnArea = cc("div", {
           text: RenameInput.old_name,
         },
         onSuccess: () => {
+          $(".OverwriteMessage").hide();
           OverwriteBtn.hide();
-          OverwriteAlert.clear().insert('success', 'Overwrite Success! 三秒後自動刷新.');
+          OverwriteAlert.clear().insert(
+            "success",
+            "Overwrite Success! 三秒後自動刷新."
+          );
           setTimeout(() => {
             window.location.reload();
           }, 5000);
         },
         onAlways: () => {
-          MJBS.enable(OverwriteBtn);  // ------------------------ enable
-        }
+          MJBS.enable(OverwriteBtn); // ------------------------ enable
+        },
       });
     }),
-  ]
+  ],
 });
 
 const SameNameRadioCard = cc("div", {
@@ -143,13 +152,15 @@ const SameNameRadioCard = cc("div", {
     m("div")
       .addClass("card-body")
       .append(
-        m("div").text("待上傳檔案的名稱, 與倉庫中的檔案名稱相同:").addClass("mb-3"),
+        m("div")
+          .text("待上傳檔案的名稱, 與倉庫中的檔案名稱相同:")
+          .addClass("mb-3"),
         m(SameNameFile).addClass("mb-3"),
         m("div").text("請選擇處理方式:").addClass("mb-3"),
         m(OverwriteRadioArea),
         m(RenameRadioArea),
-        m(RenameArea).addClass('my-5').hide(),
-        m(OverwriteBtnArea).addClass('my-5').hide(),
+        m(RenameArea).addClass("my-5").hide(),
+        m(OverwriteBtnArea).addClass("my-5").hide()
       ),
   ],
 });
@@ -157,13 +168,13 @@ const SameNameRadioCard = cc("div", {
 SameNameRadioCard.init = (file) => {
   $(`input[name="${SameNameRadioName}"]`).on("change", () => {
     const val = getSameNameRadioValue();
-    if (val == 'rename') {
+    if (val == "rename") {
       OverwriteBtnArea.hide();
       RenameArea.show();
       MJBS.focus(RenameInput);
       return;
     }
-    if (val == 'overwrite') {
+    if (val == "overwrite") {
       RenameArea.hide();
       OverwriteBtnArea.show();
     }
