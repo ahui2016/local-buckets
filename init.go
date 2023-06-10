@@ -22,6 +22,7 @@ type (
 	ProjectStatus = model.ProjectStatus
 	BucketStatus  = model.BucketStatus
 	TX            = database.TX
+	DB            = database.DB
 )
 
 const (

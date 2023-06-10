@@ -71,6 +71,7 @@ func main() {
 	api.Post("/bk-project-status", getBKProjStat)  // resp.data: ProjectStatus
 	api.Post("/check-now", checkNow)               // resp.data: ProjectStatus
 	api.Get("/damaged-files", damagedFilesHandler) // resp.data: FilePlus[]
+	api.Post("/repair-files", repairFilesHandler)
 	api.Post("/sync-backup", syncBackup)
 
 	api.Get("/login-status", getLoginStatus) // resp.data: OneTextForm

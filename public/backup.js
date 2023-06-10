@@ -179,6 +179,57 @@ function BKProjItem(projPath) {
   });
 }
 
+const BackupButton = MJBS.createButton("Backup");
+const RepairButton = MJBS.createButton("Repair", "danger");
+const BackupBtnAlert = MJBS.createAlert();
+const BackupButtonsArea = cc("div", {
+  classes: "text-center my-5",
+  children: [m(BackupBtnAlert).addClass("mb-2")],
+});
+
+BackupButtonsArea.appendBackupButton = (bkProjRoot) => {
+  BackupButtonsArea.elem().append(
+    m(BackupButton).on("click", (event) => {
+      event.preventDefault();
+      MJBS.disable(BackupButton);
+      axiosPost({
+        url: "/api/sync-backup",
+        alert: BackupBtnAlert,
+        body: { text: bkProjRoot },
+        onSuccess: () => {
+          BackupButton.hide();
+          BackupBtnAlert.insert("success", "備份完成!");
+        },
+        onAlways: () => {
+          MJBS.enable(BackupButton);
+        },
+      });
+    })
+  );
+};
+
+BackupButtonsArea.appendRepairButton = (bkProjRoot) => {
+  BackupButtonsArea.elem().append(
+    m(RepairButton).on("click", (event) => {
+      event.preventDefault();
+      BackupBtnAlert.clear();
+      MJBS.disable(RepairButton);
+      axiosPost({
+        url: "/api/repair-files",
+        alert: BackupBtnAlert,
+        body: { text: bkProjRoot },
+        onSuccess: () => {
+          BackupBtnAlert.insert("success", "修復成功!");
+          BackupBtnAlert.insert("info", "三秒後將會自動刷新本頁");
+          setTimeout(() => {
+            window.location.reload();
+          }, 5000);
+        },
+      });
+    })
+  );
+};
+
 // 根据 ProjectStatus 展示专案状态, "源专案" 与 "备份专案" 都使用该函数.
 function createProjStat(projStat) {
   let projID = "source-proj";
@@ -220,6 +271,18 @@ function createProjStat(projStat) {
             $(damagedCountID)
               .removeClass("text-muted text-danger")
               .addClass("text-danger");
+
+            MJBS.disable(BackupButton);
+
+            BackupBtnAlert.insert(
+              "warning",
+              "damaged found (發現損毀檔案, 必須修復後才可備份)"
+            );
+
+            BackupBtnAlert.insert("info", "三秒後將會自動刷新本頁.");
+            setTimeout(() => {
+              window.location.reload();
+            }, 5000);
           }
           if (projStat.WaitingCheckCount == 0) {
             $(checkNowBtnID).hide();
@@ -281,35 +344,6 @@ function createProjStat(projStat) {
     ],
   });
 }
-
-const BackupButton = MJBS.createButton("Backup");
-const RepairButton = MJBS.createButton("Repair", "danger");
-const BackupBtnAlert = MJBS.createAlert();
-const BackupButtonsArea = cc("div", {
-  classes: "text-center my-5",
-  children: [m(BackupBtnAlert).addClass("mb-2")],
-});
-
-BackupButtonsArea.appendBackupButton = (bkProjRoot) => {
-  BackupButtonsArea.elem().append(
-    m(BackupButton).on("click", (event) => {
-      event.preventDefault();
-      MJBS.disable(BackupButton);
-      axiosPost({
-        url: "/api/sync-backup",
-        alert: BackupBtnAlert,
-        body: { text: bkProjRoot },
-        onSuccess: () => {
-          BackupButton.hide();
-          BackupBtnAlert.insert("success", "備份完成!");
-        },
-        onAlways: () => {
-          MJBS.enable(BackupButton);
-        },
-      });
-    })
-  );
-};
 
 const ProjectsStatusArea = cc("div");
 
@@ -384,17 +418,8 @@ function getBKProject(bkProjRoot, alert, btn) {
         );
       }
       if (bkProjStat.DamagedCount + mainProjStat.DamagedCount > 0) {
-        BackupBtnAlert.insert(
-          "warning",
-          "damaged found (發現損毀檔案, 必須修復後才可備份)"
-        );
-        BackupBtnAlert.insert(
-          "info",
-          "修復方法: 1.點擊 Repair 按鈕嘗試自動修復; 2.如果不能自動修復, 則需要手動修復. "+
-          "手動修復方法: 下載損毀檔案, 刪除損毀檔案.",
-          "no-time"
-        );
-        BackupButtonsArea.elem().append(m(RepairButton));
+        showDamagedAlert();
+        BackupButtonsArea.appendRepairButton(bkProjRoot);
       } else {
         BackupButtonsArea.appendBackupButton(bkProjRoot);
       }
@@ -404,6 +429,19 @@ function getBKProject(bkProjRoot, alert, btn) {
       MJBS.enable(btn);
     },
   });
+}
+
+function showDamagedAlert() {
+  BackupBtnAlert.insert(
+    "warning",
+    "damaged found (發現損毀檔案, 必須修復後才可備份)"
+  );
+  BackupBtnAlert.insert(
+    "info",
+    "修復方法: 1.點擊 Repair 按鈕嘗試自動修復; 2.如果不能自動修復, 則需要手動修復. " +
+      "手動修復方法: 下載損毀檔案, 刪除損毀檔案.",
+    "no-time"
+  );
 }
 
 function initBKProjects(projects) {

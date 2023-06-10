@@ -1092,7 +1092,7 @@ func getBKProjStat(c *fiber.Ctx) error {
 }
 
 // 注意 open 后应立即 defer bk.DB.Close()
-func openBackupDB(bkProjRoot string) (*database.DB, *ProjectStatus, error) {
+func openBackupDB(bkProjRoot string) (*DB, *ProjectStatus, error) {
 	bkPath := filepath.Join(bkProjRoot, DatabaseFileName)
 	bkProjCfgPath := filepath.Join(bkProjRoot, ProjectTOML)
 
@@ -1108,6 +1108,28 @@ func openBackupDB(bkProjRoot string) (*database.DB, *ProjectStatus, error) {
 
 	bkProjStat, err := bk.GetProjStat(&bkProjCfg)
 	return bk, &bkProjStat, err
+}
+
+func repairFilesHandler(c *fiber.Ctx) error {
+	form := new(model.OneTextForm)
+	if err := parseValidate(form, c); err != nil {
+		return err
+	}
+	bkProjRoot := form.Text
+
+	bk, _, err := getDatabaseFrom(bkProjRoot)
+	if err != nil {
+		return err
+	}
+	defer bk.DB.Close()
+
+	// 要先同步文件夹, 否则有可能发生路径错误.
+	bkBucketsDir := filepath.Join(bkProjRoot, BucketsFolderName)
+	if err := syncBuckets(bkBucketsDir, bk); err != nil {
+		return err
+	}
+
+	return repairDamagedFiles(bkProjRoot, bk)
 }
 
 func checkNow(c *fiber.Ctx) error {
@@ -1136,7 +1158,7 @@ func checkNow(c *fiber.Ctx) error {
 	return c.JSON(projStat)
 }
 
-func getDatabaseFrom(root string) (*database.DB, *Project, error) {
+func getDatabaseFrom(root string) (*DB, *Project, error) {
 	yes, err := util.SamePath(root, ProjectRoot)
 	if err != nil {
 		return nil, nil, err
@@ -1149,7 +1171,7 @@ func getDatabaseFrom(root string) (*database.DB, *Project, error) {
 }
 
 // root 是被檢查的專案根目錄, db1 是被檢查的專案數據庫.
-func checkFilesChecksum(root string, db1 *database.DB) error {
+func checkFilesChecksum(root string, db1 *DB) error {
 	var totalChecked int64
 	files, err := db1.GetFilesNeedCheck(ProjectConfig.CheckInterval * Day)
 	if err != nil {
@@ -1157,7 +1179,7 @@ func checkFilesChecksum(root string, db1 *database.DB) error {
 	}
 	for _, file := range files {
 		// 先檢查一個檔案
-		if err = checkFile(root, file, db1); err != nil {
+		if _, err = checkFile(root, file, db1); err != nil {
 			return err
 		}
 		// 然後根據 ProjectConfig.CheckSizeLimit 終止檢查
@@ -1169,17 +1191,99 @@ func checkFilesChecksum(root string, db1 *database.DB) error {
 	return nil
 }
 
-func checkFile(root string, file *File, db1 *database.DB) error {
+func checkFile(root string, file *File, db1 *DB) (damaged bool, err error) {
 	filePath := filepath.Join(root, BucketsFolderName, file.BucketName, file.Name)
 	sum, err := util.FileSum512(filePath)
 	if err != nil {
-		return err
+		return
 	}
 	if sum != file.Checksum {
 		file.Damaged = true
 	}
 	file.Checked = model.Now()
-	return db1.SetFileCheckedDamaged(file)
+	err = db1.SetFileCheckedDamaged(file)
+	return file.Damaged, err
+}
+
+func recheckFile(db1 *DB, root string, fileID int64) (damaged bool, err error) {
+	// 如果在 db1 中标记了该文件已损坏，则直接返回结果。
+	file, err := db1.GetFileByID(fileID)
+	if err != nil {
+		return
+	}
+	if file.Damaged {
+		return true, nil
+	}
+
+	// 如果在 db1 中标记了该文件未损坏，则再检查一次。
+	return checkFile(root, &file, db1)
+}
+
+// 从 badDB 中找出 badFiles, 然后尝试从 goodDB 中获取未损坏版本进行修复。
+// 如果修复成功，则将 badFile 标记为未损坏，
+// 如果不可修复，则不进行任何操作, badFile 仍然保持 "已损坏" 的标记。
+func repair(badDB, goodDB *DB, badRoot, goodRoot string) error {
+	badFiles, err := badDB.GetDamagedFiles()
+	if err != nil {
+		return err
+	}
+	for _, file := range badFiles {
+		// 如果 goodDB 中的文件已损坏或找不到文件，则无法修复，如果未损坏则进行修复。
+		damaged, err := recheckFile(goodDB, goodRoot, file.ID)
+		if err == sql.ErrNoRows {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		if damaged {
+			continue
+		}
+
+		// 进行修复
+		goodFilePath := filepath.Join(goodRoot, BucketsFolderName, file.BucketName, file.Name)
+		badFilePath := filepath.Join(badRoot, BucketsFolderName, file.BucketName, file.Name)
+		if err := util.CopyFile(badFilePath, goodFilePath); err != nil {
+			return err
+		}
+
+		// 更新校验日期，标记为未损坏
+		file.Damaged = false
+		file.Checked = model.Now()
+
+		if err = badDB.SetFileCheckedDamaged(&file.File); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func damagedInProjects(db1, db2 *DB) (int64, error) {
+	info1, e1 := db1.GetProjStat(ProjectConfig)
+	info2, e2 := db2.GetProjStat(ProjectConfig)
+	return info1.DamagedCount + info2.DamagedCount, util.WrapErrors(e1, e2)
+}
+
+// repairDamagedFiles 自动修复文件，对于主仓库里的损坏文件，尝试从备份仓库中获取未损坏版本，
+// 对于备份仓库中的损坏文件则尝试从主仓库中获取未损坏版本，如果一个文件在主仓库及备份仓库中都损坏了，
+// 则无法修复该文件，后续提醒用户手动修复。
+func repairDamagedFiles(bkProjRoot string, bk *DB) error {
+	if err := repair(db, bk, ProjectRoot, bkProjRoot); err != nil {
+		return err
+	}
+	if err := repair(bk, db, bkProjRoot, ProjectRoot); err != nil {
+		return err
+	}
+
+	// 经自动修复后，再次检查有没有损坏文件。
+	n, err := damagedInProjects(bk, db)
+	if err != nil {
+		return err
+	}
+	if n > 0 {
+		return fmt.Errorf("仍有 %d 個受損檔案未修復, 請手動修復", n)
+	}
+	return nil
 }
 
 func syncBackup(c *fiber.Ctx) error {
@@ -1267,8 +1371,8 @@ func syncToBackupProject(bkProjRoot string) (*ProjectStatus, error) {
 }
 
 type ChangedFiles struct {
-	DB         *database.DB
-	BK         *database.DB
+	DB         *DB
+	BK         *DB
 	BKBuckets  string
 	BKTemp     string
 	Deleted    []int64
@@ -1278,7 +1382,7 @@ type ChangedFiles struct {
 	Inserted   []int64
 }
 
-func getChangedFiles(db, bk *database.DB, bkBuckets, bkTemp string) (files ChangedFiles, err error) {
+func getChangedFiles(db, bk *DB, bkBuckets, bkTemp string) (files ChangedFiles, err error) {
 	var (
 		bkFile File
 		dbFile File
@@ -1459,7 +1563,7 @@ func (files ChangedFiles) syncInsert() error {
 	return nil
 }
 
-func updateBKFile(bkFile, dbFile *FilePlus, bk *database.DB, bkBucketsDir string) error {
+func updateBKFile(bkFile, dbFile *FilePlus, bk *DB, bkBucketsDir string) error {
 	// 如果文档名不一致, 还要重命名
 	moved := new(MovedFile)
 	if bkFile.Name != dbFile.Name {
@@ -1489,7 +1593,7 @@ func syncProjectConfig(bkProjStat *ProjectStatus) (*ProjectStatus, error) {
 
 // 同步仓库信息到备份仓库 (包括仓库资料夹重命名)
 // 注意这里不能使用事务 TX, 因为一旦回滚, 批量恢复资料夹名称太麻烦了.
-func syncBuckets(bkBucketsDir string, bk *database.DB) error {
+func syncBuckets(bkBucketsDir string, bk *DB) error {
 	allDBBuckets, e1 := db.GetAllBuckets()
 	allBKBuckets, e2 := bk.GetAllBuckets()
 	if err := util.WrapErrors(e1, e2); err != nil {
@@ -1515,7 +1619,7 @@ func syncBuckets(bkBucketsDir string, bk *database.DB) error {
 		oldName := bkBucket.Name
 		newName := bucket.Name
 		if oldName != newName {
-			if err := renameBucket(oldName, newName, bkBucketsDir, bucket.ID); err != nil {
+			if err := renameBucket(oldName, newName, bkBucketsDir, bucket.ID, bk); err != nil {
 				return err
 			}
 			// 这里不能 continue
@@ -1550,13 +1654,13 @@ func syncBuckets(bkBucketsDir string, bk *database.DB) error {
 	return nil
 }
 
-func renameBucket(oldName, newName, buckets string, bucketid int64) error {
-	oldpath := filepath.Join(buckets, oldName)
-	newpath := filepath.Join(buckets, newName)
+func renameBucket(oldName, newName, bkBuckets string, bucketid int64, bk *DB) error {
+	oldpath := filepath.Join(bkBuckets, oldName)
+	newpath := filepath.Join(bkBuckets, newName)
 	if err := os.Rename(oldpath, newpath); err != nil {
 		return err
 	}
-	if err := db.UpdateBucketName(newName, bucketid); err != nil {
+	if err := bk.UpdateBucketName(newName, bucketid); err != nil {
 		err2 := os.Rename(newpath, oldpath)
 		return util.WrapErrors(err, err2)
 	}
@@ -1564,7 +1668,7 @@ func renameBucket(oldName, newName, buckets string, bucketid int64) error {
 }
 
 func moveBKFileToBucket(
-	bkBucketsDir, newBucketName string, bkFile *FilePlus, bk *database.DB,
+	bkBucketsDir, newBucketName string, bkFile *FilePlus, bk *DB,
 ) error {
 	moved := MovedFile{
 		Src: filepath.Join(bkBucketsDir, bkFile.BucketName, bkFile.Name),
@@ -1582,7 +1686,7 @@ func moveBKFileToBucket(
 
 // 注意, 移动加密文档时, 不可重新加密, 以免 Checksum 发生变化.
 func moveEncrypedBKFile(
-	bkBuckets, bkTemp string, bkFile, dbFile FilePlus, bk *database.DB,
+	bkBuckets, bkTemp string, bkFile, dbFile FilePlus, bk *DB,
 ) error {
 	tempFile := MovedFile{
 		Src: filepath.Join(bkBuckets, bkFile.BucketName, bkFile.Name),
@@ -1618,7 +1722,7 @@ func filesHaveSameProperties(bkFile, file File) bool {
 		file.UTime == bkFile.UTime
 }
 
-func insertBKFile(bkBuckets string, file *File, bk *database.DB) error {
+func insertBKFile(bkBuckets string, file *File, bk *DB) error {
 	dstFile := filepath.Join(bkBuckets, file.BucketName, file.Name)
 	srcFile := filepath.Join(BucketsFolder, file.BucketName, file.Name)
 	if err := util.CopyAndLockFile(dstFile, srcFile); err != nil {
@@ -1632,7 +1736,7 @@ func insertBKFile(bkBuckets string, file *File, bk *database.DB) error {
 }
 
 // 仅覆盖文档内容, 不改变其他任何信息.
-func overwriteBKFile(bkBucketsDir, bkTemp string, dbFile, bkFile *FilePlus, bk *database.DB) error {
+func overwriteBKFile(bkBucketsDir, bkTemp string, dbFile, bkFile *FilePlus, bk *DB) error {
 	// tempFile 把旧文档临时移动到安全的地方
 	tempFile := MovedFile{
 		Src: filepath.Join(bkBucketsDir, bkFile.BucketName, bkFile.Name),
