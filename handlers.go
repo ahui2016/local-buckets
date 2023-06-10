@@ -840,12 +840,7 @@ func previewFile(c *fiber.Ctx) error {
 	setFileType(c, file)
 	filePath := filepath.Join(BucketsFolder, file.BucketName, file.Name)
 	if !file.Encrypted {
-		// 因为删除文档时遇到了文档被占用的错误, 试试使用临时文档看能否解决问题.
-		tempFile, err := copyToTemp(filePath, file.Checksum, file.ID)
-		if err != nil {
-			return err
-		}
-		return c.SendFile(tempFile)
+		return c.SendFile(filePath)
 	}
 	decrypted, err := db.DecryptFile(filePath)
 	if err != nil {
