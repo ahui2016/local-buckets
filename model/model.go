@@ -59,7 +59,7 @@ type ProjectStatus struct {
 	TotalSize         int64  // 全部檔案體積合計
 	FilesCount        int64  // 檔案數量合計
 	WaitingCheckCount int64  // 待檢查檔案數量合計
-	DamagedCount      int64  // 損壞檔案數量合計
+	DamagedCount      int64  // 受損檔案數量合計
 }
 
 // Bucket 倉庫

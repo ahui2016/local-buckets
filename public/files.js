@@ -206,20 +206,17 @@ function FileItem(file) {
   const bucketLink = MJBS.createLinkElem("?bucketname=" + file.bucket_name, {
     text: bucketName + "/",
   }).addClass("link-dark fw-bold text-decoration-none");
-  const cardHeader = m("div").append(bucketLink, span(file.name));
+  const cardHeader = m("div").append(
+    span("DAMAGED").addClass("badge text-bg-danger DamagedBadge me-1").hide(),
+    bucketLink,
+    span(file.name)
+  );
 
   const self = cc("div", {
     id: fileItemID,
     classes: "card mb-4",
     children: [
-      m("div")
-        .addClass("card-header")
-        .append(
-          span("DAMAGED")
-            .addClass("badge text-bg-danger DamagedBadge me-1")
-            .hide(),
-          cardHeader
-        ),
+      m("div").addClass("card-header").append(cardHeader),
       m("div")
         .addClass("card-body")
         .append(
@@ -267,7 +264,7 @@ function FileItem(file) {
       if (file.type == "text/md") {
         previewBtn.attr({ href: `/md.html?id=${file.id}&css=${css}` });
       } else if (file.type == "text/plain") {
-        previewBtn.attr({ href: `/txt.html?id=${file.id}&css=${css}`})
+        previewBtn.attr({ href: `/txt.html?id=${file.id}&css=${css}` });
       } else {
         previewBtn.attr({ href: "/file/" + file.id });
       }
@@ -313,7 +310,7 @@ async function init() {
     getFilesLimit(bucketID, bucketName);
   }
 
-  BucketSelect.elem().attr({ accesskey: "s" })
+  BucketSelect.elem().attr({ accesskey: "s" });
   NotesInput.elem().attr({ accesskey: "n" });
   KeywordsInput.elem().attr({ accesskey: "k" });
   SubmitBtn.elem().attr({ accesskey: "e" });
@@ -353,7 +350,7 @@ function getFilesLimit(bucketID, bucketName) {
 }
 
 function getDamagedFiles() {
-  PageAlert.insert("info", "正在瀏覽損毀檔案 (damaged files)");
+  PageAlert.insert("info", "正在瀏覽受損檔案 (damaged files)");
   axiosGet({
     url: "/api/damaged-files",
     alert: PageAlert,
@@ -363,7 +360,7 @@ function getDamagedFiles() {
         MJBS.appendToList(FileList, files.map(FileItem));
         initBackupProject(PageConfig.projectInfo, PageAlert);
       } else {
-        PageAlert.insert("warning", "未找到損毀檔案");
+        PageAlert.insert("warning", "未找到受損檔案");
       }
     },
     onAlways: () => {

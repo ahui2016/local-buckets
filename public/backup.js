@@ -276,7 +276,7 @@ function createProjStat(projStat) {
 
             BackupBtnAlert.insert(
               "warning",
-              "damaged found (發現損毀檔案, 必須修復後才可備份)"
+              "damaged found (發現受損檔案, 必須修復後才可備份)"
             );
 
             BackupBtnAlert.insert("info", "三秒後將會自動刷新本頁.");
@@ -335,7 +335,7 @@ function createProjStat(projStat) {
                   checkNowBtn
                 ),
 
-              m("dt").addClass("col-sm-3").text("其中損毀檔案 (個): "),
+              m("dt").addClass("col-sm-3").text("其中受損檔案 (個): "),
               m("dt")
                 .addClass("col-sm-9 DamagedCount " + damageTextColor)
                 .text(projStat.DamagedCount)
@@ -434,12 +434,12 @@ function getBKProject(bkProjRoot, alert, btn) {
 function showDamagedAlert() {
   BackupBtnAlert.insert(
     "warning",
-    "damaged found (發現損毀檔案, 必須修復後才可備份)"
+    "damaged found (發現受損檔案, 必須修復後才可備份)"
   );
   BackupBtnAlert.insert(
     "info",
     "修復方法: 1.點擊 Repair 按鈕嘗試自動修復; 2.如果不能自動修復, 則需要手動修復. " +
-      "手動修復方法: 下載損毀檔案, 刪除損毀檔案.",
+      "手動修復方法: 下載受損檔案, 刪除受損檔案.",
     "no-time"
   );
 }

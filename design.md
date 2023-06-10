@@ -275,7 +275,7 @@
 
 ## 隱藏功能
 
-- `/files.html?damaged=1` 查看損毀檔案
+- `/files.html?damaged=1` 查看受損檔案
 - `/files.html?sort=size` 找出大體積檔案 (注意: 有注入風險)
 - `/files.html?sort=like` 按照小心心❤的數量排序 (注意: 有注入風險)
 - 在 "檔案清單" 或 "圖片清單" 界面按 F12 進入控制台, 輸入 `showMoreButtons()` 回車,
@@ -296,8 +296,6 @@
 
 ## TODO
 
-- 主仓库检查无效
-- 预览不复制临时文件
 - 获取 markdown 标题作为 notes
 - 分页
 - 自动删除临时文檔 (根据体积?)
