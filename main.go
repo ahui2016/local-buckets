@@ -53,8 +53,9 @@ func main() {
 	api.Use("/rebuild-thumbs", requireAdmin)
 	api.Post("/rebuild-thumbs", rebuildThumbsHandler)
 
-	api.Get("/waiting-folder", getWaitingFolder) // resp.data: TextMsg
-	api.Get("/auto-get-buckets", autoGetBuckets) // resp.data: null | BucketStatus[]
+	api.Get("/waiting-folder", getWaitingFolder)   // resp.data: TextMsg
+	api.Get("/auto-get-keywords", autoGetKeywords) // resp.data: null | string[]
+	api.Get("/auto-get-buckets", autoGetBuckets)   // resp.data: null | BucketStatus[]
 	api.Post("/get-bucket", getBucketHandler)
 	api.Post("/download-file", downloadFile)
 	api.Post("/download-small-pic", downloadSmallPic)

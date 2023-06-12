@@ -136,6 +136,15 @@ func getLoginStatus(c *fiber.Ctx) error {
 	return c.JSON(status)
 }
 
+func autoGetKeywords(c *fiber.Ctx) error {
+	// 等遇到性能问题再改为手动刷新吧, 数据库有索引应该效率足够高了, 不会浪费计算资源.
+	keywords, err := db.AutoGetKeywords()
+	if err != nil {
+		return err
+	}
+	return c.JSON(keywords)
+}
+
 func autoGetBuckets(c *fiber.Ctx) error {
 	buckets, err := db.AllBucketsStatus()
 	if err != nil {

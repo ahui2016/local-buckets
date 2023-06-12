@@ -242,3 +242,13 @@ FROM file
 	WHERE bucket.encrypted=FALSE AND file.type LIKE "image/%" AND (
 		file.name LIKE ? OR file.notes LIKE ? OR file.keywords LIKE ?)
 	ORDER BY file.utime DESC LIMIT ?;`
+
+const GetPublicKeywords = `SELECT file.keywords FROM file
+	INNER JOIN bucket ON file.bucket_name = bucket.name
+	WHERE bucket.encrypted=FALSE
+	GROUP BY file.keywords
+	ORDER BY file.keywords;`
+
+const GetAllKeywords = `SELECT file.keywords FROM file
+	GROUP BY file.keywords
+	ORDER BY file.keywords;`

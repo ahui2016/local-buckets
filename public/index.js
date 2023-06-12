@@ -97,6 +97,7 @@ const LinkList = cc("div", {
     createIndexItem("Recent Pics", "pics.html", "圖片清單"),
     createIndexItem("Upload", "waiting.html", "上傳檔案"),
     createIndexItem("All Buckets", "buckets.html", "倉庫清單"),
+    createIndexItem("Keywords", "keywords.html", "關鍵詞清單"),
     createIndexItem("Create Bucket", "create-bucket.html", "新建倉庫").addClass(
       "HideIfBackup"
     ),

@@ -79,6 +79,18 @@ func scanBuckets(rows *sql.Rows) (all []*Bucket, err error) {
 	return
 }
 
+func scanKeywords(rows *sql.Rows) (all []string, err error) {
+	var kw string
+	for rows.Next() {
+		if err := rows.Scan(&kw); err != nil {
+			return nil, err
+		}
+		all = append(all, kw)
+	}
+	err = util.WrapErrors(rows.Err(), rows.Close())
+	return
+}
+
 func insertFile(tx TX, f *File) error {
 	_, err := tx.Exec(
 		stmt.InsertFile,

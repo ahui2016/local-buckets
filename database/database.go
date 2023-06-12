@@ -113,6 +113,15 @@ func (db *DB) ChangePassword(oldPwd, newPwd string) (HexString, error) {
 	return db.cipherKey, nil
 }
 
+func (db *DB) AutoGetKeywords() ([]string, error) {
+	query := lo.Ternary(db.IsLoggedIn(), stmt.GetAllKeywords, stmt.GetPublicKeywords)
+	rows, err := db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	return scanKeywords(rows)
+}
+
 // autoGetBuckets 根据 db.IsLoggedIn 自动获取公开仓库或全部仓库
 func (db *DB) autoGetBuckets() ([]*Bucket, error) {
 	query := lo.Ternary(db.IsLoggedIn(), stmt.GetAllBuckets, stmt.GetPublicBuckets)
