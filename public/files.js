@@ -290,6 +290,7 @@ $("#root")
 init();
 
 async function init() {
+  const searchPattern = getUrlParam("search");
   const bucketID = getUrlParam("bucket");
   const bucketName = getUrlParam("bucketname");
 
@@ -306,6 +307,13 @@ async function init() {
 
   if (getUrlParam("damaged")) {
     getDamagedFiles();
+  } else if (searchPattern) {
+    PageLoading.hide();
+    MJBS.disable(".ShowSearchBtn");
+    $(".ShowSearchBtnArea").hide();
+    SearchInputGroup.show();
+    SearchInput.setVal(searchPattern);
+    SearchBtn.elem().trigger("click");
   } else {
     getFilesLimit(bucketID, bucketName);
   }

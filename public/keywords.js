@@ -25,10 +25,13 @@ const PageConfig = {};
 const PageAlert = MJBS.createAlert();
 const PageLoading = MJBS.createLoading(null, "large");
 
-const KeywordsList = cc("div");
+const KeywordsList = cc("ul");
 
 function KeywordsItem(kw, i) {
-  const link = MJBS.createLinkElem("#", { text: kw });
+  const link = MJBS.createLinkElem(
+    "/files.html?search=" + encodeURIComponent(kw),
+    { text: kw }
+  ).addClass("text-reset text-decoration-none");
   return cc("li", {
     id: "Keywords-" + i,
     children: [link],
