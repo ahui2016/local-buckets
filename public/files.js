@@ -1,5 +1,7 @@
 $("title").text("Files (檔案清單) - Local Buckets");
 
+const BucketID = getUrlParam("bucket");
+const BucketName = getUrlParam("bucketname");
 const SortBy = getUrlParam("sort");
 
 const SearchInput = MJBS.createInput("search", "required");
@@ -274,6 +276,29 @@ function FileItem(file) {
   return self;
 }
 
+const MoreBtnAlert = MJBS.createAlert();
+const MoreFilesBtn = MJBS.createButton("More");
+const MoreFilesDateInput = MJBS.createInput();
+const MoreFilesForm = cc("form", {
+  attr: { autocomplete: "off" },
+  children: [
+    MJBS.hiddenButtonElem(),
+    m("div")
+      .css({ width: "16rem" })
+      .addClass("input-group ms-auto me-auto my-5")
+      .append(
+        m(MoreFilesDateInput),
+        m(MoreFilesBtn).on("click", (event) => {
+          event.preventDefault();
+          getMoreFiles();
+        })
+      ),
+  ],
+});
+const MoreBtnArea = cc("div", {
+  children: [m(MoreBtnAlert), m(MoreFilesForm)],
+});
+
 $("#root")
   .css(RootCss)
   .append(
@@ -283,6 +308,7 @@ $("#root")
     m(SearchInputGroup).addClass("my-3").hide(),
     m(PageAlert).addClass("my-3"),
     m(FileList).addClass("my-3"),
+    m(MoreBtnArea),
     m(FileEditCanvas),
     bottomDot
   );
@@ -291,8 +317,6 @@ init();
 
 async function init() {
   const searchPattern = getUrlParam("search");
-  const bucketID = getUrlParam("bucket");
-  const bucketName = getUrlParam("bucketname");
 
   PageConfig.bsFileEditCanvas = new bootstrap.Offcanvas(FileEditCanvas.id);
 
@@ -300,7 +324,7 @@ async function init() {
     $("#root").css({ marginLeft: "" });
   });
 
-  initNavButtons(bucketID, bucketName);
+  initNavButtons(BucketID, BucketName);
   getWaitingFolder();
   FileInfoPageCfg.buckets = await getBuckets(PageAlert);
   PageConfig.projectInfo = await getProjectInfo();
@@ -315,7 +339,7 @@ async function init() {
     SearchInput.setVal(searchPattern);
     SearchBtn.elem().trigger("click");
   } else {
-    getFilesLimit(bucketID, bucketName);
+    getFilesLimit(BucketID, BucketName);
   }
 
   BucketSelect.elem().attr({ accesskey: "s" });
@@ -337,11 +361,13 @@ function initNavButtons(bucketID, bucketName) {
 function getFilesLimit(bucketID, bucketName) {
   axiosPost({
     url: "/api/files",
-    body: { id: parseInt(bucketID), name: bucketName, sort: SortBy },
+    body: { id: parseInt(bucketID), name: bucketName, sort: SortBy, utime: "" },
     alert: PageAlert,
     onSuccess: (resp) => {
       const files = resp.data;
       if (files && files.length > 0) {
+        const lastUTime = files[files.length - 1].utime.substr(0, 19);
+        MoreFilesDateInput.setVal(lastUTime);
         MJBS.appendToList(FileList, files.map(FileItem));
         initBackupProject(PageConfig.projectInfo, PageAlert);
       } else {
@@ -353,6 +379,34 @@ function getFilesLimit(bucketID, bucketName) {
     },
     onAlways: () => {
       PageLoading.hide();
+    },
+  });
+}
+
+function getMoreFiles() {
+  MJBS.disable(MoreFilesForm);
+  axiosPost({
+    url: "/api/files",
+    body: {
+      id: parseInt(BucketID),
+      name: BucketName,
+      sort: SortBy,
+      utime: MoreFilesDateInput.val(),
+    },
+    alert: MoreBtnAlert,
+    onSuccess: (resp) => {
+      const files = resp.data;
+      if (files && files.length > 0) {
+        const lastUTime = files[files.length - 1].utime.substr(0, 19);
+        MoreFilesDateInput.setVal(lastUTime);
+        MJBS.appendToList(FileList, files.map(FileItem));
+      } else {
+        MoreBtnAlert.insert("warning", "沒有更多檔案了.");
+        MoreFilesForm.hide();
+      }
+    },
+    onAlways: () => {
+      MJBS.enable(MoreFilesForm);
     },
   });
 }

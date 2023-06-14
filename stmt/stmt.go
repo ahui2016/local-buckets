@@ -114,6 +114,7 @@ const GetAllFilesLimit = `SELECT file.id, file.checksum, file.bucket_name,
 	file.checked, file.damaged, file.deleted,  bucket.encrypted
 FROM file
 	INNER JOIN bucket ON file.bucket_name = bucket.name
+	WHERE file.utime < ?
 	ORDER BY %s DESC LIMIT ?;`
 
 const AllFilesInBucket = `SELECT file.id, file.checksum, file.bucket_name,
@@ -150,7 +151,7 @@ const GetPublicFilesLimit = `SELECT file.id, file.checksum, file.bucket_name,
 	file.checked, file.damaged, file.deleted,  bucket.encrypted
 FROM file
 	INNER JOIN bucket ON file.bucket_name = bucket.name
-	WHERE bucket.encrypted=FALSE
+	WHERE bucket.encrypted=FALSE AND file.utime < ?
 	ORDER BY %s DESC LIMIT ?;`
 
 const PublicFilesInBucket = `SELECT file.id, file.checksum, file.bucket_name,

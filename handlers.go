@@ -739,13 +739,16 @@ func getFilesHandler(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
+	if form.UTime == "" {
+		form.UTime = model.Now()
+	}
 	if form.Sort == "" {
 		form.Sort = "utime"
 	}
 	if form.ID > 0 {
 		files, err = db.GetFilesInBucket(form.ID)
 	} else {
-		files, err = db.GetFilesLimit(form.Sort)
+		files, err = db.GetFilesLimit(form.Sort, form.UTime)
 	}
 	if err != nil {
 		return err

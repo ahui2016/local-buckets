@@ -324,12 +324,12 @@ func (db *DB) GetAllFiles() (files []*File, err error) {
 	return getFiles(db.DB, stmt.GetAllFiles)
 }
 
-func (db *DB) GetFilesLimit(sortBy string) (files []*FilePlus, err error) {
+func (db *DB) GetFilesLimit(sortBy, utime string) (files []*FilePlus, err error) {
 	// Bug: 有注入風險, 但这是單用戶系統, 因此風險可控.
 	queryAll := fmt.Sprintf(stmt.GetAllFilesLimit, sortBy)
 	queryPublic := fmt.Sprintf(stmt.GetPublicFilesLimit, sortBy)
 	query := lo.Ternary(db.IsLoggedIn(), queryAll, queryPublic)
-	if files, err = getFilesPlus(db.DB, query, db.FilesLimit); err != nil {
+	if files, err = getFilesPlus(db.DB, query, utime, db.FilesLimit); err != nil {
 		return
 	}
 	files = RemoveChecksum(files)
