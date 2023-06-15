@@ -276,29 +276,6 @@ function FileItem(file) {
   return self;
 }
 
-const MoreBtnAlert = MJBS.createAlert();
-const MoreFilesBtn = MJBS.createButton("More");
-const MoreFilesDateInput = MJBS.createInput();
-const MoreFilesForm = cc("form", {
-  attr: { autocomplete: "off" },
-  children: [
-    MJBS.hiddenButtonElem(),
-    m("div")
-      .css({ width: "16rem" })
-      .addClass("input-group ms-auto me-auto my-5")
-      .append(
-        m(MoreFilesDateInput),
-        m(MoreFilesBtn).on("click", (event) => {
-          event.preventDefault();
-          getMoreFiles();
-        })
-      ),
-  ],
-});
-const MoreBtnArea = cc("div", {
-  children: [m(MoreBtnAlert), m(MoreFilesForm)],
-});
-
 $("#root")
   .css(RootCss)
   .append(
@@ -308,7 +285,7 @@ $("#root")
     m(SearchInputGroup).addClass("my-3").hide(),
     m(PageAlert).addClass("my-3"),
     m(FileList).addClass("my-3"),
-    m(MoreBtnArea),
+    m(MoreBtnArea).addClass("my-5").hide(),
     m(FileEditCanvas),
     bottomDot
   );
@@ -367,6 +344,7 @@ function getFilesLimit(bucketID, bucketName) {
       const files = resp.data;
       if (files && files.length > 0) {
         const lastUTime = files[files.length - 1].utime.substr(0, 19);
+        MoreBtnArea.show();
         MoreFilesDateInput.setVal(lastUTime);
         MJBS.appendToList(FileList, files.map(FileItem));
         initBackupProject(PageConfig.projectInfo, PageAlert);

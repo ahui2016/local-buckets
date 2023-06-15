@@ -132,7 +132,7 @@ const GetAllPicsLimit = `SELECT file.id, file.checksum, file.bucket_name,
 	file.checked, file.damaged, file.deleted,  bucket.encrypted
 FROM file
 	INNER JOIN bucket ON file.bucket_name = bucket.name
-	WHERE file.type LIKE "image/%"
+	WHERE file.utime < ? AND file.type LIKE "image/%"
 	ORDER BY utime DESC LIMIT ?;`
 
 const AllPicsInBucket = `SELECT file.id, file.checksum, file.bucket_name,
@@ -169,7 +169,7 @@ const GetPublicPicsLimit = `SELECT file.id, file.checksum, file.bucket_name,
 	file.checked, file.damaged, file.deleted,  bucket.encrypted
 FROM file
 	INNER JOIN bucket ON file.bucket_name = bucket.name
-	WHERE bucket.encrypted=FALSE AND file.type LIKE "image/%"
+	WHERE bucket.encrypted=FALSE AND file.utime < ? AND file.type LIKE "image/%"
 	ORDER BY file.utime DESC LIMIT ?;`
 
 const PublicPicsInBucket = `SELECT file.id, file.checksum, file.bucket_name,

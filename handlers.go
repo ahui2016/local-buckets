@@ -761,10 +761,13 @@ func getPicsHandler(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
+	if form.UTime == "" {
+		form.UTime = model.Now()
+	}
 	if form.ID > 0 {
 		files, err = db.GetPicsInBucket(form.ID)
 	} else {
-		files, err = db.GetPicsLimit()
+		files, err = db.GetPicsLimit(form.UTime)
 	}
 	if err != nil {
 		return err

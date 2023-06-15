@@ -493,3 +493,26 @@ function setExport(b) {
     },
   });
 }
+
+const MoreBtnAlert = MJBS.createAlert();
+const MoreFilesBtn = MJBS.createButton("More");
+const MoreFilesDateInput = MJBS.createInput();
+const MoreFilesForm = cc("form", {
+  attr: { autocomplete: "off" },
+  children: [
+    MJBS.hiddenButtonElem(),
+    m("div")
+      .css({ width: "16rem" })
+      .addClass("input-group ms-auto me-auto")
+      .append(
+        m(MoreFilesDateInput),
+        m(MoreFilesBtn).on("click", (event) => {
+          event.preventDefault();
+          getMoreFiles();
+        })
+      ),
+  ],
+});
+const MoreBtnArea = cc("div", {
+  children: [m(MoreBtnAlert), m(MoreFilesForm)],
+});

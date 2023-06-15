@@ -1,41 +1,44 @@
 $("title").text("Pics (圖片清單) - Local Buckets");
 
+const BucketID = getUrlParam("bucket");
+const BucketName = getUrlParam("bucketname");
+
 const SearchInput = MJBS.createInput("search", "required");
 const SearchBtn = MJBS.createButton("search", "primary", "submit");
 const SearchInputGroup = cc("form", {
   classes: "input-group",
   children: [
-    m(SearchInput).attr({accesskey: "s"}),
-    m(SearchBtn).on("click", event => {
+    m(SearchInput).attr({ accesskey: "s" }),
+    m(SearchBtn).on("click", (event) => {
       event.preventDefault();
       const pattern = SearchInput.val();
       if (!pattern) {
-	MJBS.focus(SearchInput);
-	return;
+        MJBS.focus(SearchInput);
+        return;
       }
       PageAlert.insert("info", `正在尋找 ${pattern} ...`);
       MJBS.disable(SearchBtn);
       axiosPost({
-	url: "/api/search-pics",
-	body: {text: pattern},
-	alert: PageAlert,
-	onSuccess: resp => {
-	  const files = resp.data;
-	  if (files && files.length > 0) {
-	    PageAlert.clear().insert("success", `找到 ${files.length} 個檔案`);
-	    FileList.elem().html('');
-	    MJBS.appendToList(FileList, files.map(FileItem));
-	  } else {
-	    PageAlert.insert("warning", "未找到任何檔案");
-	  }
-	},
-	onAlways: () => {
-	  MJBS.focus(SearchInput);
-	  MJBS.enable(SearchBtn);
-	}
+        url: "/api/search-pics",
+        body: { text: pattern },
+        alert: PageAlert,
+        onSuccess: (resp) => {
+          const files = resp.data;
+          if (files && files.length > 0) {
+            PageAlert.clear().insert("success", `找到 ${files.length} 個檔案`);
+            FileList.elem().html("");
+            MJBS.appendToList(FileList, files.map(FileItem));
+          } else {
+            PageAlert.insert("warning", "未找到任何檔案");
+          }
+        },
+        onAlways: () => {
+          MJBS.focus(SearchInput);
+          MJBS.enable(SearchBtn);
+        },
       });
-    })
-  ]
+    }),
+  ],
 });
 
 const navBar = m("div")
@@ -53,18 +56,21 @@ const navBar = m("div")
         MJBS.createLinkElem("#", { text: "Files" }).addClass("FilesBtn"),
         " | ",
         MJBS.createLinkElem("/buckets.html", { text: "Buckets" }),
-	m('div').addClass("ShowSearchBtnArea").css({display: "inline"}).append(
-	  " | ",
-	  MJBS.createLinkElem("#", { text: "Search"})
-	    .addClass("ShowSearchBtn")
-	    .on("click", event => {
-	      event.preventDefault();
-	      MJBS.disable(".ShowSearchBtn");
-	      $(".ShowSearchBtnArea").fadeOut(2000);
-	      SearchInputGroup.show();
-	      MJBS.focus(SearchInput);
-	    })
-	)
+        m("div")
+          .addClass("ShowSearchBtnArea")
+          .css({ display: "inline" })
+          .append(
+            " | ",
+            MJBS.createLinkElem("#", { text: "Search" })
+              .addClass("ShowSearchBtn")
+              .on("click", (event) => {
+                event.preventDefault();
+                MJBS.disable(".ShowSearchBtn");
+                $(".ShowSearchBtnArea").fadeOut(2000);
+                SearchInputGroup.show();
+                MJBS.focus(SearchInput);
+              })
+          )
       )
   );
 
@@ -122,6 +128,7 @@ $("#root")
     m(SearchInputGroup).addClass("my-3").hide(),
     m(PageAlert).addClass("my-3"),
     m(FileList).addClass("my-3"),
+    m(MoreBtnArea).addClass("my-5").hide(),
     m(FileEditCanvas),
     bottomDot
   );
@@ -129,9 +136,6 @@ $("#root")
 init();
 
 async function init() {
-  const bucketID = getUrlParam("bucket");
-  const bucketName = getUrlParam("bucketname");
-
   PageConfig.bsFileEditCanvas = new bootstrap.Offcanvas(FileEditCanvas.id);
 
   FileEditCanvas.elem().on("hidden.bs.offcanvas", () => {
@@ -139,14 +143,14 @@ async function init() {
   });
   FileInfoPageCfg.buckets = await getBuckets(PageAlert);
   getWaitingFolder();
-  getPicsLimit(bucketID, bucketName);
+  getPicsLimit(BucketID, BucketName);
 
-  initNavButtons(bucketID, bucketName);
+  initNavButtons(BucketID, BucketName);
   initProjectInfo();
 
-  NotesInput.elem().attr({accesskey: "n"});
-  KeywordsInput.elem().attr({accesskey: "k"});
-  SubmitBtn.elem().attr({accesskey: "e"});
+  NotesInput.elem().attr({ accesskey: "n" });
+  KeywordsInput.elem().attr({ accesskey: "k" });
+  SubmitBtn.elem().attr({ accesskey: "e" });
 }
 
 function initNavButtons(bucketID, bucketName) {
@@ -172,6 +176,9 @@ function getPicsLimit(bucketID, bucketName) {
     onSuccess: (resp) => {
       const files = resp.data;
       if (files && files.length > 0) {
+        const lastUTime = files[files.length - 1].utime.substr(0, 19);
+        MoreBtnArea.show();
+        MoreFilesDateInput.setVal(lastUTime);
         MJBS.appendToList(FileList, files.map(FileItem));
       } else {
         const errMsg = bucketID
@@ -182,6 +189,33 @@ function getPicsLimit(bucketID, bucketName) {
     },
     onAlways: () => {
       PageLoading.hide();
+    },
+  });
+}
+
+function getMoreFiles() {
+  MJBS.disable(MoreFilesForm);
+  axiosPost({
+    url: "/api/pics",
+    body: {
+      id: parseInt(BucketID),
+      name: BucketName,
+      utime: MoreFilesDateInput.val(),
+    },
+    alert: MoreBtnAlert,
+    onSuccess: (resp) => {
+      const files = resp.data;
+      if (files && files.length > 0) {
+        const lastUTime = files[files.length - 1].utime.substr(0, 19);
+        MoreFilesDateInput.setVal(lastUTime);
+        MJBS.appendToList(FileList, files.map(FileItem));
+      } else {
+        MoreBtnAlert.insert("warning", "沒有更多圖片了.");
+        MoreFilesForm.hide();
+      }
+    },
+    onAlways: () => {
+      MJBS.enable(MoreFilesForm);
     },
   });
 }
@@ -206,7 +240,7 @@ function initProjectInfo() {
     alert: PageAlert,
     onSuccess: (resp) => {
       PageConfig.projectInfo = resp.data;
-      initBackupProject(PageConfig.projectInfo, PageAlert)
+      initBackupProject(PageConfig.projectInfo, PageAlert);
     },
   });
 }
