@@ -12,6 +12,7 @@ const SearchInputGroup = cc("form", {
     m(SearchInput).attr({ accesskey: "s" }),
     m(SearchBtn).on("click", (event) => {
       event.preventDefault();
+      MoreBtnArea.hide();
       const pattern = SearchInput.val();
       if (!pattern) {
         MJBS.focus(SearchInput);
@@ -29,6 +30,7 @@ const SearchInputGroup = cc("form", {
             PageAlert.clear().insert("success", `找到 ${files.length} 個檔案`);
             FileList.elem().html("");
             MJBS.appendToList(FileList, files.map(FileItem));
+            $(".HideIfBackup").hide();
           } else {
             PageAlert.insert("warning", "未找到任何檔案");
           }
@@ -390,6 +392,8 @@ function getMoreFiles() {
 }
 
 function getDamagedFiles() {
+  $(".ShowSearchBtnArea").hide();
+  SearchInputGroup.hide();
   PageAlert.insert("info", "正在瀏覽受損檔案 (damaged files)");
   axiosGet({
     url: "/api/damaged-files",

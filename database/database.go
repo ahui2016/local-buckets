@@ -336,9 +336,9 @@ func (db *DB) GetFilesLimit(sortBy, utime string) (files []*FilePlus, err error)
 	return
 }
 
-func (db *DB) GetFilesInBucket(id int64) (files []*FilePlus, err error) {
+func (db *DB) GetFilesInBucket(id int64, utime string) (files []*FilePlus, err error) {
 	query := lo.Ternary(db.IsLoggedIn(), stmt.AllFilesInBucket, stmt.PublicFilesInBucket)
-	if files, err = getFilesPlus(db.DB, query, id, db.FilesLimit); err != nil {
+	if files, err = getFilesPlus(db.DB, query, id, utime, db.FilesLimit); err != nil {
 		return
 	}
 	files = RemoveChecksum(files)
@@ -354,9 +354,9 @@ func (db *DB) GetPicsLimit(utime string) (files []*FilePlus, err error) {
 	return
 }
 
-func (db *DB) GetPicsInBucket(id int64) (files []*FilePlus, err error) {
+func (db *DB) GetPicsInBucket(id int64, utime string) (files []*FilePlus, err error) {
 	query := lo.Ternary(db.IsLoggedIn(), stmt.AllPicsInBucket, stmt.PublicPicsInBucket)
-	if files, err = getFilesPlus(db.DB, query, id, db.FilesLimit); err != nil {
+	if files, err = getFilesPlus(db.DB, query, id, utime, db.FilesLimit); err != nil {
 		return
 	}
 	files = RemoveChecksum(files)

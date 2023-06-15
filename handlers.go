@@ -746,7 +746,7 @@ func getFilesHandler(c *fiber.Ctx) error {
 		form.Sort = "utime"
 	}
 	if form.ID > 0 {
-		files, err = db.GetFilesInBucket(form.ID)
+		files, err = db.GetFilesInBucket(form.ID, form.UTime)
 	} else {
 		files, err = db.GetFilesLimit(form.Sort, form.UTime)
 	}
@@ -765,7 +765,7 @@ func getPicsHandler(c *fiber.Ctx) error {
 		form.UTime = model.Now()
 	}
 	if form.ID > 0 {
-		files, err = db.GetPicsInBucket(form.ID)
+		files, err = db.GetPicsInBucket(form.ID, form.UTime)
 	} else {
 		files, err = db.GetPicsLimit(form.UTime)
 	}

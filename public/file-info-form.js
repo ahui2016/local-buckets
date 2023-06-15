@@ -394,6 +394,8 @@ function getBuckets(alert) {
                 : bucket.name;
             CurrentBucketAlert.show();
             CurrentBucketAlert.elem().text(`正在瀏覽倉庫: ${name}`);
+            $(".ShowSearchBtnArea").hide();
+            SearchInputGroup.hide();          
           }
         }
         if (!hasBucket) {

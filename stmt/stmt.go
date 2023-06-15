@@ -123,7 +123,7 @@ const AllFilesInBucket = `SELECT file.id, file.checksum, file.bucket_name,
 	file.checked, file.damaged, file.deleted,  bucket.encrypted
 FROM file
 	INNER JOIN bucket ON file.bucket_name = bucket.name
-	WHERE bucket.id=?
+	WHERE bucket.id=? AND file.utime < ?
 	ORDER BY utime DESC LIMIT ?;`
 
 const GetAllPicsLimit = `SELECT file.id, file.checksum, file.bucket_name,
@@ -141,7 +141,7 @@ const AllPicsInBucket = `SELECT file.id, file.checksum, file.bucket_name,
 	file.checked, file.damaged, file.deleted,  bucket.encrypted
 FROM file
 	INNER JOIN bucket ON file.bucket_name = bucket.name
-	WHERE bucket.id=? AND file.type LIKE "image/%"
+	WHERE bucket.id=? AND file.utime < ? AND file.type LIKE "image/%"
 	ORDER BY utime DESC LIMIT ?;`
 
 // Bug: 有注入風險, 但这是單用戶系統, 因此風險可控.
@@ -160,7 +160,7 @@ const PublicFilesInBucket = `SELECT file.id, file.checksum, file.bucket_name,
 	file.checked, file.damaged, file.deleted,  bucket.encrypted
 FROM file
 	INNER JOIN bucket ON file.bucket_name = bucket.name
-	WHERE bucket.id=? AND bucket.encrypted=FALSE
+	WHERE bucket.id=? AND bucket.encrypted=FALSE AND file.utime < ?
 	ORDER BY file.utime DESC LIMIT ?;`
 
 const GetPublicPicsLimit = `SELECT file.id, file.checksum, file.bucket_name,
@@ -178,7 +178,7 @@ const PublicPicsInBucket = `SELECT file.id, file.checksum, file.bucket_name,
 	file.checked, file.damaged, file.deleted,  bucket.encrypted
 FROM file
 	INNER JOIN bucket ON file.bucket_name = bucket.name
-	WHERE bucket.id=? AND bucket.encrypted=FALSE AND file.type LIKE "image/%"
+	WHERE bucket.id=? AND bucket.encrypted=FALSE AND file.utime < ? AND file.type LIKE "image/%"
 	ORDER BY file.utime DESC LIMIT ?;`
 
 const TotalSize = `SELECT COALESCE(sum(size),0) as totalsize FROM file;`
