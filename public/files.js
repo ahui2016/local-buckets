@@ -428,6 +428,7 @@ function getProjectInfo() {
 function canBePreviewed(fileType) {
   return (
     fileType.startsWith("image") ||
+    fileType.startsWith("audio") ||
     fileType.startsWith("video") ||
     fileType.startsWith("text") ||
     fileType.endsWith("pdf")

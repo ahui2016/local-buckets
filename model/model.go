@@ -156,6 +156,10 @@ func (f *File) IsImage() bool {
 	return strings.HasPrefix(f.Type, "image")
 }
 
+func (f *File) IsAudio() bool {
+	return strings.HasPrefix(f.Type, "audio")
+}
+
 func (f *File) IsVideo() bool {
 	return strings.HasPrefix(f.Type, "video")
 }
@@ -170,7 +174,7 @@ func (f *File) IsPDF() bool {
 
 // 添加 音频/视频 支持
 func (f *File) CanBePreviewed() bool {
-	return f.IsImage() || f.IsVideo() || f.IsText() || f.IsPDF()
+	return f.IsImage() || f.IsAudio() || f.IsVideo() || f.IsText() || f.IsPDF()
 }
 
 func ExportFileFrom(f File) FileExportImport {
