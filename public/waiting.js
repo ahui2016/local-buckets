@@ -205,6 +205,17 @@ function getWaitingFiles() {
           "這裡列出的檔案清單僅供參考, 實際上傳檔案以 waiting 資料夾為準.",
           "no-time"
         );
+        const SizeLimit = GB * 0.5;
+        for (const file of files) {
+          if (file.size > SizeLimit) {
+            console.log(file.name, file.size);
+            UploadAlert.insert(
+              "warning",
+              "發現大於 500MB 的檔案, 如果上傳到加密倉庫, 建議單個檔案不要超過 500MB"
+            );
+            break;
+          }
+        }
       } else {
         PageAlert.insert("info", "沒有等待上傳的檔案");
         PageAlert.insert(

@@ -69,9 +69,6 @@ const navBar = m("div")
     m("div")
       .addClass("col text-end")
       .append(
-        MJBS.createLinkElem("#", { text: "Link1" }).addClass("Link1"),
-        " | ",
-        MJBS.createLinkElem("#", { text: "Link2" }).addClass("Link2"),
         m(CreateBKProjLinkArea).append(
           " | ",
           MJBS.createLinkElem("#", { text: "新建備份專案" })
