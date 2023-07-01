@@ -255,6 +255,7 @@ function createProjStat(projStat) {
         alert: PageAlert,
         onSuccess: (resp) => {
           projStat = resp.data;
+          // console.log(JSON.stringify(projStat));
           if (projID == "source-proj") {
             mainProjStat = projStat;
           } else {

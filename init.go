@@ -113,12 +113,19 @@ func initProjectConfig() {
 	readProjectConfig()
 }
 
-// 更新备份时间
-func projCfgUpdateTime(bkProjStat *ProjectStatus) error {
+// 更新备份时间, 然後同步 toml 檔案的部分內容.
+func projCfgUpdateAndSync(bkProjStat *ProjectStatus) error {
 	ProjectConfig.LastBackupAt = model.Now()
 	err1 := writeProjectConfig()
 	bkProjCfgPath := filepath.Join(bkProjStat.Root, ProjectTOML)
+
 	bkProjStat.LastBackupAt = ProjectConfig.LastBackupAt
+	bkProjStat.Title = ProjectConfig.Title
+	bkProjStat.Subtitle = ProjectConfig.Subtitle
+	bkProjStat.CheckInterval = ProjectConfig.CheckInterval
+	bkProjStat.CheckSizeLimit = ProjectConfig.CheckSizeLimit
+	bkProjStat.CipherKey = ProjectConfig.CipherKey
+
 	err2 := util.WriteTOML(bkProjStat.Project, bkProjCfgPath)
 	return util.WrapErrors(err1, err2)
 }

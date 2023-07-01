@@ -1305,7 +1305,7 @@ func syncBackup(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	e1 := projCfgUpdateTime(bkProjStat)
+	e1 := projCfgUpdateAndSync(bkProjStat)
 	e2 := syncPublicFolder(form.Text)
 	e3 := syncExeFile(bkProjStat.Root)
 	return util.WrapErrors(e1, e2, e3)
